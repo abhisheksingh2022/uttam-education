@@ -1,0 +1,25 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.account;
+
+import java.util.List;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.service.IService;
+import com.hixapi.pmp.api.model.PreferenceVO;
+import com.hixapi.pmp.api.model.UserVO;
+
+/**
+ * @author admin
+ *
+ */
+public interface PreferencesService extends IService {
+
+	List<PreferenceVO> retrieveUserPreferences(UserVO user) throws BusinessServiceException;
+
+	void saveUserPreferences(List<PreferenceVO> preferences) throws BusinessServiceException;
+
+	void deleteUserPreferences(List<PreferenceVO> preferences) throws BusinessServiceException;
+
+}

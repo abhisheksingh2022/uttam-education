@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 10:52:08 AM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.FunctionRole" table="FUNCTION_ROLE" optimistic-lock="version">
+        <id name="functionRoleId" type="java.lang.Long">
+            <column name="FUNCTION_ROLE_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_FUNCTION_ROLE_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="functionMstr" class="com.hixapi.pmp.entity.model.FunctionMstr" fetch="select">
+            <column name="FUNCTION_ID" precision="12" scale="0" not-null="true">
+                <comment>Function ID referenced from FUNCTION_MSTR</comment>
+            </column>
+        </many-to-one>
+        <many-to-one name="roleMstr" class="com.hixapi.pmp.entity.model.RoleMstr" fetch="select">
+            <column name="ROLE_ID" precision="12" scale="0" not-null="true">
+                <comment>Role ID Referenced from ROLE_MSTR</comment>
+            </column>
+        </many-to-one>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+        <property name="activeInd" type="string">
+            <column name="ACTIVE_IND" length="1" />
+        </property>
+    </class>
+</hibernate-mapping>

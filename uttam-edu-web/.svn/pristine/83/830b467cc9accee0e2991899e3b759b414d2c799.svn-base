@@ -1,0 +1,296 @@
+package com.hixapi.pmp.struts.planmgmt;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.model.UserMessage;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.api.model.CarrierVO;
+import com.hixapi.pmp.api.model.PlanUploadHistoryVO;
+import com.hixapi.pmp.api.model.PlanUploadVO;
+import com.hixapi.pmp.api.model.criteria.CarrierSearchCriteria;
+import com.hixapi.pmp.common.util.PMPUtil;
+import com.hixapi.pmp.service.carrier.CarrierService;
+import com.hixapi.pmp.service.plan.PlanUploadService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+
+public class PlanUploadAction extends BaseSecureAction {
+
+	private static final Logger log = LogManager.getLogger(PlanUploadAction.class);
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7296331027656555878L;
+
+	private List<CarrierVO> carriers;
+	private List<Integer> years = new ArrayList<Integer>();
+	private List<PlanUploadHistoryVO> planUploadHistory = new ArrayList<PlanUploadHistoryVO>();
+  
+	private String coverageYear;
+	private String carrierId;
+	boolean uploadDataResult = false;
+	boolean savesuccess=false;
+	boolean showUploadPopup = false;
+
+	/** Input Objects start **/
+	private CarrierSearchCriteria criteria;
+
+	/** Input Objects end **/
+	private PlanUploadVO planUploadVO = new PlanUploadVO();
+
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		log.entry();
+		fetchYearAndCarriers();
+
+		log.exit();
+	}
+
+	
+	/**
+	 * Method call from : loadDisplayContent method
+	 * When is calling: load time of plan-upload.jsp
+	 * functionality: getting coverageYear and carriers from service
+	 */
+	private void fetchYearAndCarriers() {
+		years = PMPUtil.getCoverageYearList();
+		carriers = ServiceLocator.getInstance().getService(CarrierService.class).searchCarriers(null);
+	}
+
+	public String search() {
+		log.entry();
+		/*
+		 * Search using the incoming criteria
+		 */
+		return log.exit(FLASH);
+	}
+
+	/**
+	 * Method call from:  plan-upload.jsp 
+	 * When is calling: on page submission
+	 * functionality: pass data as planUploadVO object to service
+	 * @return flash
+	 */
+	public String upload() {
+		log.entry();
+		/*
+		 */
+		try {
+			ServiceLocator.getInstance().getService(PlanUploadService.class).uploadPlan(planUploadVO);
+			List<Object> subs = new ArrayList<Object>();
+			subs.add(planUploadVO.getCarrierName());
+			subs.add(planUploadVO.getCoverageYear());
+			subs.add(getLookupDisplay(APIConstants.LKUP_TYPE_PLAN_TEMPLATES, planUploadVO.getPlanTemplateType()));
+			addBusinessMessage(new UserMessage(Severity.INFO.getCode(),"msg.planupload.upload_success", subs, null ), "");
+            this.setSavesuccess(true);
+		} catch (BusinessServiceException bex) {
+			log.error("Caught error in plan upload", bex);
+			super.addBusinessServiceErrorMessage(bex);
+		}
+		years.clear();
+		if (years.isEmpty()) {
+			fetchYearAndCarriers();
+			uploadDataResult = true;
+		}
+
+		return log.exit(FLASH);
+	}
+
+	public String uploadPopup() {
+		log.entry();
+		/*
+		 */
+		try {
+			setShowUploadPopup(true);
+		} catch (BusinessServiceException bex) {
+			log.error("Caught error in plan upload", bex);
+			super.addBusinessServiceErrorMessage(bex);
+		}
+		years.clear();
+		if (years.isEmpty()) {
+			fetchYearAndCarriers();
+			uploadDataResult = true;
+		}
+
+		return log.exit(FLASH);
+	}
+	
+	@Override
+	protected String handleExecute() throws Exception {
+		log.entry();
+		// TODO Auto-generated method stub
+		return log.exit(null);
+	}
+
+	
+	/**
+	 * Method call from: from plan-upload.jsp 
+	 * When is calling: on click of upload XML template button
+	 * functionality: getting history of uploaded template
+	 * @return success message
+	 */
+	public String ajaxGetPlanUploadHistory() {
+		planUploadVO.setCoverageYear(coverageYear);
+		planUploadVO.setCarrierId(carrierId);
+		
+		if (StringUtils.isNotBlank(carrierId)) {
+			planUploadHistory = ServiceLocator.getInstance().getService(PlanUploadService.class)
+					.retrievePlanUploadHistory(ConversionUtil.toShort(coverageYear), ConversionUtil.toLong(carrierId));
+		}
+
+		return "successPlans";
+	}
+	
+	/**
+	 * Method call from: automatically called struts feature
+	 * When is calling: just before the upload method
+	 * functionality: to validate the fields before uploading
+	 */
+	public void validate_upload(){
+		if(planUploadVO == null){
+			planUploadVO = new PlanUploadVO();
+		}
+		planUploadVO.setCoverageYear(coverageYear);
+		if (planUploadVO == null || StringUtils.isEmpty(planUploadVO.getCoverageYear())) {
+			super.addValidationError("msg.planupload.coverageYear_required", "planuploadVO.coverageYear");
+		}
+		if (planUploadVO == null || StringUtils.isEmpty(planUploadVO.getCarrierId())) {
+			super.addValidationError("msg.planupload.carrier_required", "carrierId");
+		}
+		if (planUploadVO == null || StringUtils.isEmpty(planUploadVO.getPlanTemplateType())) {
+			super.addValidationError("msg.planupload.templatetype_required", "carrierId");
+		}
+		if (planUploadVO == null || planUploadVO.getUploadFile() == null) {
+			super.addValidationError("msg.planupload.file_required", "carrierId");
+		}
+		else if(planUploadVO != null && !"text/xml".equals(planUploadVO.getUploadFileContentType())){
+			super.addValidationError("msg.planupload.xml_file_required", "carrierId");
+		}
+	}
+
+	public void validate_uploadPopup() {
+		if(planUploadVO == null){
+			planUploadVO = new PlanUploadVO();
+		}
+		planUploadVO.setCoverageYear(coverageYear);
+		if (planUploadVO == null || StringUtils.isEmpty(planUploadVO.getCoverageYear())) {
+			super.addValidationError("msg.planupload.coverageYear_required", "planuploadVO.coverageYear");
+		}
+		if (planUploadVO == null || StringUtils.isEmpty(planUploadVO.getCarrierId())) {
+			super.addValidationError("msg.planupload.carrier_required", "carrierId");
+		}
+	}
+	
+	/**
+	 * Method call from: automatically called struts feature
+	 * When is calling: just before the ajaxGetPlanUploadHistory method
+	 * functionality: to validate the fields on click of upload XML template button
+	 */
+	public void validate_ajaxGetPlanUploadHistory() {
+		if (StringUtils.isEmpty(coverageYear)) {
+			super.addValidationError("msg.planupload.coverageYear_required", "coverageYear");
+		}
+		if (StringUtils.isBlank(carrierId)) {
+			super.addValidationError("msg.planupload.carrier_required", "carrierId");
+		}
+
+	}
+
+	public void onValidationError() throws Exception {
+		fetchYearAndCarriers();
+	}
+	
+	public PlanUploadVO getPlanUploadVO() {
+		return planUploadVO;
+	}
+
+	public void setPlanUploadVO(PlanUploadVO planUploadVO) {
+		this.planUploadVO = planUploadVO;
+	}
+	
+	public boolean isUploadDataResult() {
+		return uploadDataResult;
+	}
+
+	public void setUploadDataResult(boolean uploadDataResult) {
+		this.uploadDataResult = uploadDataResult;
+	}
+	
+	public List<CarrierVO> getCarriers() {
+		return carriers;
+	}
+
+	public void setCarriers(List<CarrierVO> carriers) {
+		this.carriers = carriers;
+	}
+
+	public void setCriteria(CarrierSearchCriteria criteria) {
+		this.criteria = criteria;
+	}
+
+	public CarrierSearchCriteria getCriteria() {
+		return criteria;
+	}
+
+	public List<Integer> getYears() {
+		return years;
+	}
+
+	public void setYears(List<Integer> years) {
+		this.years = years;
+	}
+
+	public List<PlanUploadHistoryVO> getPlanUploadHistory() {
+		return planUploadHistory;
+	}
+
+	public void setPlanUploadHistory(List<PlanUploadHistoryVO> planUploadHistory) {
+		this.planUploadHistory = planUploadHistory;
+	}
+
+	public String getCoverageYear() {
+		return coverageYear;
+	}
+
+	public void setCoverageYear(String coverageYear) {
+		this.coverageYear = coverageYear;
+	}
+
+	public String getCarrierId() {
+		return carrierId;
+	}
+
+	public void setCarrierId(String carrierId) {
+		this.carrierId = carrierId;
+	}
+
+
+	public boolean isSavesuccess() {
+		return savesuccess;
+	}
+
+
+	public void setSavesuccess(boolean savesuccess) {
+		this.savesuccess = savesuccess;
+	}
+
+
+	public boolean isShowUploadPopup() {
+		return showUploadPopup;
+	}
+
+
+	public void setShowUploadPopup(boolean showUploadPopup) {
+		this.showUploadPopup = showUploadPopup;
+	}
+
+}

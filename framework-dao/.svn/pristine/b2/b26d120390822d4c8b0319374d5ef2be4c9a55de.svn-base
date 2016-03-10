@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+	<class name="com.hixapi.prescreening.api.model.LkupCountyDetails" table="lkup_county_details">
+		<id name="identifier" column="lkup_county_details_id">
+            <generator class="native"/>
+        </id>
+        
+		<property name="county" column="county" />
+		<property name="countyId" column="county_Id" />
+		<property name="ratingAreaId" column="rating_area_Id" />
+		<property name="langCd" column="language_cd" />
+	</class>	
+</hibernate-mapping>

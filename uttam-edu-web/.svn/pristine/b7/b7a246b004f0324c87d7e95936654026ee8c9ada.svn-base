@@ -1,0 +1,809 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+
+
+
+<s:hidden name="planPdfVO.planHiosId" id="planPdfVO_planHiosId" />
+<s:hidden name="planPdfVO.coverageYear" id="planPdfVO_coverageYear" />
+<s:hidden name="planPdfVO.language" id="planPdfVO_language" />
+<s:hidden name="planPdfVO.carrierId" id="planPdfVO_carrierId" />
+<s:hidden name="planPdfVO.variantHiosId" value="" class="fileVarId" id="fileUploadVarId"/>
+<%-- <s:hidden name="planPdfVO.planIdNumber" value="%{planPreview.planId}" id="planPdfVO_planIdNumber" /> --%>
+
+			<!-- Modal content-->
+
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">
+						<s:property value="planPreview.carrierName" />
+					</h4>
+					<h2 class="plns">
+						<s:text name="txt.planmanage.plansummary" />
+					</h2>
+					<h4>
+						<s:property value="planPreview.planName" />
+					</h4>
+					<h5>
+						<s:property value="previewPlanVariants[variantIndexInteger].planSecondaryName" />
+
+					</h5>
+				</div>
+				<div class="modal-body modalbdypop">
+					<div class="planModal">
+						<fieldset class="grey">
+
+
+
+							<div class="modalspan11" style="border-bottom: 8px solid #F9F9F9;">
+								<div class="modalspan10">
+									<p></p>
+									<div class="head4" style="margin-left: 20px; margin-top: 8px;">
+										<b><s:property value="planDetailsKeyLookup['PLO']" /></b>
+									</div>
+									<p></p>
+								</div>
+
+							</div>
+
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<!-- TODO change help text -->
+										<img data-placement="right" data-original-title=""
+											data-title="<s:text name="txt.planpreview.healthcareprovider"/>"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['HCP']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+
+										<a id="id_a_link_to_providersearch" class="toAppendHTTP" target="_blank"
+											href="<s:property value='planPreview.networkUrl.networkURL'/>"> <s:text
+												name="txt.planpreview.searchprovider" />
+										</a>
+
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<!-- TODO -->
+										<img data-placement="right" data-original-title="" data-title="<s:text name="txt.planpreview.plantype"/>"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['PLT']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<s:property value="planPreviewPlanType" />
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title="" data-title="<s:text name="txt.planpreview.planlevel"/>"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['PLL']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<img
+											src="<s:property value='rootPath'/>static/custom/images/metal_tier_<s:property value="planPreviewPlanLevel.toUpperCase()" />.png"
+											style="margin-top: 5px" alt="Metal Level">
+										<s:property value="planPreviewPlanLevel" />
+
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title=""
+											data-title="<s:text name="txt.planpreview.qualityrating" />"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['QRT']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<s:if test="qualityRatingInteger!=0">
+											<s:iterator begin="1" step="1" end="qualityRatingInteger">
+												<img class="middle" src="<s:property value='rootPath'/>static/custom/images/star.png" alt="Full Star">
+											</s:iterator>
+										</s:if>
+										<s:else>
+											<s:text name="txt.planpreview.notrated"></s:text>
+										</s:else>
+
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11" style="border-bottom: 8px solid #F9F9F9; border-top: 8px solid #F9F9F9;">
+								<div class="modalspan10">
+									<p></p>
+									<div class="head4" style="margin-left: 20px; margin-top: 8px;">
+										<b><s:property value="planDetailsKeyLookup['CSO']" /></b>
+									</div>
+									<p></p>
+								</div>
+							</div>
+
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title="" data-title="<s:text name="txt.planpreview.deductible" />"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b> <s:property value="planDetailsKeyLookup['DED']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b> <s:property value="planDetailsKeyLookup['IND']" />
+										</b> <br> <b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property
+											value="previewPlanVariantDetails[variantIndexInteger].deductibleDetails.get('DED_MED').inNetworkTier1Individual" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].deductibleDetails.get('DED_MED').outOfNetworkIndividual" />
+											<br>
+										</s:if>
+										<b> <s:property value="planDetailsKeyLookup['FAM']" />
+										</b> <br> <b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property
+											value="previewPlanVariantDetails[variantIndexInteger].deductibleDetails.get('DED_MED').inNetworkTier1Family" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].deductibleDetails.get('DED_MED').outOfNetworkFamily" />
+										</s:if>
+									</p>
+								</div>
+							</div>
+
+
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title="" data-title="<s:text name="txt.planpreview.oopmaximum" />"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['OOM']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b> <s:property value="planDetailsKeyLookup['IND']" />
+										</b> <br> <b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property
+											value="previewPlanVariantDetails[variantIndexInteger].moopDetails.get('MOOP_MED').inNetworkTier1Individual" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].moopDetails.get('MOOP_MED').outOfNetworkIndividual" />
+											<br>
+										</s:if>
+										<b><s:property value="planDetailsKeyLookup['FAM']" /> </b> <br> <b><s:property
+												value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].moopDetails.get('MOOP_MED').inNetworkTier1Family" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].moopDetails.get('MOOP_MED').outOfNetworkFamily" />
+										</s:if>
+									</p>
+								</div>
+							</div>
+
+
+
+
+
+							<div class="modalspan11" style="border-bottom: 8px solid #F9F9F9; border-top: 8px solid #F9F9F9;">
+								<div class="modalspan10">
+									<p></p>
+									<div class="head4" style="margin-left: 20px; margin-top: 8px;">
+										<b><s:property value="planDetailsKeyLookup['PHY']" /></b>
+									</div>
+									<p></p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title=""
+											data-title="<s:text name="txt.planpreview.preventivecare" />"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['PSI']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('PSI').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('PSI').outNetworkDisplayValue" />
+										</s:if>
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title="" data-title="<s:text name="txt.planpreview.primarycare" />"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['PCV']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b> <s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('PCV').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('PCV').outNetworkDisplayValue" />
+										</s:if>
+
+
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title=""
+											data-title="<s:text name="txt.planpreview.specialistvisit" />"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['SPV']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('SPV').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('SPV').outNetworkDisplayValue" />
+										</s:if>
+
+
+									</p>
+								</div>
+							</div>
+							<div class="modalspan11" style="border-bottom: 8px solid #F9F9F9; border-top: 8px solid #F9F9F9;">
+								<div class="modalspan10">
+									<p></p>
+									<div class="head4" style="margin-left: 20px; margin-top: 8px;">
+										<b><s:property value="planDetailsKeyLookup['PHD']" /></b>
+									</div>
+									<p></p>
+								</div>
+							</div>
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title=""
+											data-title="<s:text name="txt.planpreview.prescriptiondrugdeductible" />"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['PDE']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property
+											value="previewPlanVariantDetails[variantIndexInteger].deductibleDetails.get('DED_DRG').inNetworkTier1Individual" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].deductibleDetails.get('DED_DRG').outOfNetworkIndividual" />
+										</s:if>
+										<br> <b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property
+											value="previewPlanVariantDetails[variantIndexInteger].deductibleDetails.get('DED_DRG').inNetworkTier1Family" />
+										<br>
+
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].deductibleDetails.get('DED_DRG').outOfNetworkFamily" />
+										</s:if>
+
+									</p>
+								</div>
+							</div>
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title=""
+											data-title="<s:text name="txt.planpreview.prescriptiondrugoop" />"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['PDO']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property
+											value="previewPlanVariantDetails[variantIndexInteger].moopDetails.get('MOOP_DRG').inNetworkTier1Individual" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].moopDetails.get('MOOP_DRG').outOfNetworkIndividual" />
+										</s:if>
+										<br> <b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].moopDetails.get('MOOP_DRG').inNetworkTier1Family" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].moopDetails.get('MOOP_DRG').outOfNetworkFamily" />
+										</s:if>
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title=""
+											data-title="<s:text name="txt.planpreview.retailpharmacy" />"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['PRP']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+
+										<b> <s:text name="txt.planpreview.tier1" /></b> <br> <b><s:property
+												value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[0].copayDetails.get('GDG').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b> :
+										<s:property value="previewPlanVariantDetails[0].copayDetails.get('GDG').outNetworkDisplayValue" />
+											<br>
+										</s:if>
+										<b><s:text name="txt.planpreview.tier2" /></b><br> <b><s:property
+												value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[0].copayDetails.get('PBD').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b> :
+										<s:property value="previewPlanVariantDetails[0].copayDetails.get('PBD').outNetworkDisplayValue" />
+
+
+											<br>
+										</s:if>
+										<b> <s:text name="txt.planpreview.tier3" /></b><br> <b> <s:property
+												value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[0].copayDetails.get('NBD').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b> :
+										<s:property value="previewPlanVariantDetails[0].copayDetails.get('NBD').outNetworkDisplayValue" />
+
+											<br>
+										</s:if>
+										<b> <s:text name="txt.planpreview.tier4" /></b><br> <b><s:property
+												value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[0].copayDetails.get('SDG').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b> :
+										<s:property value="previewPlanVariantDetails[0].copayDetails.get('SDG').outNetworkDisplayValue" />
+											<br>
+										</s:if>
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title="" data-title="<s:text name="txt.planpreview.formularydrug"/>"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['PFS']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+
+										<a id="id_a_formulary-link" class="toAppendHTTP" target="_blank"
+											href="<s:property escapeHtml='false' value='planPreview.carrierFormularyVO.formularyUrlLink'/>"> <s:text
+												name="txt.planpreview.searchprescriptiondrugs" />
+										</a>
+
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11" style="border-bottom: 8px solid #F9F9F9; border-top: 8px solid #F9F9F9;">
+								<div class="modalspan10">
+									<p></p>
+									<div class="head4" style="margin-left: 20px; margin-top: 8px;">
+										<b><s:property value="planDetailsKeyLookup['ECH']" /></b>
+									</div>
+									<p></p>
+								</div>
+							</div>
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title=""
+											data-title="<s:text name="txt.planpreview.emergencyroomservices"/>"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['ERS']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('ERS').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('ERS').outNetworkDisplayValue" />
+										</s:if>
+
+									</p>
+								</div>
+							</div>
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title="" data-title="<s:text name="txt.planpreview.inpatient"/>"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['IHS']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('IHS').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('IHS').outNetworkDisplayValue" />
+										</s:if>
+									</p>
+								</div>
+							</div>
+							<div class="modalspan11" style="border-bottom: 8px solid #F9F9F9; border-top: 8px solid #F9F9F9;">
+								<div class="modalspan10">
+									<p></p>
+									<div class="head4" style="margin-left: 20px; margin-top: 8px;">
+										<b><s:property value="planDetailsKeyLookup['PDC']" /></b>
+									</div>
+									<p></p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p></p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['DAP']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('DCC').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('DCC').outNetworkDisplayValue" />
+										</s:if>
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p></p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['BAR']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('BDC').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('BDC').outNetworkDisplayValue" />
+										</s:if>
+									</p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p></p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['MAR']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('MDC').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('MDC').outNetworkDisplayValue" />
+										</s:if>
+									</p>
+								</div>
+							</div>
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p></p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['ODS']" /></b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['INW']" /></b> :
+										<s:property value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('OCD').inNetworkDisplayValue" />
+										<br>
+										<s:if test="outOfNetworkToBeDeleted == false">
+											<b><s:property value="planDetailsKeyLookup['ONW']" /></b>
+																:
+																<s:property
+												value="previewPlanVariantDetails[variantIndexInteger].copayDetails.get('OCD').outNetworkDisplayValue" />
+										</s:if>
+									</p>
+								</div>
+							</div>
+							<div class="modalspan11" style="border-bottom: 8px solid #F9F9F9; border-top: 8px solid #F9F9F9;">
+								<div class="modalspan10">
+									<p></p>
+									<div class="head4" style="margin-left: 20px; margin-top: 8px;">
+										<b> <s:property value="planDetailsKeyLookup['ABI']" />
+										</b>
+									</div>
+									<p></p>
+								</div>
+							</div>
+
+
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title=""
+											data-title="<s:text name="txt.planpreview.detailedplandocument"/>"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b> <s:property value="planDetailsKeyLookup['DPD']" />
+										</b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<a href="#" target="_blank" id="<s:property value='previewPlanVariants[variantIndexInteger].variantHiosId'/>"
+											onclick="return viewDocument(this)"><s:text name="txt.planpreview.viewdocument" /></a>
+									<%-- <a style="background-color: #fffab2;"
+											href="<s:property value='previewPlanVariantDetails[variantIndexInteger].hsaPlanBrochureUrlTxt'/>" target="_blank"><s:text
+												name="txt.planpreview.viewdocument" /></a> --%>
+									</p>
+								</div>
+							</div>
+							<div class="modalspan11">
+								<div class="modalspan1">
+									<p>
+										<img data-placement="right" data-original-title="" data-title="<s:text name="txt.planpreview.summary"/>"
+											src="<s:property value='rootPath'/>static/custom/images/helpicon.png" class="tooltipAnchor middle offset1010"
+											alt="Tooltip">
+									</p>
+								</div>
+								<div class="modalspan4">
+									<p>
+										<b><s:property value="planDetailsKeyLookup['SBC']" /> </b>
+									</p>
+								</div>
+								<div class="modalspan5">
+									<p>
+										<a id="id_a_link_to_summary" class="toAppendHTTP" target="_blank"
+											href="<s:property value='previewPlanVariantDetails[variantIndexInteger].hsaBenefitCoverageUrlTxt' />"> <s:text
+												name="txt.planpreview.linktosummary" />
+										</a>
+									</p>
+								</div>
+							</div>
+						</fieldset>
+					</div>
+				</div>
+
+		
+<script>
+	$(document).ready(function() {
+		$('.toAppendHTTP').each(function(){
+			var myLink = $(this).attr('href');
+ 			if(typeof myLink === "undefined"){
+			
+			}else{
+				if (myLink.indexOf('http://') != 0
+							&& myLink.indexOf('https://') != 0) {
+						$(this).attr("href",
+								"http://" + myLink);
+					}
+			}
+		});
+		$("#myModalA").draggable({
+    		handle: ".modal-header"
+		});
+	});
+
+
+	function viewDocument(input) {
+		document.getElementById("fileUploadVarId").value = input.id;
+		var url = "<s:property value='rootPath'/>planmgmt/plan-manage_downloadPDF";
+		url = url+"?planPdfVO.variantHiosId="+$("#fileUploadVarId").val();
+		url = url+"&planPdfVO.coverageYear="+$("#planPdfVO_coverageYear").val();
+		url = url+"&planPdfVO.language="+$("#planPdfVO_language").val();
+		url = url+"&planPdfVO.carrierId="+$("#planPdfVO_carrierId").val();
+		url = url+"&planPdfVO.planIdNumber="+$("#planPdfVO_planIdNumber").val();
+		
+		window.open(url, "_blank");
+		return false;
+		//alert();
+	}
+
+	
+	
+</script>

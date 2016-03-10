@@ -1,0 +1,265 @@
+<%@page import="com.hixapi.framework.common.APIUtil"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+	</div> <%--body-con --%>
+	<div class="clearfix"></div>
+</div> <%-- container maincont --%>
+<footer>
+    	<div class="container maincont">
+        	<div class="row">
+            	<div class="footer-left">
+                	<p><s:text name="txt.commonfooter.contactnbr"/>  <span>|</span> <s:text name="txt.commonfooter.ttynbr"/></p>
+                    <p>&copy; <%=APIUtil.getCurrentYear() %> <s:text name="txt.commonfooter.ahctline"/></p>
+                </div>
+                <div class="footer-right">
+                	<ul class="footer-link">
+                    	<li><a data-toggle="modal" data-target="#myModal"><s:text name="txt.footer.label1" /> </a><span>|</span></li>
+                    	<li><a data-toggle="modal" data-target="#myModalprivacy"><s:text name="txt.footer.label2" /> </a> <span>|</span></li>
+                    	 <s:if test="!production">
+                        <li><a data-toggle="modal" data-target="#myModalsetTime"><s:text name="txt.commonfooter.settime"/></a></li>
+                    	</s:if>
+                    </ul>
+                    <s:if test="!production">
+	                	<div class="clearfix"></div>
+	                	<div style="font-size:10px;" id="currentDate"><%=APIUtil.getCurrentDate() %></div>
+	                	<div class="clearfix"></div>
+	                	<div style="font-size:10px;" id="buildId">Build: <s:property value="getEnvProperty('GLOBAL',@com.hixapi.framework.common.APIConstants@PROPKEY_BUILD_ID)"/></div>
+	                </s:if>
+                </div>
+                
+            </div>
+        </div>
+        <div id="ajax_result"></div>
+    </footer>
+    <div id="myModal" class="modal fade" role="dialog" >
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h2 class="modal-title"> <b> <s:text name="txt.footer.label5" /> </b></h2>
+      </div>
+      <div class="modal-body" style="overflow: scroll; height: 400px">
+        <h4><b>
+        <s:text name="txt.footer.label6" /></b> </h4>
+        <br>
+        <br>
+        <s:text name="txt.footer.label7" />
+        <br>
+        <br> 
+        <s:text name="txt.footer.label8" /> 
+        <a href="http://www.accesshealthct.com"> 
+		<s:text name="txt.plandetails.ahct" /></a>
+        <s:text name="txt.footer.label9" /> 
+        <a href=" http://www.ct.gov/hix "> <s:text name="txt.commonfooter.websitelink"/>
+		</a>
+        <s:text name="txt.footer.label10" /> 
+        <s:text name="txt.footer.label11" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.label12" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.label13" /> 
+        <br>
+        <br>
+        <h4><b><s:text name="txt.footer.label14" /></b>  </h4>
+        <br>
+        <br>
+        <s:text name="txt.footer.label15" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.label16" />
+        <br>
+        <br> 
+        <h2><b> <s:text name="txt.footer.label17" /></b> </h2>
+        <br>
+        <br>
+        <s:text name="txt.footer.label18" /> <br><br>
+        <s:text name="txt.footer.label19" /> <br><br>
+        <s:text name="txt.footer.label20" /><br><br>
+        <s:text name="txt.footer.label21" /> <br><br>
+        <s:text name="txt.footer.label22" /> <br><br>
+        <s:text name="txt.footer.label23" /> <br><br>
+        <s:text name="txt.footer.label24" /> <br><br>
+        <s:text name="txt.footer.label25" /> <br><br>
+        <s:text name="txt.footer.label26" /> <br><br>
+        <s:text name="txt.footer.label27" /> <br><br>
+        <s:text name="txt.footer.label28" /> <br><br>
+        <s:text name="txt.footer.label29" /> <br><br>
+        <h4><b><s:text name="txt.footer.label30" /></b></h4><br> <br>
+        <s:text name="txt.footer.label31" /> <br><br>
+        <s:text name="txt.footer.label32" /> <br><br>
+        <s:text name="txt.footer.label33" /> <br><br>
+        <s:text name="txt.footer.label34" /> <br><br>
+        <h4><b><s:text name="txt.footer.label35" /></b></h4><br> <br>
+        <s:text name="txt.footer.label36" /> <br><br>
+        <s:text name="txt.footer.label37" /> <br><br>
+        <s:text name="txt.footer.label38" /> <br><br>
+        <s:text name="txt.footer.label39" /> <br><br>
+        <s:text name="txt.footer.label40" /> <br><br>
+        <h4><b><s:text name="txt.footer.label41" /></b> </h4><br><br>
+        <s:text name="txt.footer.label42" /> <br><br>
+        <h4><b><s:text name="txt.footer.label43" /></b></h4><br> <br>
+        <s:text name="txt.footer.label44" /> <br><br>
+         
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" style="background: linear-gradient(to bottom, #f9a819 0px, #ec7b08 100%)!important;
+border-color: #c86300!important;"><s:text name="txt.global.close" /></button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div id="myModalprivacy" class="modal fade" role="dialog" >
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h2 class="modal-title"> <b> <s:text name="txt.footer.label11" /> </b></h2>
+      </div>
+      <div class="modal-body" style="overflow: scroll; height: 400px">
+        <h3><b>
+        <s:text name="txt.footer.privacylabel1" /></b> </h3>
+        <br>
+        <s:text name="txt.footer.privacylabel2" />
+        <br>
+        <br> 
+        <h3><b><s:text name="txt.footer.privacylabel3" /> </b></h3>
+        <br>
+        <h4><b><s:text name="txt.footer.privacylabel4" /> </b></h4>
+        <br>
+        <s:text name="txt.footer.privacylabel5" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.privacylabel6" /> 
+        <br>
+        <br>
+        <h3><b><s:text name="txt.footer.privacylabel7" /> </b></h3>
+        <br>
+        <h4><b><s:text name="txt.footer.privacylabel8" /> </b></h4>
+        <br>
+        <s:text name="txt.footer.privacylabel9" /> 
+        <br>
+        <br>
+        <h4><b><s:text name="txt.footer.privacylabel10" /> </b></h4>
+        <br>
+        <s:text name="txt.footer.privacylabel11" /> 
+        <br>
+        <br>
+        <h4><b><s:text name="txt.footer.privacylabel12" /> </b></h4>
+        <br>
+        <s:text name="txt.footer.privacylabel13" /> 
+        <br>
+        <br>
+        <h4><b><s:text name="txt.footer.privacylabel14" /> </b></h4>
+        <br>
+        <s:text name="txt.footer.privacylabel15" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.privacylabel16" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.privacylabel17" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.privacylabel18" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.privacylabel19" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.privacylabel20" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.privacylabel21" /> 
+        <br>
+        <br>
+        <s:text name="txt.footer.privacylabel22" /> 
+        <br>
+        <br>
+        <h4><b><s:text name="txt.footer.privacylabel23" /> </b></h4>
+        <br>
+        <s:text name="txt.footer.privacylabel24" /> 
+        <br>
+        <br>
+         <h4><b><s:text name="txt.footer.privacylabel25" /> </b></h4>
+        <br>
+        <s:text name="txt.footer.privacylabel26" /> 
+        <br>
+        <br>
+        <h4><b><s:text name="txt.footer.privacylabel27" /> </b></h4>
+        <br>
+        <s:text name="txt.footer.privacylabel28" /> 
+        <br>
+        <br>
+        
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" style="background: linear-gradient(to bottom, #f9a819 0px, #ec7b08 100%)!important;
+border-color: #c86300!important;"><s:text name="txt.global.close" /></button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="myModalsetTime" class="modal fade" role="dialog">
+  <div class="modal-dialog model-time" >
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h2 class="modal-title"> <b> Time Machine</b></h2>
+      </div>
+      <div class="modal-body" style="height:280px">
+      	<div class="tinefield">
+			<label>Current System Date</label>
+			<span id="timefieldspan"><%=APIUtil.getCurrentDate() %></span>
+		</div>
+		<div class="tinefield">
+			<label>Current System Date Source</label>
+			<span id="timesourcespan"><%=APIUtil.getCurrentDateSource() %></span>
+		</div>
+		<div class="tinefield">
+			<label>Select Date</label>
+			<span><s:textfield name="date" id="systemdate" class="form-control datetype"/></span>
+		</div>
+		<div class="tinefield">
+			<label>&nbsp;</label>
+			<span> <input type="submit" value="Set Date in Session" class="save-btn time-btn btn_enable_class" onclick="return setSessionTime();"> </span>
+		</div>
+      </div>
+    </div>
+  </div>
+</div> 
+
+	<div class="clearfix"></div>
+</div> <%--wrapper --%>
+
+<script type="text/javascript" src="<s:property value='rootPath'/>static/custom/js/bootstrap.min.js?v=<s:property value="buildId"/>"></script>
+ <script type="text/javascript" src="<s:property value='rootPath'/>static/custom/js/script.js?v=<s:property value="buildId"/>"></script>
+ <script>
+ 	
+  	
+  	function setSessionTime(){
+  		var userSelectedDate = $("#systemdate").val();
+  		if(userSelectedDate != ''){
+	  		ajaxGet({
+				resource : '<s:property value="rootPath"/>main/set-system-date_ajaxSetDate',
+				targetId : 'currentDate',
+				urlparams : {"newDate": userSelectedDate}
+			}); 
+			$("#myModalsetTime").modal('hide');
+		}
+		return false;
+  	}
+ </script>
+</body>
+</html>

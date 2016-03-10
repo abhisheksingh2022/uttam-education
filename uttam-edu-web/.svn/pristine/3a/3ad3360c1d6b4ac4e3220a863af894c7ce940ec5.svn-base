@@ -1,0 +1,134 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp"%>
+<%@include file="/jsp/includes/datatable.jsp"%>
+
+<div class="row">
+
+	<div class="body-bg">
+		<div class="hedingsec">
+			<h2 class="inner-heading">
+				<s:text name="txt.carrierprofile.CarrierProfile_label"></s:text>
+			</h2>
+			<form>
+				<%-- <input name="" type="text" placeholder="<s:text name="txt.carrierprofile.searchcriteria"></s:text>"> <input name="" type="submit" value="<s:text name="txt.global.search"></s:text>"> --%>
+			</form>
+		</div>
+		<s:form autocomplete="off" id="id_form_carrierprofile" action="carrier-search">
+			<s:token />
+			<s:hidden name="ajaxRequest" value="false" />
+			<s:hidden name="formId" />
+			<div class="plan-table content">
+				<div class="carrier-data">
+					<table width="100%" border="0" cellpadding="0" cellspacing="0" id="datatable" class="pretty searchtabel">
+						<thead>
+							<tr class="ac-trHd serchtr">
+								<th class="plan-table-input padng10 nwidth"></th>
+								<th class="padng10"><s:text name="txt.carrierprofile.CarrierId_label"></s:text></th>
+								<th class="padng10"><s:text name="txt.carrierprofile.CarrierName_label"></s:text></th>
+								<th class="padng10"><s:text name="txt.carrierprofile.Contact_label"></s:text></th>
+								<th class="padng10"><s:text name="txt.carrierprofile.Carrierurl_label"></s:text></th>
+								
+							</tr>
+						</thead>
+						<s:iterator value="carrierList" var="carrierVO" status="itStatus">
+							<tr>
+								<td class="plan-table-input padng10"><input type="radio" name="carrierIdNbr" id="radio_box"
+									
+									value="<s:property value="%{#carrierVO.carrierIdNbr}" />"></td>
+								<td class="padding-gav padng10">
+								<s:a namespace="/usermgmt" action="carrier-profile_input">
+									<s:param name="mode">view</s:param>
+									<s:param name="carrierIdNbr" value="%{#carrierVO.carrierIdNbr}" />
+								
+								<s:property value="%{#carrierVO.carrierId}" /></s:a></td>
+								<td class="padng10"><s:property value="%{#carrierVO.carrierName}" /></td>
+								<td class="padng10 phone"><s:property value="%{#carrierVO.contactPhoneNo}" /></td>
+								<td class="padng10"><a href="http://<s:property value='carrierUrl'/>" target="_blank"><s:property value="carrierUrl" /></a></td>
+								
+							</tr>
+						</s:iterator>
+
+
+
+					</table>
+
+					<div class="form-btn">
+					    <s:if test="%{viewAccess == true}">
+						<button class="save-btn btn_enable_class" onclick="return setActionAndSubmit('id_form_carrierprofile', 'view');">
+							<s:text name="txt.global.view" />
+						</button>
+						</s:if>
+						<s:if test="%{editAccess == true}">
+						<button class="cancel-btn btn_enable_class" onclick="return setActionAndSubmit('id_form_carrierprofile', 'edit');">
+							<s:text name="txt.global.edit" />
+						</button>
+						</s:if>
+						<s:if test="%{addAccess == true}">
+						<button class="save-btn" onclick="return setActionAndSubmit('id_form_carrierprofile', 'add');">
+							<s:text name="txt.carrierprofile.AddCarrier_btn"></s:text>
+						</button>
+						</s:if>
+					</div>
+					<!-- <div> <button onclick="exportExcel()">Export table to Excel</button></div> -->
+
+				</div>
+
+			</div>
+
+		</s:form>
+	</div>
+</div>
+<script>
+	$(document).ready(function(){
+	disable_btn();
+	$('#datatable').on( 'draw.dt', function () {
+    $( ('#datatable tbody tr input[type=radio]')).each(function() {
+						$(this).prop('checked',false);
+						});
+	                    disable_btn();
+	                    remove_selected_row_color();
+			});																		
+  
+	});
+	$('input[name=carrierIdNbr]','#id_form_carrierprofile').click(function(){
+		$('.btn_enable_class').prop('disabled',false);
+		$('.btn_enable_class').prop('title','');
+		$('.btn_enable_class').css({"background-color":"","border":""});
+	});
+</script>
+<script type="text/javascript">
+function disable_btn(){
+			
+			
+			if((typeof $('input[name=carrierIdNbr]:checked', '#id_form_carrierprofile').val()== "undefined")
+							 || ($('input[name=carrierIdNbr]:checked', '#id_form_carrierprofile').val()=='')){
+				$('.btn_enable_class').prop('disabled',true);
+				$('.btn_enable_class').prop('title','please select an user from list');
+				$('.btn_enable_class').css({"background-color":"grey","border": "1px solid rgb(128,128,128)"});
+			}
+	}
+function remove_selected_row_color() {
+											$(
+													'.searchtabel tbody tr input[type=radio]')
+													.each(
+															function() {
+																$(this)
+																		.parent()
+																		.parent()
+																		.removeClass(
+																				'selected');
+																if ($(this)
+																		.is(
+																				':checked') == true) {
+																	$(this)
+																			.parent()
+																			.parent()
+																			.addClass(
+																					"selected")
+																}
+															});
+										}
+</script>
+<%@include file="/jsp/includes/footer.jsp"%>
+

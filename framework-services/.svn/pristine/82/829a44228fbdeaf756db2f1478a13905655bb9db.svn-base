@@ -1,0 +1,75 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.plan;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.model.LookupBean;
+import com.hixapi.framework.service.IService;
+import com.hixapi.pmp.api.model.APICodeConstants.Language;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanStatus;
+import com.hixapi.pmp.api.model.PlanHistoryVO;
+import com.hixapi.pmp.api.model.PlanPdfVO;
+import com.hixapi.pmp.api.model.PlanRateVO;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsVO;
+import com.hixapi.pmp.api.model.criteria.PlanHistorySearchCriteria;
+import com.hixapi.pmp.api.model.criteria.PlanRateSearchCriteria;
+import com.hixapi.pmp.api.model.criteria.PlanSearchCriteria;
+import com.hixapi.pmp.entity.model.TDsplPlanStg;
+
+/**
+ * @author admin
+ *
+ */
+public interface PlanManagerService extends IService {
+	//TODO Vibhor
+	List<PlanVO> searchPlans(PlanSearchCriteria criteria) throws BusinessServiceException;
+
+	//TODO Vibhor and Shaaswat
+	/*	List<PlanVO> updatePlanStatus(List<PlanVO> plans, PlanStatus status) throws BusinessServiceException;*/
+	void updatePlanStatus(List<PlanVO> plans, PlanStatus status, PlanStatus oldStatus) throws BusinessServiceException;
+
+	//TODO Shaaswat
+	PlanVO retrievePlan(Long planId,Language lang) throws BusinessServiceException;
+/*	PlanVO retrievePlan(Long planId, Language lang);
+*/
+	//Not used for now. Keep this commented. 
+	//	PlanVO retrievePlanBenefits(Long planId, Language lang) throws BusinessServiceException;
+
+	//TODO Kunal
+	PlanVO retrievePlanRates(Long planId, Language lang) throws BusinessServiceException;
+
+	//TODO Kunal
+	List<PlanRateVO> searchPlanRates(PlanRateSearchCriteria criteria) throws BusinessServiceException;
+
+	//TODO Shaaswat
+	void updatePlan(PlanVO vo,Language lang,Map<String, List<LookupBean>> map) throws BusinessServiceException;
+
+	//TODO Shaaswat
+	void unlockPlanForUpdates(PlanVO plan) throws BusinessServiceException;
+
+	//TODO Shaaswat
+	void lockPlan(PlanVO plan) throws BusinessServiceException;
+
+
+	void uploadPlanPdf(PlanPdfVO pdf) throws BusinessServiceException;
+	
+	void updatePlanVariantDetails(List<PlanVariantDetailsVO> planVariantDetials, PlanVO oldPlanVO);
+	
+	List<PlanHistoryVO> retrievePlanHistory(PlanHistorySearchCriteria criteria);
+	
+	byte[] downloadDraftPlanPDF(PlanPdfVO vo);
+
+	byte[] downloadFinalPlanPDF(PlanPdfVO vo);
+
+	PlanVO retrievePlanPreview(String variantHiosId, Language lang, Short year) throws BusinessServiceException;
+
+	TDsplPlanStg retrieveDisplayPlanRecord(String dsplPlanId, Locale locale);
+
+	PlanRateVO retrievePlanRateDates(String planId);
+}

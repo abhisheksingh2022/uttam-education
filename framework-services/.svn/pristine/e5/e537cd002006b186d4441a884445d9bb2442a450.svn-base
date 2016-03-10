@@ -1,0 +1,5 @@
+package com.hixapi.pmp.service.plan.mapping.hix;
+
+public class HIXCarrierMapper {
+
+}

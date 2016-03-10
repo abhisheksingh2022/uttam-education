@@ -1,0 +1,94 @@
+package com.hixapi.pmp.api.model;
+
+import org.apache.commons.lang3.StringUtils;
+
+public class PlanChangeVO {
+
+	private String fieldUpdated;
+	private String planId;
+	private String oldValue;
+	private String newValue;
+	private String language;
+	
+	private String year;
+	
+	private String id;
+
+	public String getFieldUpdated() {
+		return fieldUpdated;
+	}
+
+	public void setFieldUpdated(String fieldUpdated) {
+		this.fieldUpdated = fieldUpdated;
+	}
+
+	public String getPlanId() {
+		return planId;
+	}
+
+	public void setPlanId(String planId) {
+		this.planId = planId;
+	}
+
+	public String getOldValue() {
+		return oldValue;
+	}
+
+	public void setOldValue(String oldValue) {
+		this.oldValue = oldValue;
+	}
+
+	public String getNewValue() {
+		return newValue;
+	}
+
+	public void setNewValue(String newValue) {
+		this.newValue = newValue;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
+	public String toHtmlString() {
+		//		<b>Field Updated</b> : fieldUpdated<br/>
+		//		<b>Language</b> : language
+		//		<b>Plan Id </b> :  PlanId
+		//		&#160;&#160;<b>Old Value</b> : oldValue
+		//		&#160;&#160;<b>New Value</b> : newValue
+
+		StringBuilder str = new StringBuilder();
+		str.append("<p align=\"left\"><b>Field Updated</b> : " + StringUtils.trimToEmpty(this.getFieldUpdated()) + "<br/>");
+		str.append("<b>Language</b> : " + StringUtils.trimToEmpty(this.getLanguage()) + "<br/>");
+		str.append("<b>Plan ID</b> : " +  StringUtils.trimToEmpty(this.getPlanId()) + "<br/>");
+		str.append("<b>Year</b> : " +  StringUtils.trimToEmpty(this.getYear()) + "<br/>");
+		str.append("&#160;&#160;<b>Old Value</b> : " +  StringUtils.trimToEmpty(this.getOldValue()) + "<br/>");
+		str.append("&#160;&#160;<b>New Value</b> : " +  StringUtils.trimToEmpty(this.getNewValue()) + "<br/></p>");
+
+		return str.toString();
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getYear() {
+		return year;
+	}
+
+	public void setYear(String year) {
+		this.year = year;
+	}
+
+	
+	
+
+}

@@ -1,0 +1,68 @@
+package com.hixapi.pmp.service.plan.mapping;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.dao.LookupManager;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.api.model.BusinessServiceErrorVO;
+
+public class BaseMapper {
+	
+	private static final Logger log = LogManager.getLogger(BaseMapper.class);
+	
+	protected static final Locale ENGLISH = APIUtil.getLocale("en_US");
+	protected static final Locale SPANISH = APIUtil.getLocale("es_US");
+	protected static final Character YES_CHAR = new Character('Y');
+
+	private List<BusinessServiceErrorVO> errors = new ArrayList<BusinessServiceErrorVO>();
+
+	public List<BusinessServiceErrorVO> getErrors() {
+		return errors;
+	}
+
+	public boolean hasFatalErrors() {
+		if (CollectionUtils.isNotEmpty(errors)) {
+			for (BusinessServiceErrorVO vo : errors) {
+				if (Severity.ERROR.getCode().equals(vo.getSeverity())) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	protected void addError(String errorCode, Severity severity) {
+		BusinessServiceErrorVO vo = new BusinessServiceErrorVO();
+		vo.setErrorKey(errorCode);
+		vo.setSeverity(severity.getCode());
+		this.errors.add(vo);
+	}
+	
+	protected void addError(String errorCode, Severity severity, List<Object> subs) {
+		BusinessServiceErrorVO vo = new BusinessServiceErrorVO();
+		vo.setErrorKey(errorCode);
+		vo.setSeverity(severity.getCode());
+		vo.setSubstitutions(subs);
+		this.errors.add(vo);
+	}
+	
+	
+	protected String getLookupCode(String lookupName, String value){
+		String result =  LookupManager.getLookupKey(ENGLISH, lookupName, value);
+		if(StringUtils.isBlank(result)){
+			log.debug("Looked up look up of {}: {}, found {}", lookupName, value, result);
+		}
+		return result;
+	}
+	
+	
+	
+}

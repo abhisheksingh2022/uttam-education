@@ -1,0 +1,75 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+public class PlanHistoryVO implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -752165969949092539L;
+	private Long userId;
+	private String chngByUsr;
+	private String planName;
+	private String planId;
+	private String planComponent;
+	private String carrier;
+	private String changeDate;
+	private String changes;
+	private String comments;
+	public Long getUserId() {
+		return userId;
+	}
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
+	public String getPlanName() {
+		return planName;
+	}
+	public void setPlanName(String planName) {
+		this.planName = planName;
+	}
+	public String getPlanId() {
+		return planId;
+	}
+	public void setPlanId(String planId) {
+		this.planId = planId;
+	}
+	public String getPlanComponent() {
+		return planComponent;
+	}
+	public void setPlanComponent(String planComponent) {
+		this.planComponent = planComponent;
+	}
+	public String getCarrier() {
+		return carrier;
+	}
+	public void setCarrier(String carrier) {
+		this.carrier = carrier;
+	}
+	public String getChangeDate() {
+		return changeDate;
+	}
+	public void setChangeDate(String changeDate) {
+		this.changeDate = changeDate;
+	}
+	public String getChanges() {
+		return changes;
+	}
+	public void setChanges(String changes) {
+		this.changes = changes;
+	}
+	public String getComments() {
+		return comments;
+	}
+	public void setComments(String comments) {
+		this.comments = comments;
+	}
+	public String getChngByUsr() {
+		return chngByUsr;
+	}
+	public void setChngByUsr(String chngByUsr) {
+		this.chngByUsr = chngByUsr;
+	}
+
+}

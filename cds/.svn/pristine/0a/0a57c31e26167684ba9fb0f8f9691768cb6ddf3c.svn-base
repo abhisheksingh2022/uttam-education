@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+	http://www.springframework.org/schema/jee
+	http://www.springframework.org/schema/jee/spring-jee-4.1.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+
+	<bean id="fileSystemEnvironmentProvider" class="com.hixapi.web.framework.env.FileSystemEnvProvider">
+	</bean>
+
+	<bean id="globalServiceLocator" class="com.hixapi.web.framework.service.ServiceLocator" factory-method="getInstance">
+		<property name="services">
+			<map key-type="java.lang.Class" value-type="com.hixapi.web.framework.service.IService">
+				<entry key="com.hixapi.web.framework.env.IEnvironmentProvider" value-ref="dbEnvironmentProvider" />
+				<entry key="com.hixapi.ahct.cds.service.CDSService" value-ref="cdsService" />
+				<entry key="com.hixapi.web.framework.i18n.IResourceBundleDao" value-ref="resourceBundleDao" />
+			</map>
+		</property>
+	</bean>
+
+	<bean id="cdsService" class="com.hixapi.ahct.cds.service.impl.CDSServiceImpl">
+	</bean>
+
+
+</beans>

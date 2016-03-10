@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 10:52:08 AM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.WorkItem" table="WORK_ITEM" optimistic-lock="version">
+        <id name="workItemId" type="java.lang.Long">
+            <column name="WORK_ITEM_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_WORK_ITEM_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="attachment" class="com.hixapi.pmp.entity.model.Attachment" fetch="select">
+            <column name="DOC_ATTACHMENT_ID" precision="12" scale="0" />
+        </many-to-one>
+        
+        <property name="workItemDescTxt" type="string">
+            <column name="WORK_ITEM_DESC_TXT" length="45" />
+        </property>
+        <property name="workItemCreateUserId" type="string">
+            <column name="WORK_ITEM_CREATE_USER_ID" length="30" />
+        </property>
+        <property name="workItemCrtrOrgNm" type="string">
+            <column name="WORK_ITEM_CRTR_ORG_NM" length="200" />
+        </property>
+        <property name="workItemRcpntUserId" type="string">
+            <column name="WORK_ITEM_RCPNT_USER_ID" length="30" not-null="true" />
+        </property>
+        <property name="workItemRcpntOrgNm" type="string">
+            <column name="WORK_ITEM_RCPNT_ORG_NM" length="200" />
+        </property>
+        <property name="workItemCrtdDt" type="date">
+            <column name="WORK_ITEM_CRTD_DT" length="10" not-null="true" />
+        </property>
+        <property name="workItemDueDt" type="date">
+            <column name="WORK_ITEM_DUE_DT" length="10" />
+        </property>
+        <property name="workItemPriorityCd" type="java.lang.Character">
+            <column name="WORK_ITEM_PRIORITY_CD" length="1" />
+        </property>
+        <property name="lkWorkItemStatusCd" type="string">
+            <column name="LK_WORK_ITEM_STATUS_CD" length="5" not-null="true" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+        <property name="delInd" type="string">
+            <column name="DEL_IND" length="1" not-null="true" />
+        </property>
+    </class>
+</hibernate-mapping>

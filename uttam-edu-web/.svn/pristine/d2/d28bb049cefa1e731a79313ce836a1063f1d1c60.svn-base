@@ -1,0 +1,24 @@
+
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%-- <s:token id="updatedtoken" /> --%>
+<table width="100%" border="0" cellpadding="0" cellspacing="0" class="upload-history02">
+	<s:if test="planUploadHistory.size() > 0">
+	<s:iterator value="planUploadHistory" status="itr">
+		<%-- <s:if test="#itr.index==0"> --%>
+		 <tr>
+			<td class="template-name"><s:property value="planTemplateType"/></td>
+			<td class="file-text"><s:property value="fileName"/></td>			
+			<td class="upload-text"><s:property value="uploadTs"/></td>
+			<td class="uploadby-text"><s:property value="uploadUsrId"/></td>
+		</tr> 
+		<%-- </s:if> --%>
+	</s:iterator>
+	</s:if>
+	<s:else>
+		<div style="height: 150px;">
+            <img class="nodataFoundIcon" src="<s:property value='contextRoot'/>static/custom/images/alert.png" />
+            <p style="text-align: center;"> <s:text name="txt.planuploadhistory.nodatafound"/></p>
+        </div>
+	</s:else>
+</table>	
+

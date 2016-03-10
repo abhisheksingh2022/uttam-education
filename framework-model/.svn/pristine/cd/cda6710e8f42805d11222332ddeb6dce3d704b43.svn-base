@@ -1,0 +1,42 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+public class PlanRateVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private String ratingArea;
+	private String tobaccoPreference;
+	private String age;
+	private String rate;
+	public String getRatingArea() {
+		return ratingArea;
+	}
+	public void setRatingArea(String ratingArea) {
+		this.ratingArea = ratingArea;
+	}
+	public String getTobaccoPreference() {
+		return tobaccoPreference;
+	}
+	public void setTobaccoPreference(String tobaccoPreference) {
+		this.tobaccoPreference = tobaccoPreference;
+	}
+	public String getAge() {
+		return age;
+	}
+	public void setAge(String age) {
+		this.age = age;
+	}
+	public String getRate() {
+		return rate;
+	}
+	public void setRate(String rate) {
+		this.rate = rate;
+	}
+	
+	
+}

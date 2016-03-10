@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 5:24:36 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.PlanUploadHist" table="PLAN_UPLOAD_HIST" optimistic-lock="version">
+        <id name="planUploadHistId" type="java.lang.Long">
+            <column name="PLAN_UPLOAD_HIST_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_PLAN_MSTR_HIST_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="carrierAdminInfo" class="com.hixapi.pmp.entity.model.CarrierAdminInfo" fetch="join">
+            <column name="CARRIER_ADMIN_INFO_ID" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="fileName" type="string">
+            <column name="FILE_NAME" length="100" not-null="true" />
+        </property>
+        <property name="lkTemplateTypeCd" type="string">
+            <column name="LK_TEMPLATE_TYPE_CD" length="3" not-null="true" />
+        </property>
+        <property name="uploadUsrId" type="string">
+            <column name="UPLOAD_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="uploadTs" type="java.util.Date">
+            <column name="UPLOAD_TS" length="26" not-null="true" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

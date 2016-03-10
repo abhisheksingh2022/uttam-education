@@ -1,0 +1,39 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+public class NetworkURLVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Long networkIdNbr;
+	private String networkURL;
+	private String networkURLId;
+
+	public String getNetworkURL() {
+		return networkURL;
+	}
+
+	public void setNetworkURL(String networkURL) {
+		this.networkURL = networkURL;
+	}
+
+	public String getNetworkURLId() {
+		return networkURLId;
+	}
+
+	public void setNetworkURLId(String networkURLId) {
+		this.networkURLId = networkURLId;
+	}
+
+	public Long getNetworkIdNbr() {
+		return networkIdNbr;
+	}
+
+	public void setNetworkIdNbr(Long networkIdNbr) {
+		this.networkIdNbr = networkIdNbr;
+	}
+
+}

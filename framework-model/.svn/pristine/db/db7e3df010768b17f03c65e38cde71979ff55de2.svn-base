@@ -1,0 +1,29 @@
+package com.hixapi.pmp.api.model.plandetails;
+
+import java.io.Serializable;
+
+public class IndividualFamilyNetwork implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -842617105127631647L;
+	private CopayAndCoinsurance individualInAndOutNetwork;
+	private CopayAndCoinsurance familyInAndOutNetwork;
+	public CopayAndCoinsurance getIndividualInAndOutNetwork() {
+		return individualInAndOutNetwork;
+	}
+	public void setIndividualInAndOutNetwork(CopayAndCoinsurance individualInAndOutNetwork) {
+		this.individualInAndOutNetwork = individualInAndOutNetwork;
+	}
+	public CopayAndCoinsurance getFamilyInAndOutNetwork() {
+		return familyInAndOutNetwork;
+	}
+	public void setFamilyInAndOutNetwork(CopayAndCoinsurance familyinAndOutNetwork) {
+		this.familyInAndOutNetwork = familyinAndOutNetwork;
+	}
+	
+	
+
+	
+}

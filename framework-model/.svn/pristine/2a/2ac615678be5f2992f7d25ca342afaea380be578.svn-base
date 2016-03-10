@@ -1,0 +1,59 @@
+package com.hixapi.prescreening.api.model.plan;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
+
+public class PlanContainer implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4934313346035749598L;
+	
+	private Double maxAPTCAmount;
+	private List<Plan> plans;
+	private Plan plan;
+	private BigDecimal estimatedAmount;
+	private Boolean catastrophicFlag;
+
+	public List<Plan> getPlans() {
+		return plans;
+	}
+
+	public void setPlans(List<Plan> plans) {
+		this.plans = plans;
+	}
+
+	public Plan getPlan() {
+		return plan;
+	}
+
+	public void setPlan(Plan plan) {
+		this.plan = plan;
+	}
+
+	public BigDecimal getEstimatedAmount() {
+		return estimatedAmount;
+	}
+
+	public void setEstimatedAmount(BigDecimal estimatedAmount) {
+		this.estimatedAmount = estimatedAmount;
+	}
+
+	public Boolean getCatastrophicFlag() {
+		return catastrophicFlag;
+	}
+
+	public void setCatastrophicFlag(Boolean catastrophicFlag) {
+		this.catastrophicFlag = catastrophicFlag;
+	}
+
+	public Double getMaxAPTCAmount() {
+		return maxAPTCAmount;
+	}
+
+	public void setMaxAPTCAmount(Double maxAPTCAmount) {
+		this.maxAPTCAmount = maxAPTCAmount;
+	}
+	
+}

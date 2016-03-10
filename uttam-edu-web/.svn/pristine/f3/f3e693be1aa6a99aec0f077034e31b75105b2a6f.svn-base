@@ -1,0 +1,378 @@
+package com.hixapi.pmp.struts.usermgmt;
+
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.exception.UnauthorizedAccessException;
+import com.hixapi.framework.common.model.UserMessage;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants.RecordMode;
+import com.hixapi.pmp.api.model.APICodeConstants.UserActivationStatus;
+import com.hixapi.pmp.api.model.APICodeConstants.UserFunction;
+import com.hixapi.pmp.api.model.CarrierUserVO;
+import com.hixapi.pmp.api.model.CarrierVO;
+import com.hixapi.pmp.api.model.criteria.CarrierSearchCriteria;
+import com.hixapi.pmp.common.util.PMPAccessController;
+import com.hixapi.pmp.common.util.PMPUtil;
+import com.hixapi.pmp.service.carrier.CarrierService;
+import com.hixapi.pmp.service.user.UserService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+
+public class CarrierUserProfileAction extends BaseSecureAction {
+
+	private static final Logger log = LogManager.getLogger(CarrierUserProfileAction.class);
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7296331027656555878L;
+
+	private static final String RESULT_CARRIERUSER_SEARCH = "carrieruser-search";
+	private static final String RESULT_CARRIERUSER_ADDRESS = "address";
+	public static final String CARRIERUSER_ID = "userId";
+	public static final String RECORD_MODE = "mode";
+
+	private Long carrierId;
+	private CarrierUserVO carrierUser;
+	private List<CarrierVO> carriers;
+	private Long userId;
+	private String mode;
+
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		log.entry(userId);
+		/*
+		 * First check if the user has access to perform the requested mode on the carrier - admin will do this using global code
+		 */
+		if (isAddMode() || isEditMode()) {
+			setReadOnly(false);
+		} else {
+			setReadOnly(true);
+		}
+		if ((isEditMode() && isEditAccess()) || (isViewMode() && isViewAccess())) {
+			carrierUser = ServiceLocator.getInstance().getService(UserService.class).retrieveCarrierUserById(userId);
+			if (!PMPAccessController.getInstance().isCarrierAccessibleForCurrentUser(
+					Long.parseLong(carrierUser.getOrganizationId()))) {
+				throw new UnauthorizedAccessException();
+			}
+		} else if (!(isAddMode() && isAddAccess())) {
+			throw new UnauthorizedAccessException();
+		}
+		searchCarriers();
+		log.exit();
+	}
+
+	public boolean isAddMode() {
+		if (RecordMode.ADD.getCode().equals(mode)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public boolean isEditMode() {
+		if (RecordMode.EDIT.getCode().equals(mode)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public boolean isViewMode() {
+		if (RecordMode.VIEW.getCode().equals(mode)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public boolean isUserActivated() {
+		if (carrierUser.getStatusCode().equals(UserActivationStatus.ACTIVE.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public boolean isEditAccess() {
+		if (isUserAllowedToAccessFunction(UserFunction.CARRIERUSER_EDIT.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public boolean isAddAccess() {
+		if (isUserAllowedToAccessFunction(UserFunction.CARRIERUSER_ADD.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public boolean isViewAccess() {
+		if (isUserAllowedToAccessFunction(UserFunction.CARRIERUSER_VIEW.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public String ajaxGetCarrierDetails() {
+		CarrierVO carrier = ServiceLocator.getInstance().getService(CarrierService.class)
+				.retrieveCarrier(ConversionUtil.toLong(carrierUser.getOrganizationId()));
+		carrierUser.setContactAddress(carrier.getContactAddressLine1());
+		carrierUser.setAddressLine2(carrier.getContactAddressLine2());
+		carrierUser.setCity(carrier.getCity());
+		carrierUser.setState(carrier.getState());
+		carrierUser.setZipcode(carrier.getZip());
+		return RESULT_CARRIERUSER_ADDRESS;
+	}
+
+	/**
+	 * Save
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
+	public String save() throws Exception {
+		log.entry();
+		if (isAddAccess() || isEditAccess()) {
+			try {
+				if (carrierUser.getUserId() == null) {
+					carrierUser.setStatusCode(UserActivationStatus.ACTIVE.getCode());
+				}
+				if (isAddMode()) {
+					ServiceLocator.getInstance().getService(UserService.class).saveCarrierUser(carrierUser);
+				} else if (isEditMode()) {
+					ServiceLocator.getInstance().getService(UserService.class).updateCarrierUser(carrierUser);
+				}
+				super.addBusinessMessage(new UserMessage(UserMessage.SEVERITY_INFO, "msg.carrieruser.savesuccess", null,
+						null), "");
+				userId = carrierUser.getUserId();
+				mode = RecordMode.EDIT.getCode();
+			} catch (BusinessServiceException bex) {
+				super.addBusinessServiceErrorMessage(bex);
+			}
+			addDefaultRedirectParameters();
+			searchCarriers();
+			return log.exit(FLASH);
+		} else {
+			return log.exit(UNAUTHORIZED);
+		}
+
+	}
+
+	public void validate_resetPassword() {
+		if (StringUtils.isEmpty(carrierUser.getPassword())) {
+			super.addValidationError("msg.carrieruser.password_required", "carrierUser.password");
+		} else if (carrierUser.getPassword().length() > 15 || carrierUser.getPassword().length() < 9) {
+			super.addValidationError("msg.carrieruser.password_length", "carrierUser.password");
+		} else if (carrierUser.getPassword().contains(
+				carrierUser.getFirstName().subSequence(0, carrierUser.getFirstName().length()))
+				|| carrierUser.getPassword().contains(
+						carrierUser.getLastName().subSequence(0, carrierUser.getLastName().length()))
+				|| carrierUser.getPassword().contains(
+						carrierUser.getLoginId().subSequence(0, carrierUser.getLoginId().length()))) {
+			super.addValidationError("msg.carrieruser.passwordsecurity", "carrierUser.password");
+		}
+
+		if (StringUtils.isEmpty(carrierUser.getConfirmPassword())) {
+			super.addValidationError("msg.carrieruser.confirmpassword_required", "carrierUser.confirmPassword");
+		}
+		if (!StringUtils.isEmpty(carrierUser.getPassword()) && !StringUtils.isEmpty(carrierUser.getConfirmPassword())
+				&& !carrierUser.getPassword().equals(carrierUser.getConfirmPassword())) {
+			super.addValidationError("msg.carrieruser.mismatchpassword", "carrierUser.password");
+		}
+
+	}
+
+	public String resetPassword() {
+		log.entry();
+		if (isEditAccess()) {
+			try {
+				ServiceLocator.getInstance().getService(UserService.class).resetCarrierUserPassword(carrierUser);
+				super.addBusinessMessage(new UserMessage(UserMessage.SEVERITY_INFO, "msg.carrieruser.resetpasswordsuccess",
+						null, null), "");
+
+			} catch (BusinessServiceException bex) {
+				super.addBusinessServiceErrorMessage(bex);
+			}
+			searchCarriers();
+			addDefaultRedirectParameters();
+			return log.exit(FLASH);
+		} else {
+			return log.exit(UNAUTHORIZED);
+		}
+
+	}
+
+	public String changeStatus() {
+		log.entry();
+		if (isEditAccess()) {
+
+			try {
+				if (carrierUser.getStatusCode().equals(UserActivationStatus.ACTIVE.getCode())) {
+					carrierUser.setStatusCode(UserActivationStatus.DEACTIVATED.getCode());
+					ServiceLocator.getInstance().getService(UserService.class).suspendUser(carrierUser);
+				} else {
+					carrierUser.setStatusCode(UserActivationStatus.ACTIVE.getCode());
+					ServiceLocator.getInstance().getService(UserService.class).restoreUser(carrierUser);
+				}
+
+				super.addBusinessMessage(new UserMessage(UserMessage.SEVERITY_INFO, "msg.carrieruser.statuschangesuccess",
+						null, null), "");
+
+			} catch (BusinessServiceException bex) {
+				super.addBusinessServiceErrorMessage(bex);
+			}
+			addDefaultRedirectParameters();
+			searchCarriers();
+			return log.exit(FLASH);
+		} else {
+			return log.exit(UNAUTHORIZED);
+		}
+
+	}
+
+	public String back() throws Exception {
+		log.entry();
+		return log.exit(RESULT_CARRIERUSER_SEARCH);
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		return save();
+	}
+
+	public void validate_execute() {
+		carrierUser.setPhoneNo(PMPUtil.getStringWithoutMask(carrierUser.getPhoneNo()));
+		carrierUser.setFirstName(carrierUser.getFirstName().trim());
+		carrierUser.setLastName(carrierUser.getLastName().trim());
+		carrierUser.setLoginId(carrierUser.getLoginId().toLowerCase());
+		if (StringUtils.isEmpty(carrierUser.getFirstName())) {
+			super.addValidationError("msg.carrieruser.firstname_required", "carrierUser.firstName");
+		} else if (carrierUser.getFirstName().length() > 30) {
+			super.addValidationError("msg.carrieruser.firstname_length", "carrierUser.firstName");
+		}
+		if (StringUtils.isEmpty(carrierUser.getLastName())) {
+			super.addValidationError("msg.carrieruser.lastname_required", "carrierUser.lastName");
+		} else if (carrierUser.getLastName().length() > 30) {
+			super.addValidationError("msg.carrieruser.lastname_length", "carrierUser.lastName");
+		}
+		if (StringUtils.isEmpty(carrierUser.getLoginId())) {
+			super.addValidationError("msg.carrieruser.userid_required", "carrierUser.loginId");
+		} else if (carrierUser.getLoginId().length() > 15 || carrierUser.getLoginId().length() < 5) {
+			super.addValidationError("msg.carrieruser.userid_length", "carrierUser.loginId");
+		}
+
+		if (StringUtils.isNotBlank(carrierUser.getPhoneNo()) && !PMPUtil.isPhoneNumberValid(carrierUser.getPhoneNo())) {
+			super.addValidationError("msg.carrieruser.phoneno_format", "carrierUser.phoneNo");
+		}
+
+		if (StringUtils.isEmpty(carrierUser.getEmail())) {
+			super.addValidationError("msg.carrieruser.email_required", "carrierUser.email");
+		} else if (!PMPUtil.isEmailValid(carrierUser.getEmail())) {
+			super.addValidationError("msg.carrieruser.email_format", "carrierUser.email");
+		} else if (carrierUser.getEmail().length() > 125) {
+			super.addValidationError("msg.carrieruser.email_length", "carrierUser.email");
+		}
+
+		if (StringUtils.isEmpty(carrierUser.getOrganizationId())) {
+			super.addValidationError("msg.carrieruser.carriername_required", "carrierUser.organizationId");
+		}
+
+		/*if (StringUtils.isEmpty(carrierUser.getContactAddress())) {
+			super.addValidationError("msg.carrieruser.address_required", "carrierUser.contactAddress");
+		} else*/ if (carrierUser.getContactAddress().length() > 60) {
+			super.addValidationError("msg.carrieruser.address_length", "carrierUser.contactAddress");
+		}
+		
+		if (carrierUser.getAddressLine2().length() > 60) {
+			super.addValidationError("msg.carrieruser.address2_length", "carrierUser.addressLine2");
+		}
+		/*if (StringUtils.isEmpty(carrierUser.getCity())) {
+			super.addValidationError("msg.carrieruser.city_required", "carrierUser.city");
+		} else*/ if (carrierUser.getCity().length() > 30) {
+			super.addValidationError("msg.carrieruser.city_length", "carrierUser.city");
+		}
+
+		/*if (StringUtils.isEmpty(carrierUser.getState())) {
+			super.addValidationError("msg.carrieruser.state_required", "carrierUser.state");
+		}
+		if (StringUtils.isEmpty(carrierUser.getZipcode())) {
+			super.addValidationError("msg.carrieruser.zip_required", "carrierUser.zipcode");
+		} else*/ if (StringUtils.isNotEmpty(carrierUser.getZipcode()) && !PMPUtil.isZipcodeValid(carrierUser.getZipcode())) {
+			super.addValidationError("msg.carrieruser.zip_format", "carrierUser.zipcode");
+		}
+		if (isAddMode()) {
+			validate_resetPassword();
+		}
+
+	}
+
+	@Override
+	public void onValidationError() {
+		searchCarriers();
+		this.addDefaultRedirectParameters();
+	}
+
+	private void searchCarriers() {
+		CarrierSearchCriteria criteria = new CarrierSearchCriteria();
+		this.carriers = ServiceLocator.getInstance().getService(CarrierService.class).searchCarriers(criteria);
+	}
+
+	public String getMode() {
+		return mode;
+	}
+
+	public void setMode(String mode) {
+		this.mode = mode;
+	}
+
+	public CarrierUserVO getCarrierUser() {
+		return carrierUser;
+	}
+
+	public void setCarrierUser(CarrierUserVO user) {
+		this.carrierUser = user;
+	}
+
+	public Long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
+
+	public List<CarrierVO> getCarriers() {
+		return carriers;
+	}
+
+	public void setCarriers(List<CarrierVO> carriers) {
+		this.carriers = carriers;
+	}
+
+	public Long getCarrierId() {
+		return carrierId;
+	}
+
+	public void setCarrierId(Long carrierId) {
+		this.carrierId = carrierId;
+	}
+
+	@Override
+	public void addDefaultRedirectParameters() {
+		addRedirectURLParameter(RECORD_MODE, mode);
+		if (carrierUser.getUserId() != null) {
+			addRedirectURLParameter(CARRIERUSER_ID, carrierUser.getUserId());
+		}
+	}
+
+}

@@ -1,0 +1,621 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://services.ws.itim.ibm.com" xmlns:impl="http://services.ws.itim.ibm.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:intf="http://services.ws.itim.ibm.com" xmlns:tns1="http://model.ws.itim.ibm.com" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tns2="http://exceptions.ws.itim.ibm.com" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <wsdl:types>
+    <schema elementFormDefault="qualified" targetNamespace="http://services.ws.itim.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://exceptions.ws.itim.ibm.com"/>
+   <import namespace="http://model.ws.itim.ibm.com"/>
+   <import namespace="http://xml.apache.org/xml-soap"/>
+   <element name="changePassword">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element maxOccurs="unbounded" name="accountDNs" type="xsd:string"/>
+      <element name="newPassword" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="changePasswordResponse">
+    <complexType>
+     <sequence>
+      <element name="changePasswordReturn" type="tns1:WSRequest"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="fault" type="tns2:WSInvalidSessionException"/>
+   <element name="fault1" type="tns2:WSLoginServiceException"/>
+   <element name="fault2" type="tns2:WSApplicationException"/>
+   <element name="fault3" type="tns2:WSPasswordRuleException"/>
+   <element name="fault4" type="tns2:WSInvalidPasswordException"/>
+   <element name="generatePassword">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element maxOccurs="unbounded" name="accountDNs" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="generatePasswordResponse">
+    <complexType>
+     <sequence>
+      <element name="generatePasswordReturn" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="generatePasswordByService">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="serviceDN" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="generatePasswordByServiceResponse">
+    <complexType>
+     <sequence>
+      <element name="generatePasswordByServiceReturn" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="generatePasswordForService">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="serviceDN" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="generatePasswordForServiceResponse">
+    <complexType>
+     <sequence>
+      <element name="generatePasswordForServiceReturn" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getPasswordRules">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element maxOccurs="unbounded" name="accountDNs" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getPasswordRulesResponse">
+    <complexType>
+     <sequence>
+      <element name="getPasswordRulesReturn" type="tns1:WSPasswordRulesInfo"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getSelfPasswordChangeRules">
+    <complexType>
+     <sequence>
+      <element name="itimAccountId" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getSelfPasswordChangeRulesResponse">
+    <complexType>
+     <sequence>
+      <element name="getSelfPasswordChangeRulesReturn" type="tns1:WSPasswordRulesInfo"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="isPasswordValid">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element maxOccurs="unbounded" name="accountDNs" type="xsd:string"/>
+      <element name="newPassword" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="isPasswordValidResponse">
+    <complexType>
+     <sequence>
+      <element name="isPasswordValidReturn" type="xsd:boolean"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="joinRules">
+    <complexType>
+     <sequence>
+      <element maxOccurs="unbounded" name="wsPris" type="tns1:WSPasswordRulesInfo"/>
+      <element name="wsLocale" type="tns1:WSLocale"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="joinRulesResponse">
+    <complexType>
+     <sequence>
+      <element name="joinRulesReturn" type="tns1:WSPasswordRulesInfo"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="selfChangePassword">
+    <complexType>
+     <sequence>
+      <element name="itimAccountId" type="xsd:string"/>
+      <element name="oldPassword" type="xsd:string"/>
+      <element name="newPassword" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="selfChangePasswordResponse">
+    <complexType>
+     <sequence>
+      <element name="selfChangePasswordReturn" type="tns1:WSRequest"/>
+     </sequence>
+    </complexType>
+   </element>
+  </schema>
+    <schema elementFormDefault="qualified" targetNamespace="http://model.ws.itim.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://exceptions.ws.itim.ibm.com"/>
+   <import namespace="http://xml.apache.org/xml-soap"/>
+   <complexType name="WSLocale">
+    <sequence>
+     <element name="country" nillable="true" type="xsd:string"/>
+     <element name="variant" nillable="true" type="xsd:string"/>
+     <element name="language" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="WSSession">
+    <sequence>
+     <element name="clientSession" nillable="true" type="xsd:string"/>
+     <element name="enforceChallengeResponse" type="xsd:boolean"/>
+     <element name="locale" nillable="true" type="tns1:WSLocale"/>
+     <element name="sessionID" type="xsd:long"/>
+    </sequence>
+   </complexType>
+   <complexType name="WSRequest">
+    <sequence>
+     <element name="timeCompleted" nillable="true" type="xsd:dateTime"/>
+     <element name="subjectProfile" nillable="true" type="xsd:string"/>
+     <element name="result" nillable="true" type="xsd:string"/>
+     <element name="select" type="xsd:boolean"/>
+     <element name="description" nillable="true" type="xsd:string"/>
+     <element name="processTypeString" nillable="true" type="xsd:string"/>
+     <element name="title" nillable="true" type="xsd:string"/>
+     <element name="owner" nillable="true" type="xsd:string"/>
+     <element name="processStateString" nillable="true" type="xsd:string"/>
+     <element name="status" type="xsd:int"/>
+     <element name="requestee" nillable="true" type="xsd:string"/>
+     <element name="timeSubmitted" nillable="true" type="xsd:dateTime"/>
+     <element name="subject" nillable="true" type="xsd:string"/>
+     <element name="requestId" type="xsd:long"/>
+     <element name="processType" nillable="true" type="xsd:string"/>
+     <element name="subjectService" nillable="true" type="xsd:string"/>
+     <element name="statusString" nillable="true" type="xsd:string"/>
+     <element name="processState" nillable="true" type="xsd:string"/>
+     <element name="timeScheduled" nillable="true" type="xsd:dateTime"/>
+    </sequence>
+   </complexType>
+   <complexType name="WSPasswordRulesInfo">
+    <sequence>
+     <element name="allowUserName" type="xsd:boolean"/>
+     <element name="requiredChars" nillable="true" type="xsd:string"/>
+     <element name="minDistinctCharacters" type="xsd:int"/>
+     <element name="minLength" type="xsd:int"/>
+     <element name="reversedHistoryLength" type="xsd:int"/>
+     <element name="maxValidityPeriod" type="xsd:long"/>
+     <element name="allowUserIDCaseInsensitive" type="xsd:boolean"/>
+     <element name="allowUserID" type="xsd:boolean"/>
+     <element name="maxSequentialCharacters" type="xsd:int"/>
+     <element name="maxLength" type="xsd:int"/>
+     <element name="minAlphabeticCharacters" type="xsd:int"/>
+     <element name="restrictedToChars" nillable="true" type="xsd:string"/>
+     <element name="customRules" nillable="true" type="apachesoap:Map"/>
+     <element name="invalidChars" nillable="true" type="xsd:string"/>
+     <element name="startsWithChars" nillable="true" type="xsd:string"/>
+     <element name="minDigitCharacters" type="xsd:int"/>
+     <element name="minValidityPeriod" type="xsd:long"/>
+     <element name="allowInDictionary" type="xsd:boolean"/>
+     <element name="allowUserNameCaseInsensitive" type="xsd:boolean"/>
+     <element name="repeatedHistoryLength" type="xsd:int"/>
+    </sequence>
+   </complexType>
+  </schema>
+    <schema elementFormDefault="qualified" targetNamespace="http://exceptions.ws.itim.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://model.ws.itim.ibm.com"/>
+   <import namespace="http://xml.apache.org/xml-soap"/>
+   <complexType name="WSLoginServiceException">
+    <sequence/>
+   </complexType>
+   <complexType name="WSInvalidSessionException">
+    <complexContent>
+     <extension base="tns2:WSLoginServiceException">
+      <sequence/>
+     </extension>
+    </complexContent>
+   </complexType>
+   <complexType name="WSApplicationException">
+    <sequence/>
+   </complexType>
+   <complexType name="WSPasswordRuleException">
+    <sequence>
+     <element name="wsPri2" nillable="true" type="tns1:WSPasswordRulesInfo"/>
+     <element name="wsPri1" nillable="true" type="tns1:WSPasswordRulesInfo"/>
+    </sequence>
+   </complexType>
+   <complexType name="WSInvalidPasswordException">
+    <sequence/>
+   </complexType>
+  </schema>
+    <schema elementFormDefault="qualified" targetNamespace="http://xml.apache.org/xml-soap" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://exceptions.ws.itim.ibm.com"/>
+   <import namespace="http://model.ws.itim.ibm.com"/>
+   <complexType name="mapItem">
+    <sequence>
+     <element name="key" nillable="true" type="xsd:anyType"/>
+     <element name="value" nillable="true" type="xsd:anyType"/>
+    </sequence>
+   </complexType>
+   <complexType name="Map">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="item" type="apachesoap:mapItem"/>
+    </sequence>
+   </complexType>
+  </schema>
+  </wsdl:types>
+  <wsdl:message name="WSPasswordRuleException">
+    <wsdl:part name="fault" element="impl:fault3">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="generatePasswordForServiceResponse">
+    <wsdl:part name="parameters" element="impl:generatePasswordForServiceResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="generatePasswordRequest">
+    <wsdl:part name="parameters" element="impl:generatePassword">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="isPasswordValidRequest">
+    <wsdl:part name="parameters" element="impl:isPasswordValid">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="isPasswordValidResponse">
+    <wsdl:part name="parameters" element="impl:isPasswordValidResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="selfChangePasswordRequest">
+    <wsdl:part name="parameters" element="impl:selfChangePassword">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="selfChangePasswordResponse">
+    <wsdl:part name="parameters" element="impl:selfChangePasswordResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="WSInvalidPasswordException">
+    <wsdl:part name="fault" element="impl:fault4">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="WSApplicationException">
+    <wsdl:part name="fault" element="impl:fault2">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="WSInvalidSessionException">
+    <wsdl:part name="fault" element="impl:fault">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="generatePasswordResponse">
+    <wsdl:part name="parameters" element="impl:generatePasswordResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="generatePasswordForServiceRequest">
+    <wsdl:part name="parameters" element="impl:generatePasswordForService">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="changePasswordResponse">
+    <wsdl:part name="parameters" element="impl:changePasswordResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="joinRulesResponse">
+    <wsdl:part name="parameters" element="impl:joinRulesResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="generatePasswordByServiceResponse">
+    <wsdl:part name="parameters" element="impl:generatePasswordByServiceResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getPasswordRulesRequest">
+    <wsdl:part name="parameters" element="impl:getPasswordRules">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getSelfPasswordChangeRulesResponse">
+    <wsdl:part name="parameters" element="impl:getSelfPasswordChangeRulesResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="changePasswordRequest">
+    <wsdl:part name="parameters" element="impl:changePassword">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getSelfPasswordChangeRulesRequest">
+    <wsdl:part name="parameters" element="impl:getSelfPasswordChangeRules">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getPasswordRulesResponse">
+    <wsdl:part name="parameters" element="impl:getPasswordRulesResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="WSLoginServiceException">
+    <wsdl:part name="fault" element="impl:fault1">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="generatePasswordByServiceRequest">
+    <wsdl:part name="parameters" element="impl:generatePasswordByService">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="joinRulesRequest">
+    <wsdl:part name="parameters" element="impl:joinRules">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="WSPasswordService">
+    <wsdl:operation name="changePassword">
+      <wsdl:input name="changePasswordRequest" message="impl:changePasswordRequest">
+    </wsdl:input>
+      <wsdl:output name="changePasswordResponse" message="impl:changePasswordResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException" message="impl:WSInvalidSessionException">
+    </wsdl:fault>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSInvalidPasswordException" message="impl:WSInvalidPasswordException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+      <wsdl:fault name="WSPasswordRuleException" message="impl:WSPasswordRuleException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="generatePassword">
+      <wsdl:input name="generatePasswordRequest" message="impl:generatePasswordRequest">
+    </wsdl:input>
+      <wsdl:output name="generatePasswordResponse" message="impl:generatePasswordResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="generatePasswordByService">
+      <wsdl:input name="generatePasswordByServiceRequest" message="impl:generatePasswordByServiceRequest">
+    </wsdl:input>
+      <wsdl:output name="generatePasswordByServiceResponse" message="impl:generatePasswordByServiceResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException" message="impl:WSInvalidSessionException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="generatePasswordForService">
+      <wsdl:input name="generatePasswordForServiceRequest" message="impl:generatePasswordForServiceRequest">
+    </wsdl:input>
+      <wsdl:output name="generatePasswordForServiceResponse" message="impl:generatePasswordForServiceResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException" message="impl:WSInvalidSessionException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getPasswordRules">
+      <wsdl:input name="getPasswordRulesRequest" message="impl:getPasswordRulesRequest">
+    </wsdl:input>
+      <wsdl:output name="getPasswordRulesResponse" message="impl:getPasswordRulesResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException" message="impl:WSInvalidSessionException">
+    </wsdl:fault>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getSelfPasswordChangeRules">
+      <wsdl:input name="getSelfPasswordChangeRulesRequest" message="impl:getSelfPasswordChangeRulesRequest">
+    </wsdl:input>
+      <wsdl:output name="getSelfPasswordChangeRulesResponse" message="impl:getSelfPasswordChangeRulesResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="isPasswordValid">
+      <wsdl:input name="isPasswordValidRequest" message="impl:isPasswordValidRequest">
+    </wsdl:input>
+      <wsdl:output name="isPasswordValidResponse" message="impl:isPasswordValidResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException" message="impl:WSInvalidSessionException">
+    </wsdl:fault>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSInvalidPasswordException" message="impl:WSInvalidPasswordException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+      <wsdl:fault name="WSPasswordRuleException" message="impl:WSPasswordRuleException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="joinRules">
+      <wsdl:input name="joinRulesRequest" message="impl:joinRulesRequest">
+    </wsdl:input>
+      <wsdl:output name="joinRulesResponse" message="impl:joinRulesResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+      <wsdl:fault name="WSPasswordRuleException" message="impl:WSPasswordRuleException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="selfChangePassword">
+      <wsdl:input name="selfChangePasswordRequest" message="impl:selfChangePasswordRequest">
+    </wsdl:input>
+      <wsdl:output name="selfChangePasswordResponse" message="impl:selfChangePasswordResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSInvalidPasswordException" message="impl:WSInvalidPasswordException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+      <wsdl:fault name="WSPasswordRuleException" message="impl:WSPasswordRuleException">
+    </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="WSPasswordServiceSoapBinding" type="impl:WSPasswordService">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="changePassword">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="changePasswordRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="changePasswordResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException">
+        <wsdlsoap:fault name="WSInvalidSessionException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSInvalidPasswordException">
+        <wsdlsoap:fault name="WSInvalidPasswordException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSPasswordRuleException">
+        <wsdlsoap:fault name="WSPasswordRuleException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="generatePassword">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="generatePasswordRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="generatePasswordResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="generatePasswordByService">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="generatePasswordByServiceRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="generatePasswordByServiceResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException">
+        <wsdlsoap:fault name="WSInvalidSessionException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="generatePasswordForService">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="generatePasswordForServiceRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="generatePasswordForServiceResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException">
+        <wsdlsoap:fault name="WSInvalidSessionException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getPasswordRules">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getPasswordRulesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getPasswordRulesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException">
+        <wsdlsoap:fault name="WSInvalidSessionException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getSelfPasswordChangeRules">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getSelfPasswordChangeRulesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getSelfPasswordChangeRulesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="isPasswordValid">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="isPasswordValidRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="isPasswordValidResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException">
+        <wsdlsoap:fault name="WSInvalidSessionException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSInvalidPasswordException">
+        <wsdlsoap:fault name="WSInvalidPasswordException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSPasswordRuleException">
+        <wsdlsoap:fault name="WSPasswordRuleException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="joinRules">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="joinRulesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="joinRulesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSPasswordRuleException">
+        <wsdlsoap:fault name="WSPasswordRuleException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="selfChangePassword">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="selfChangePasswordRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="selfChangePasswordResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSInvalidPasswordException">
+        <wsdlsoap:fault name="WSInvalidPasswordException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSPasswordRuleException">
+        <wsdlsoap:fault name="WSPasswordRuleException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="WSPasswordServiceService">
+    <wsdl:port name="WSPasswordService" binding="impl:WSPasswordServiceSoapBinding">
+      <wsdlsoap:address location="http://10.118.19.245:9080/itim/services/WSPasswordServiceService"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

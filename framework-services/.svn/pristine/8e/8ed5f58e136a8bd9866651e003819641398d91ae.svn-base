@@ -1,0 +1,384 @@
+package com.hixapi.pmp.service.user;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.EncryptionUtil;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.pmp.entity.model.idm.IDMUser;
+import com.hixapi.web.framework.service.BaseJaxWSServiceClient;
+import com.ibm.itim.ws.model.WSAttribute;
+import com.ibm.itim.ws.model.WSObjectCategoryConstants;
+import com.ibm.itim.ws.model.WSOrganizationalContainer;
+import com.ibm.itim.ws.model.WSPerson;
+import com.ibm.itim.ws.model.WSRole;
+import com.ibm.itim.ws.model.WSSession;
+import com.ibm.itim.ws.services.ArrayOfTns1WSAttribute;
+import com.ibm.itim.ws.services.ArrayOfXsdString;
+import com.ibm.itim.ws.services.WSAccessServiceProxy;
+import com.ibm.itim.ws.services.WSAccountServiceProxy;
+import com.ibm.itim.ws.services.WSExtensionServiceProxy;
+import com.ibm.itim.ws.services.WSGroupServiceProxy;
+import com.ibm.itim.ws.services.WSOrganizationalContainerServiceProxy;
+import com.ibm.itim.ws.services.WSPasswordServiceProxy;
+import com.ibm.itim.ws.services.WSPersonServiceProxy;
+import com.ibm.itim.ws.services.WSProvisioningPolicyServiceProxy;
+import com.ibm.itim.ws.services.WSRequestServiceProxy;
+import com.ibm.itim.ws.services.WSRoleServiceProxy;
+import com.ibm.itim.ws.services.WSSearchDataServiceProxy;
+import com.ibm.itim.ws.services.WSServiceServiceProxy;
+import com.ibm.itim.ws.services.WSSessionServicePortProxy;
+import com.ibm.itim.ws.services.WSSharedAccessProxy;
+import com.ibm.itim.ws.services.WSSystemUserServiceProxy;
+import com.ibm.itim.ws.services.WSToDoServiceProxy;
+import com.ibm.itim.ws.services.WSUnauthServiceProxy;
+
+public class BaseIsimServiceImpl extends BaseJaxWSServiceClient {
+
+	private static final Logger log = LogManager.getLogger(BaseIsimServiceImpl.class);
+
+	public WSSession login() {
+		log.entry();
+		return log.exit(login(getServiceProperty(APIConstants.PROPKEY_ISIM_PRINCIPAL, ""),
+				EncryptionUtil.decrypt(getServiceProperty(APIConstants.PROPKEY_ISIM_ENC_PASSWORD, ""))));
+	}
+	
+	public void logout(WSSession session) {
+		log.entry();
+		try{
+			if(session != null){
+				getSharedAccessService().logout(session);
+			}
+		}catch(Exception ex){
+			log.error("Error in logout() from ISIM - ignoring", ex);
+		}
+		log.exit();
+	}
+
+	public WSSession login(String principal, String credential) throws BusinessServiceException {
+		log.entry();
+
+		WSSessionServicePortProxy proxy = getSessionService();
+
+		WSSession session = null;
+		try {
+			long start = System.currentTimeMillis();
+			session = proxy.login(principal, credential);
+			long end = System.currentTimeMillis();
+			if (session == null) {
+				log.error("WS Session returned is null, unknown cause, check URL and credentials");
+				BusinessServiceException idmException = new BusinessServiceException(
+						APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+				throw log.throwing(idmException);
+			} else {
+				log.debug("Login to ISIM in : {} ms", (end - start));
+			}
+		} catch (Exception e) {
+			BusinessServiceException idmException = new BusinessServiceException(e,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		}
+
+		return log.exit(session);
+	}
+
+	public WSOrganizationalContainer getOrganizationUnitContainer(WSSession session, String ouName)
+			throws BusinessServiceException {
+		Validate.notNull(session, "WSession cannot be null");
+		WSOrganizationalContainer wsOrganizationalContainer = null;
+		WSOrganizationalContainerServiceProxy wsOrganizationalContainerServiceProxy = getOrganizationContainerService();
+		List<WSOrganizationalContainer> lstWSOrgContainers = null;
+
+		try {
+			lstWSOrgContainers = wsOrganizationalContainerServiceProxy.searchContainerByName(session, null,
+					WSObjectCategoryConstants.ORGUNIT, ouName);
+
+			if (CollectionUtils.isNotEmpty(lstWSOrgContainers)) {
+				wsOrganizationalContainer = lstWSOrgContainers.get(0);
+				log.debug("Found container with OrganizationUnit : {}", ouName);
+			}
+
+		} catch (Exception e) {
+			log.error("Error Communicating with ISIM", e);
+			BusinessServiceException idmException = new BusinessServiceException(e,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		}
+
+		return wsOrganizationalContainer;
+	}
+
+	public String getRoleDN(WSSession session, String roleName) throws BusinessServiceException {
+		log.entry();
+		Validate.notNull(session, "WSession cannot be null");
+		WSRoleServiceProxy wsRoleServiceProxy = getRoleService();
+		WSRole wsRole = null;
+		String roleDN = null;
+		log.debug("Searching for DN of role name {}", roleName);
+		try {
+
+			List<WSRole> lstWSRoles = wsRoleServiceProxy.searchRoles(session, APIConstants.WS_ISIM_CODE_OPEN_BRACES
+					+ APIConstants.WS_ISIM_ATTR_ERROLE_NAME + APIConstants.WS_ISIM_CODE_EQUAL_STRING + roleName
+					+ APIConstants.WS_ISIM_CODE_CLOSE_BRACES);
+			if (lstWSRoles != null && lstWSRoles.size() > 0) {
+				wsRole = lstWSRoles.get(0);
+				roleDN = wsRole.getItimDN();
+				log.debug("Found DN of role {} as {}", roleName, roleDN);
+			}
+
+		} catch (Exception e) {
+			log.error("Error Communicating with ISIM", e);
+			BusinessServiceException idmException = new BusinessServiceException(e,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		}
+		
+		return log.exit(roleDN);
+
+	}
+
+	
+
+	public List<WSPerson> searchPersonsFromRoot(WSSession session, String filter, List<String> attrList)
+			throws BusinessServiceException {
+		Validate.notNull(session, "WSession cannot be null");
+		WSPersonServiceProxy personService = getPersonService();
+		List<WSPerson> wsLstPerson = null;
+
+		try {
+			wsLstPerson = personService.searchPersonsFromRoot(session, filter, attrList);
+		} catch (Exception e) {
+			log.error("Error Communicating with ISIM", e);
+			BusinessServiceException idmException = new BusinessServiceException(e,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		}
+
+		return wsLstPerson;
+	}
+
+	protected WSPerson buildWSPerson(IDMUser user) {
+		log.entry("Creating WSPerson object");
+		WSPerson wsPerson = new WSPerson();
+		wsPerson.setName(user.getFirstName() + APIConstants.WS_ISIM_CODE_SPACE_STRING + user.getLastName());
+		WSAttribute wsAttr = null;
+		ArrayOfXsdString arrStringValues = null;
+		List<WSAttribute> lstWSAttributes = new ArrayList<WSAttribute>();
+		{
+			wsAttr = new WSAttribute();
+			wsAttr.setName(APIConstants.WS_ISIM_CODE_USER_ID);
+			arrStringValues = new ArrayOfXsdString();
+			arrStringValues.getItem().addAll(Arrays.asList(user.getLoginId()));
+			wsAttr.setValues(arrStringValues);
+			lstWSAttributes.add(wsAttr);
+		}
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_GIVEN_NAME);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(user.getFirstName()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_LAST_NAME);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(user.getLastName()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_COMPLETE_NAME);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(user.getFirstName() + " " + user.getLastName()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_PASSWORD);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(user.getPassword()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_EMAIL);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(user.getEmail()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+		
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_PHONE);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(user.getPhoneNumber()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+
+		ArrayOfTns1WSAttribute attrs = new ArrayOfTns1WSAttribute();
+		attrs.getItem().addAll(lstWSAttributes);
+		wsPerson.setAttributes(attrs);
+		
+		return log.exit(wsPerson);
+	}
+	
+	protected void buildWSPersonForUpdate(WSPerson wsPerson, IDMUser account) {
+		log.entry();
+		wsPerson.setName(account.getFirstName() + APIConstants.WS_ISIM_CODE_SPACE_STRING + account.getLastName());
+		WSAttribute wsAttr = null;
+		ArrayOfXsdString arrStringValues = null;
+		List<WSAttribute> lstWSAttributes = new ArrayList<WSAttribute>();
+
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_GIVEN_NAME);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(account.getFirstName()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_LAST_NAME);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(account.getLastName()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_COMPLETE_NAME);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(account.getFirstName() + " " + account.getLastName()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_EMAIL);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(account.getEmail()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+
+		wsAttr = new WSAttribute();
+		wsAttr.setName(APIConstants.WS_ISIM_CODE_PHONE);
+		arrStringValues = new ArrayOfXsdString();
+		arrStringValues.getItem().addAll(Arrays.asList(account.getPhoneNumber()));
+		wsAttr.setValues(arrStringValues);
+		lstWSAttributes.add(wsAttr);
+
+		ArrayOfTns1WSAttribute attrs = new ArrayOfTns1WSAttribute();
+		attrs.getItem().addAll(lstWSAttributes);
+		wsPerson.setAttributes(attrs);
+		log.exit();
+	}
+
+	public WSSessionServicePortProxy getSessionService() throws BusinessServiceException {
+		WSSessionServicePortProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_SESSSION_SERVICE, WSSessionServicePortProxy.class);
+		return proxy;
+	}
+
+	public WSPersonServiceProxy getPersonService() throws BusinessServiceException {
+		WSPersonServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_PERSON_SERVICE, WSPersonServiceProxy.class);
+		return proxy;
+	}
+
+	public WSOrganizationalContainerServiceProxy getOrganizationContainerService() throws BusinessServiceException {
+		WSOrganizationalContainerServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_ORGANIZATIONAL_CONTAINER_SERVICE,
+				WSOrganizationalContainerServiceProxy.class);
+		return proxy;
+	}
+
+	public WSToDoServiceProxy getToDoService() throws BusinessServiceException {
+		WSToDoServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_TODO_SERVICE, WSToDoServiceProxy.class);
+		return proxy;
+	}
+
+	public WSUnauthServiceProxy getUnauthService() throws BusinessServiceException {
+		WSUnauthServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_UNAUTH_SERVICE, WSUnauthServiceProxy.class);
+		return proxy;
+	}
+
+	public WSSystemUserServiceProxy getSystemUserService() throws BusinessServiceException {
+		WSSystemUserServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_SYSTEM_USER_SERVICE, WSSystemUserServiceProxy.class);
+		return proxy;
+	}
+
+	public WSServiceServiceProxy getServiceService() throws BusinessServiceException {
+
+		WSServiceServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_SERVICE_SERVICE, WSServiceServiceProxy.class);
+		return proxy;
+
+	}
+
+	public WSSearchDataServiceProxy getSearchDataService() throws BusinessServiceException {
+		WSSearchDataServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_SEARCH_DATA_SERVICE, WSSearchDataServiceProxy.class);
+		return proxy;
+	}
+
+	public WSRoleServiceProxy getRoleService() throws BusinessServiceException {
+		WSRoleServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_ROLE_SERVICE, WSRoleServiceProxy.class);
+		return proxy;
+	}
+
+	public WSRequestServiceProxy getRequestService() throws BusinessServiceException {
+		WSRequestServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_REQUEST_SERVICE, WSRequestServiceProxy.class);
+		return proxy;
+	}
+
+	public WSProvisioningPolicyServiceProxy getProvisioningPolicyService() throws BusinessServiceException {
+		WSProvisioningPolicyServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_PROVISIONING_POLICY_SERVICE, WSProvisioningPolicyServiceProxy.class);
+		return proxy;
+	}
+
+	public WSPasswordServiceProxy getPasswordService() throws BusinessServiceException {
+		WSPasswordServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_PASSWORD_SERVICE, WSPasswordServiceProxy.class);
+		return proxy;
+	}
+
+	public WSGroupServiceProxy getGroupService() throws BusinessServiceException {
+		WSGroupServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_GROUP_SERVICE, WSGroupServiceProxy.class);
+		return proxy;
+	}
+
+	public WSExtensionServiceProxy getExtensionService() throws BusinessServiceException {
+		WSExtensionServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_EXTENSION_SERVICE, WSExtensionServiceProxy.class);
+		return proxy;
+	}
+
+	public WSAccountServiceProxy getAccountService() throws BusinessServiceException {
+		WSAccountServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_ACCOUNT_SERVICE, WSAccountServiceProxy.class);
+		return proxy;
+	}
+	
+	public WSSharedAccessProxy getSharedAccessService() throws BusinessServiceException {
+		WSSharedAccessProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_SHARED_ACCESS_SERVICE, WSSharedAccessProxy.class);
+		return proxy;
+	}
+
+	public WSAccessServiceProxy getAccessService() throws BusinessServiceException {
+		WSAccessServiceProxy proxy = null;
+		proxy = getService(APIConstants.WS_ISIM_ACCESS_SERVICE, WSAccessServiceProxy.class);
+		return proxy;
+	}
+
+}

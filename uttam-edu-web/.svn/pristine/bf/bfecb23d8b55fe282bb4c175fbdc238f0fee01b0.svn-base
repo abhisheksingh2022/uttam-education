@@ -1,0 +1,129 @@
+<%@page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp"%>
+<%@include file="/jsp/includes/datatable.jsp"%>
+<html>
+<head>
+<style type="text/css">
+.searchtabel{ float:left;}
+.serchtr  th{   background: #f5f5f5 none repeat scroll 0 0;
+    color: rgb(235, 87, 49);
+    font-size: 15px;
+    font-weight: 700;
+    height: 50px;}
+.serchtr1  td{ }
+#datatable { border-bottom:1px solid #ccc;}
+#datatable  tr{border-bottom: 1px solid #ccc !important;}
+#datatable  tr td{ width:0% !important; padding:0px; height:50px;}
+.padng10{ padding:10px !important;}
+div.DTTT_container {
+    float: right;
+    margin-bottom: 1em;
+    padding: 10px 3px;
+    position: relative;
+}
+.paging_full_numbers {
+    height: 46px;
+    line-height: 22px;
+    margin: 11px 0 0;
+    width: 400px;
+}
+.nwidth{ background:#f5f5f5 !important;}
+</style>
+
+</head>
+<body>
+	<div class="body-con">
+		<div class="container maincont">
+			<div class="row">
+				<div class="body-bg">
+					<div class="hedingsec">
+						<h2 class="inner-heading">Carrier Profile</h2>
+						<form>
+							<!-- <input name="" type="text" placeholder="Input search criteria"> <input name="" type="submit" -->
+								<!-- value="Search"> -->
+						</form>
+					</div>
+
+					<div class="plan-table content">
+						<div class="carrier-data">
+							<table width="100%" border="0" cellpadding="0" cellspacing="0" id="datatable" class="pretty searchtabel">
+								<thead>
+									<tr class="ac-trHd serchtr">
+										<th class="plan-table-input padng10 nwidth"></th>
+										<th class="padng10">Carrier ID</th>
+										<th class="padng10">Carrier Name</th>
+										<th class="padng10">Contact No</th>
+										<th class="padng10">Carrier url</th>
+										<th class="nwidth">&nbsp;</th>
+										<th class="nwidth">&nbsp;</th>
+										<th class="nwidth">&nbsp;</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td class="plan-table-input padng10"><input type="checkbox" name="checkbox" id="checKbox"></td>
+										<td class="padding-gav padng10">67654</td>
+										<td class="padng10">Anthem Blue Cross Blue Shield</td>
+										<td class="padng10">800-123-1234</td>
+										<td class="padng10"><a href="#">www.anthem.com</a></td>
+										<td>&nbsp;</td>
+										<td>&nbsp;</td>
+										<td>&nbsp;</td>
+									</tr>
+									<tr>
+										<td class="plan-table-input padng10"><input type="checkbox" name="checkbox" id="checKbox"></td>
+										<td class="padding-gav padng10">45676</td>
+										<td class="padng10">ConnectiCare Benefits INC</td>
+										<td class="padng10">800-234-9876</td>
+										<td class="padng10"><a href="#">www.connecticare.com</a></td>
+										<td>&nbsp;</td>
+										<td>&nbsp;</td>
+										<td>&nbsp;</td>
+
+									</tr>
+									<tr>
+										<td class="plan-table-input padng10"><input type="checkbox" name="checkbox" id="checKbox"></td>
+										<td class="padding-gav padng10">90898</td>
+										<td class="padng10">HealthyCT INC</td>
+										<td class="padng10">800-678-5678</td>
+										<td class="padng10"><a href="#">www.healthyct.org</a></td>
+										<td>&nbsp;</td>
+										<td>&nbsp;</td>
+										<td>&nbsp;</td>
+									</tr>
+									<tr>
+										<td class="plan-table-input padng10"><input type="checkbox" name="checkbox" id="checKbox"></td>
+										<td class="padding-gav padng10">79099</td>
+										<td class="padng10">United Health Group</td>
+										<td class="padng10">800-123-6789</td>
+										<td class="padng10"><a href="#">www.uhc.com/xct</a></td>
+										<td>&nbsp;</td>
+										<td>&nbsp;</td>
+										<td>&nbsp;</td>
+									</tr>
+								<tbody>
+							</table>
+
+
+
+
+							<div class="form-btn">
+								<input type="button" onclick="location.href = 'edit_view_carrier.html';" value="View" name="view"
+									class="save-btn"> <input type="button" onclick="location.href = 'edit_view_carrier1.html';"
+									value="Edit" name="edit" class="cancel-btn"> <input type="button"
+									onclick="location.href = 'carrier.html';" value="Add a Carrier" name="carrier" class="save-btn">
+							</div>
+
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+</body>
+</html>
+<%@include file="/jsp/includes/footer.jsp"%>
+

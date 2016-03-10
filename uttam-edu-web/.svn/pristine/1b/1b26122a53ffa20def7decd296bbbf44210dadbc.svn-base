@@ -1,0 +1,182 @@
+package com.hixapi.pmp.struts.planmgmt;
+
+import java.io.File;
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.exception.UnauthorizedAccessException;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.PlanRateVO;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.api.model.criteria.PlanRateSearchCriteria;
+import com.hixapi.pmp.service.plan.PlanManagerService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+import com.hixapi.web.framework.struts.SessionController;
+
+public class PlanRatesAction extends BaseSecureAction {
+	
+	private static final Logger LOG = LogManager.getLogger(PlanRatesAction.class);
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7296331027656555878L;
+	private static final String RESULT_PLAN_SEARCH = "plan-search";
+	private static final String RESULT_PLAN_MANAGE = "plan-manage";
+	private static final String RESULT_PLAN_BENEFITS = "plan-benefits";
+	private static final String PLAN_ID = "planId";
+	
+	private PlanVO plan;
+	private List<PlanRateVO> planRates;
+	private File uploadedRates;
+	private boolean searched;
+	private String planId;
+	private PlanRateSearchCriteria criteria;
+
+	@Override
+	public void addDefaultRedirectParameters() {
+		
+	}
+	
+	@Override
+	public void onValidationError() {	
+		this.addDefaultRedirectParameters();
+	}
+	
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		LOG.entry();
+		if(SessionController.getPlanManagePlan() == null) {
+			throw new UnauthorizedAccessException();
+		} else {
+			plan = SessionController.getPlanManagePlan();
+			planId = plan.getPlanId();
+		}
+		
+		criteria = new PlanRateSearchCriteria();
+		LOG.exit();
+
+	}
+	
+	public String save(){
+		LOG.entry();
+		/*
+		 * Save
+		 */
+		return LOG.exit(FLASH);
+	}
+	
+	public void validate_search() {
+		
+	}
+	
+	public String search(){
+		LOG.entry();
+		if(planId != null) {
+			criteria.setPlanId(planId);
+			planRates = ServiceLocator.getInstance().getService(PlanManagerService.class).searchPlanRates(criteria);
+			searched = true;
+			/*plan.setPlanRates(planRates);
+			SessionController.setPlanManagePlan(plan);*/
+			/*if(planRates.isEmpty()) {
+				super.addValidationError("msg.planrates.nodata", "rates");
+			}*/
+			plan = SessionController.getPlanManagePlan();
+		} else {
+			super.addValidationError("msg.planrates.nodata", "rates");
+		}
+		
+		return LOG.exit(FLASH);
+	}
+	
+	/*public void loadRatesList() {
+		if(plan != null && plan.getPlanRates() != null && !plan.getPlanRates().isEmpty()) {
+			planRates = plan.getPlanRates();
+		}
+	}*/
+	
+	public String back(){
+		LOG.entry();
+		return LOG.exit(RESULT_PLAN_SEARCH);
+	}
+	
+	@Override
+	protected String handleExecute() throws Exception {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		return LOG.exit(null);
+	}
+	
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public String showManage() throws Exception {
+		LOG.entry();
+		addRedirectURLParameter(PLAN_ID, planId);
+		return LOG.exit(RESULT_PLAN_MANAGE);
+	}
+
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public String showBenefits() throws Exception {
+		LOG.entry();
+		addRedirectURLParameter(PLAN_ID, planId);
+		return LOG.exit(RESULT_PLAN_BENEFITS);
+	}
+
+	public PlanVO getPlan() {
+		return plan;
+	}
+
+	public void setPlan(PlanVO plan) {
+		this.plan = plan;
+	}
+
+	public List<PlanRateVO> getPlanRates() {
+		return planRates;
+	}
+
+	public void setPlanRates(List<PlanRateVO> planRates) {
+		this.planRates = planRates;
+	}
+
+	public PlanRateSearchCriteria getCriteria() {
+		return criteria;
+	}
+
+	public void setCriteria(PlanRateSearchCriteria criteria) {
+		this.criteria = criteria;
+	}
+
+	public File getUploadedRates() {
+		return uploadedRates;
+	}
+
+	public void setUploadedRates(File uploadedRates) {
+		this.uploadedRates = uploadedRates;
+	}
+
+	public boolean isSearched() {
+		return searched;
+	}
+
+	public void setSearched(boolean searched) {
+		this.searched = searched;
+	}
+
+	public String getPlanId() {
+		return planId;
+	}
+
+	public void setPlanId(String planId) {
+		this.planId = planId;
+	}
+
+	
+	
+}

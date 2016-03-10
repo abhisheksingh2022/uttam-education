@@ -1,0 +1,23 @@
+package com.hixapi.pmp.service.user;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.service.IService;
+import com.hixapi.pmp.entity.model.idm.IDMUser;
+
+public interface IdentityManagerService extends IService {
+
+	IDMUser retrieveUser(String loginId) throws BusinessServiceException;
+
+	void saveCarrierUser(IDMUser user) throws BusinessServiceException;
+
+	void resetUserPassword(IDMUser user) throws BusinessServiceException;
+
+	void updateUser(IDMUser user) throws BusinessServiceException;
+
+	void suspendUser(IDMUser user) throws BusinessServiceException;
+
+	void restoreUser(IDMUser user) throws BusinessServiceException;
+
+	void deleteUser(IDMUser idmUser) throws BusinessServiceException;
+
+}

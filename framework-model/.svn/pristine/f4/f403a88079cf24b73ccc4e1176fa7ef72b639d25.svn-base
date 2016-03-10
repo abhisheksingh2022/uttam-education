@@ -1,0 +1,35 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+
+public class PlanVariantDetailsDeductibleVO extends InOutNetworkVO implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String deductibleId;
+	private String inNetworkTier1DefaultCoins;
+	private String inNetworkTier2DefaultCoins;
+	public String getDeductibleId() {
+		return deductibleId;
+	}
+	public void setDeductibleId(String deductibleId) {
+		this.deductibleId = deductibleId;
+	}
+	public String getInNetworkTier1DefaultCoins() {
+		return inNetworkTier1DefaultCoins;
+	}
+	public void setInNetworkTier1DefaultCoins(String inNetworkTier1DefaultCoins) {
+		this.inNetworkTier1DefaultCoins = inNetworkTier1DefaultCoins;
+	}
+	public String getInNetworkTier2DefaultCoins() {
+		return inNetworkTier2DefaultCoins;
+	}
+	public void setInNetworkTier2DefaultCoins(String inNetworkTier2DefaultCoins) {
+		this.inNetworkTier2DefaultCoins = inNetworkTier2DefaultCoins;
+	}
+	
+	
+}

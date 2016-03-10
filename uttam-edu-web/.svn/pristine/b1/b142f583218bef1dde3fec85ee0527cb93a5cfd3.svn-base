@@ -1,0 +1,52 @@
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/header.jsp"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@ taglib uri="/WEB-INF/tld/hixapi.tld" prefix="common"%>
+
+
+<body>
+	<%@include file="/jsp/sessionTimeoutModal.jsp"%>
+	<div id="blockDiv" style="display: none;">
+		<img src="<s:property value='contextRoot'/>static/custom/images/loading.gif" />
+	</div>
+	<div id="noteContent" title="Notice" style="display: none;">
+		<p id="alertNotice"></p>
+	</div>
+	<div id="wrapper">
+		<%--closed in footer --%>
+		<jsp:include page="/jsp/includes/title.jsp" />
+
+
+
+		<div class="body-con">
+			<%--closed in footer --%>
+
+			<div class="container maincont">
+				<div class="ui-state-error errorMessageDiv">
+					<s:if test="hasMessages()">
+						<script>
+							<s:if test="ajaxRequest">
+							highlight();
+							</s:if>
+							<s:else>
+							$(document).ready(function() {
+								highlight()
+							});
+							</s:else>
+
+							function highlight() {
+								try {
+									<s:iterator value="errorFieldNames">
+									$(
+											"#<s:property value='formId'/> [name=<s:property/>]")
+											.removeClass("form-control").addClass("errorField form-control");
+									</s:iterator>
+								} catch (e) {
+									alert(e);
+								}
+							}
+						</script>
+						<br />
+					</s:if>
+					<common:ErrorMessages showHelpButtonMessage="false" />
+				</div>

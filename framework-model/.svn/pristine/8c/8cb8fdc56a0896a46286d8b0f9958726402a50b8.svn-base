@@ -1,0 +1,193 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+import java.util.Map;
+
+
+public class PlanVariantDetailsVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	//String will be their respective lookup detail code
+	private Map<String, PlanVariantDetailsCopayVO> copayDetails;
+	private Map<String, PlanVariantDetailsDeductibleVO> deductibleDetails;
+	private Map<String, PlanVariantDetailsMoopVO> moopDetails; 
+	
+	private String planVariantDtlId;
+	private String variantHiosId;
+	private String issuerActVal;
+	private String avCalcOutputNum;
+	private String medAndDrgDeducIntgFlg;
+	private String medAndDrgMaxOutOfPocketIntgFlg;
+	private String planVariantDtlCol;
+	private String tierUtilization1;
+	private String tierUtilization2;
+	private String sbcHavingBabyDeductible;
+	private String sbcHavingBabyCopay;
+	private String sbcHavingBabyCoins;
+	private String sbcHavingBabyLimit;
+	private String sbcDiabetesDeductible;
+	private String sbcDiabetesCopay;
+	private String sbcDiabetesCoins;
+	private String sbcDiabetesLimit;
+	private String hsaEligibleFlag;
+	private String hsaEmplrContributionFlag;
+	private String hsaEmplrContributionNbr;
+	private String hsaBenefitCoverageUrlTxt;
+	private String hsaPlanBrochureUrlTxt;
+	public Map<String, PlanVariantDetailsCopayVO> getCopayDetails() {
+		return copayDetails;
+	}
+	public void setCopayDetails(Map<String, PlanVariantDetailsCopayVO> copayDetails) {
+		this.copayDetails = copayDetails;
+	}
+	public Map<String, PlanVariantDetailsDeductibleVO> getDeductibleDetails() {
+		return deductibleDetails;
+	}
+	public void setDeductibleDetails(Map<String, PlanVariantDetailsDeductibleVO> deductibleDetails) {
+		this.deductibleDetails = deductibleDetails;
+	}
+	public Map<String, PlanVariantDetailsMoopVO> getMoopDetails() {
+		return moopDetails;
+	}
+	public void setMoopDetails(Map<String, PlanVariantDetailsMoopVO> moopDetails) {
+		this.moopDetails = moopDetails;
+	}
+	public String getPlanVariantDtlId() {
+		return planVariantDtlId;
+	}
+	public void setPlanVariantDtlId(String planVariantDtlId) {
+		this.planVariantDtlId = planVariantDtlId;
+	}
+	public String getIssuerActVal() {
+		return issuerActVal;
+	}
+	public void setIssuerActVal(String issuerActVal) {
+		this.issuerActVal = issuerActVal;
+	}
+	public String getAvCalcOutputNum() {
+		return avCalcOutputNum;
+	}
+	public void setAvCalcOutputNum(String avCalcOutputNum) {
+		this.avCalcOutputNum = avCalcOutputNum;
+	}
+	public String getMedAndDrgDeducIntgFlg() {
+		return medAndDrgDeducIntgFlg;
+	}
+	public void setMedAndDrgDeducIntgFlg(String medAndDrgDeducIntgFlg) {
+		this.medAndDrgDeducIntgFlg = medAndDrgDeducIntgFlg;
+	}
+	public String getMedAndDrgMaxOutOfPocketIntgFlg() {
+		return medAndDrgMaxOutOfPocketIntgFlg;
+	}
+	public void setMedAndDrgMaxOutOfPocketIntgFlg(String medAndDrgMaxOutOfPocketIntgFlg) {
+		this.medAndDrgMaxOutOfPocketIntgFlg = medAndDrgMaxOutOfPocketIntgFlg;
+	}
+	public String getPlanVariantDtlCol() {
+		return planVariantDtlCol;
+	}
+	public void setPlanVariantDtlCol(String planVariantDtlCol) {
+		this.planVariantDtlCol = planVariantDtlCol;
+	}
+	public String getTierUtilization1() {
+		return tierUtilization1;
+	}
+	public void setTierUtilization1(String tierUtilization1) {
+		this.tierUtilization1 = tierUtilization1;
+	}
+	public String getTierUtilization2() {
+		return tierUtilization2;
+	}
+	public void setTierUtilization2(String tierUtilization2) {
+		this.tierUtilization2 = tierUtilization2;
+	}
+	public String getSbcHavingBabyDeductible() {
+		return sbcHavingBabyDeductible;
+	}
+	public void setSbcHavingBabyDeductible(String sbcHavingBabyDeductible) {
+		this.sbcHavingBabyDeductible = sbcHavingBabyDeductible;
+	}
+	public String getSbcHavingBabyCopay() {
+		return sbcHavingBabyCopay;
+	}
+	public void setSbcHavingBabyCopay(String sbcHavingBabyCopay) {
+		this.sbcHavingBabyCopay = sbcHavingBabyCopay;
+	}
+	public String getSbcHavingBabyCoins() {
+		return sbcHavingBabyCoins;
+	}
+	public void setSbcHavingBabyCoins(String sbcHavingBabyCoins) {
+		this.sbcHavingBabyCoins = sbcHavingBabyCoins;
+	}
+	public String getSbcHavingBabyLimit() {
+		return sbcHavingBabyLimit;
+	}
+	public void setSbcHavingBabyLimit(String sbcHavingBabyLimit) {
+		this.sbcHavingBabyLimit = sbcHavingBabyLimit;
+	}
+	public String getSbcDiabetesDeductible() {
+		return sbcDiabetesDeductible;
+	}
+	public void setSbcDiabetesDeductible(String sbcDiabetesDeductible) {
+		this.sbcDiabetesDeductible = sbcDiabetesDeductible;
+	}
+	public String getSbcDiabetesCopay() {
+		return sbcDiabetesCopay;
+	}
+	public void setSbcDiabetesCopay(String sbcDiabetesCopay) {
+		this.sbcDiabetesCopay = sbcDiabetesCopay;
+	}
+	public String getSbcDiabetesCoins() {
+		return sbcDiabetesCoins;
+	}
+	public void setSbcDiabetesCoins(String sbcDiabetesCoins) {
+		this.sbcDiabetesCoins = sbcDiabetesCoins;
+	}
+	public String getSbcDiabetesLimit() {
+		return sbcDiabetesLimit;
+	}
+	public void setSbcDiabetesLimit(String sbcDiabetesLimit) {
+		this.sbcDiabetesLimit = sbcDiabetesLimit;
+	}
+	public String getHsaEligibleFlag() {
+		return hsaEligibleFlag;
+	}
+	public void setHsaEligibleFlag(String hsaEligibleFlag) {
+		this.hsaEligibleFlag = hsaEligibleFlag;
+	}
+	public String getHsaEmplrContributionFlag() {
+		return hsaEmplrContributionFlag;
+	}
+	public void setHsaEmplrContributionFlag(String hsaEmplrContributionFlag) {
+		this.hsaEmplrContributionFlag = hsaEmplrContributionFlag;
+	}
+	public String getHsaEmplrContributionNbr() {
+		return hsaEmplrContributionNbr;
+	}
+	public void setHsaEmplrContributionNbr(String hsaEmplrContributionNbr) {
+		this.hsaEmplrContributionNbr = hsaEmplrContributionNbr;
+	}
+	public String getHsaBenefitCoverageUrlTxt() {
+		return hsaBenefitCoverageUrlTxt;
+	}
+	public void setHsaBenefitCoverageUrlTxt(String hsaBenefitCoverageUrlTxt) {
+		this.hsaBenefitCoverageUrlTxt = hsaBenefitCoverageUrlTxt;
+	}
+	public String getHsaPlanBrochureUrlTxt() {
+		return hsaPlanBrochureUrlTxt;
+	}
+	public void setHsaPlanBrochureUrlTxt(String hsaPlanBrochureUrlTxt) {
+		this.hsaPlanBrochureUrlTxt = hsaPlanBrochureUrlTxt;
+	}
+	public String getVariantHiosId() {
+		return variantHiosId;
+	}
+	public void setVariantHiosId(String variantHiosId) {
+		this.variantHiosId = variantHiosId;
+	}
+	
+	
+}

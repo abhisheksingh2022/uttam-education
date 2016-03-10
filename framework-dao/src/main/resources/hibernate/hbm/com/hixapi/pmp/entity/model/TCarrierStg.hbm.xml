@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 29, 2015 6:45:01 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.TCarrierStg" table="T_CARRIER_STG" optimistic-lock="version">
+        <id name="carrierId" type="string">
+            <column name="CARRIER_ID" length="5" />
+            <generator class="assigned" />
+        </id>
+       
+        <property name="carrierNa" type="string">
+            <column name="CARRIER_NA" length="50" />
+        </property>
+        <property name="carrierStateTx" type="string">
+            <column name="CARRIER_STATE_TX" length="2" />
+        </property>
+        <property name="naicCompyCd" type="string">
+            <column name="NAIC_COMPY_CD" length="6" />
+        </property>
+        <property name="naicGroupCd" type="string">
+            <column name="NAIC_GROUP_CD" length="6" />
+        </property>
+        <property name="taxpayerIdTx" type="string">
+            <column name="TAXPAYER_ID_TX" length="10" />
+        </property>
+        <property name="carrierLogoImage" type="blob">
+            <column name="CARRIER_LOGO_IMAGE">
+                <comment>Represents carrier logo.</comment>
+            </column>
+        </property>
+        <property name="adrLine1Tx" type="string">
+            <column name="ADR_LINE_1_TX" length="64">
+                <comment>Represents address line 1.</comment>
+            </column>
+        </property>
+        <property name="adrLine2Tx" type="string">
+            <column name="ADR_LINE_2_TX" length="64">
+                <comment>Represents address line 2.</comment>
+            </column>
+        </property>
+        <property name="cityNa" type="string">
+            <column name="CITY_NA" length="28">
+                <comment>Represents city name.</comment>
+            </column>
+        </property>
+        <property name="stCdNb" type="java.lang.Long">
+            <column name="ST_CD_NB" precision="12" scale="0">
+                <comment>Represents state code.</comment>
+            </column>
+        </property>
+        <property name="zipCodeAd" type="string">
+            <column name="ZIP_CODE_AD" length="10">
+                <comment>Represents zip code.</comment>
+            </column>
+        </property>
+        <property name="carrierLoadStatIn" type="string">
+            <column name="CARRIER_LOAD_STAT_IN" length="1">
+                <comment>Represents the loading status for that carrier.</comment>
+            </column>
+        </property>
+        <property name="phoneNb" type="string">
+            <column name="PHONE_NB" length="30">
+                <comment>Represents carrier phone number.</comment>
+            </column>
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+        <property name="carrUrlTx" type="string">
+            <column name="CARR_URL_TX">
+                <comment>Represents carrier URL.</comment>
+            </column>
+        </property>
+    </class>
+</hibernate-mapping>

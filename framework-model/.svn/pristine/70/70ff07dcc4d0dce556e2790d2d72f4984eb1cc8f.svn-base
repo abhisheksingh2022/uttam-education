@@ -1,0 +1,113 @@
+package com.hixapi.prescreening.api.model.plan;
+
+import java.io.Serializable;
+import java.util.List;
+
+import com.hixapi.prescreening.api.model.Individual;
+
+public class HealthPlanDeterminant implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private List<Individual> memberList;
+	private String ratingAreaId;
+	private Integer coverageYear;
+	private Double aptcAmount;
+	private boolean catastrophicElig;
+	private String county;
+	private List<String> ageCategories;
+	private boolean pregnantPersonPresent;
+	private String csrVarIdForPlansFetch;
+	private String language;
+
+	
+	
+	public String getRatingAreaId() {
+		return ratingAreaId;
+	}
+
+	public void setRatingAreaId(String ratingAreaId) {
+		this.ratingAreaId = ratingAreaId;
+	}
+
+	public Integer getCoverageYear() {
+		return coverageYear;
+	}
+
+	public void setCoverageYear(Integer coverageYear) {
+		this.coverageYear = coverageYear;
+	}
+
+	public Double getAptcAmount() {
+		return aptcAmount;
+	}
+
+	public void setAptcAmount(Double aptcAmount) {
+		this.aptcAmount = aptcAmount;
+	}
+
+	public List<String> getAgeCategories() {
+		return ageCategories;
+	}
+
+	public void setAgeCategories(List<String> ageCategories) {
+		this.ageCategories = ageCategories;
+	}
+
+	public boolean isPregnantPersonPresent() {
+		return pregnantPersonPresent;
+	}
+
+	public void setPregnantPersonPresent(boolean pregnantPersonPresent) {
+		this.pregnantPersonPresent = pregnantPersonPresent;
+	}
+
+	public boolean getCatastrophicElig() {
+		return catastrophicElig;
+	}
+
+	public void setCatastrophicElig(boolean catastrophicElig) {
+		this.catastrophicElig = catastrophicElig;
+	}
+
+	public List<Individual> getMemberList() {
+		return memberList;
+	}
+
+	public void setMemberList(List<Individual> memberList) {
+		this.memberList = memberList;
+	}
+
+	
+
+	public String getCounty() {
+		return county;
+	}
+
+	public void setCounty(String county) {
+		this.county = county;
+	}
+
+	public String getCsrVarIdForPlansFetch() {
+		return csrVarIdForPlansFetch;
+	}
+
+	public void setCsrVarIdForPlansFetch(String csrVarIdForPlansFetch) {
+		this.csrVarIdForPlansFetch = csrVarIdForPlansFetch;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
+	
+
+	
+
+}

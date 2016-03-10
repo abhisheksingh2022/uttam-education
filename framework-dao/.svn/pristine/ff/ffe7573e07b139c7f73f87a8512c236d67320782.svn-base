@@ -1,0 +1,33 @@
+package com.hixapi.pmp.dao.prescreen;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import com.hixapi.prescreening.api.model.EligLkupFplAmounts;
+import com.hixapi.prescreening.api.model.EligLkupFplLimitsWithDisregards;
+import com.hixapi.prescreening.api.model.HealthPlan;
+import com.hixapi.prescreening.api.model.EligLkupApplicablePercentageRange;
+
+
+
+public interface EligibilityDAO {
+
+	public EligLkupFplAmounts getFPLValue(int houseHoldSize, Date date);
+	
+	//type tells the DAO method whether its MinFPL or Max FPL.
+	public EligLkupFplLimitsWithDisregards getFplLimitsPlusDisregards(String programCode, String subProgramCode, Date date,String type);
+
+	public Map<Integer, List<HealthPlan>> getSilverPlans(Integer coverageYear,
+			String ratingAreaId, List<String> ageCategories, String pgmSubCsr01,String language);
+	
+	public String getRatingAreaText(String county);
+	
+	public List<EligLkupApplicablePercentageRange> getMinAndMaxRangeValues(Date todayDate);
+
+	
+	public Map<Integer, List<HealthPlan>> getAllHealthPlansForFamily(Integer coverageYear, String ratingAreaId,
+			List<String> ageCategories, String csrId, boolean catastrophicElig,String language, boolean family);
+	
+	public String getCounty(String countyId);
+	}

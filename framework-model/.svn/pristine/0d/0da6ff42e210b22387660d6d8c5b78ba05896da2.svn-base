@@ -1,0 +1,54 @@
+package com.hixapi.pmp.api.model.plandetails;
+
+import java.io.Serializable;
+
+public class RetailPharmacyDrugs implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1331700844310101229L;
+	private CopayAndCoinsurance tier1;
+	private CopayAndCoinsurance tier2;
+	private CopayAndCoinsurance tier3;
+	private CopayAndCoinsurance tier4;
+	private CopayAndCoinsurance tier5;
+
+	public RetailPharmacyDrugs(){
+		tier1 = new CopayAndCoinsurance();
+		tier2 = new CopayAndCoinsurance();
+		tier3 = new CopayAndCoinsurance();
+		tier4 = new CopayAndCoinsurance();
+		tier5 = new CopayAndCoinsurance();
+	}
+	public CopayAndCoinsurance getTier1() {
+		return tier1;
+	}
+	public void setTier1(CopayAndCoinsurance tier1) {
+		this.tier1 = tier1;
+	}
+	public CopayAndCoinsurance getTier2() {
+		return tier2;
+	}
+	public void setTier2(CopayAndCoinsurance tier2) {
+		this.tier2 = tier2;
+	}
+	public CopayAndCoinsurance getTier3() {
+		return tier3;
+	}
+	public void setTier3(CopayAndCoinsurance tier3) {
+		this.tier3 = tier3;
+	}
+	public CopayAndCoinsurance getTier4() {
+		return tier4;
+	}
+	public void setTier4(CopayAndCoinsurance tier4) {
+		this.tier4 = tier4;
+	}
+	public CopayAndCoinsurance getTier5() {
+		return tier5;
+	}
+	public void setTier5(CopayAndCoinsurance tier5) {
+		this.tier5 = tier5;
+	}
+}

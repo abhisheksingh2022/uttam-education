@@ -1,0 +1,102 @@
+package com.uttam.framework.dao;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hibernate.FlushMode;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+
+import com.hixapi.framework.dao.helper.HixQueryGenerator;
+
+public abstract class BaseDAO {
+
+	private SessionFactory sessionFactory;
+
+	private Logger _log = LogManager.getLogger(getClass());
+
+	public SessionFactory getSessionFactory() {
+		return sessionFactory;
+	}
+
+	public void setSessionFactory(SessionFactory sessionFactory) {
+		this.sessionFactory = sessionFactory;
+	}
+
+	public Session getCurrentSession() {
+		_log.entry();
+		Session session = sessionFactory.getCurrentSession();
+		_log.exit();
+		return session;
+	}
+
+	public Session getReadOnlySession() {
+		_log.entry();
+		Session session = this.getCurrentSession();
+		session.setFlushMode(FlushMode.MANUAL);
+		_log.exit();
+		return session;
+	}
+
+	/**
+	 * Method to perform bulk updation based on given conditions, here propertyName array contains the properties which have
+	 * to be updated and propertyValue array contains respective value to be set. conditionPropertyName array contains those
+	 * properties which will be used as a condition in where clause <br>
+	 * Usage: <br>
+	 * <code>int recordsUpdated = performBulkUpdate(PlanMstr.class, new String[] { "carrierUpdatesAllowedInd" },
+				new Object[] { "Y" }, new String[] { "planMstrId" }, new Object[] { planId });
+	   </code> <br>
+	 * <code>Note:</code> <b>Since Hibernate does not support join in bulk update, so we can not use cascading style property
+	 * with dot(.) <br>
+	 * Example: </b><code>
+	 * int recordsUpdated = performBulkUpdate(PlanLifecycle.class, new String[] {"planMstr.planMktngName"},
+				new Object[] {"XYZ"}, new String[] { "planMstr.planHiosId" }, new Object[] { planId });
+	<b>	<br>here planMstr.planMktngName, "planMstr.planHiosId" style is wrong in this query.</b>	</code>
+	 * 
+	 * @author Abhishek
+	 * @param aClass
+	 * @param propertyName
+	 * @param propertyValue
+	 * @param conditionPropertyName
+	 * @param conditionPropertyValue
+	 * 
+	 * @return Number of records updated, if query returns -1 means any exception occurred during query execution
+	 * 
+	 */
+	public int performBulkUpdate(@SuppressWarnings("rawtypes") Class aClass, String[] propertyName, Object[] propertyValue,
+			String[] conditionPropertyName, Object[] conditionPropertyValue) {
+
+		if (propertyName == null || propertyValue == null || propertyName.length != propertyValue.length) {
+			throw new RuntimeException("Null or Un-mached property name-value pair");
+		}
+		if (conditionPropertyName != null && conditionPropertyValue != null
+				&& conditionPropertyName.length != conditionPropertyValue.length) {
+			throw new RuntimeException("Null or Un-mached conditional property name-value pair");
+		}
+		Session session = getCurrentSession();
+
+		Query query = session.createQuery(HixQueryGenerator.generateBulkUpdateQuery(aClass, propertyName, propertyValue,
+				conditionPropertyName, conditionPropertyValue));
+		int i = 0;
+		if (propertyValue != null) {
+			for (; i < propertyValue.length; i++) {
+				Object object = propertyValue[i];
+				query.setParameter("" + i, object);
+			}
+		}
+		if (conditionPropertyValue != null) {
+			for (int j = 0; j < conditionPropertyValue.length; j++) {
+				Object object = conditionPropertyValue[j];
+				if (object != null) {
+					query.setParameter("" + i, object);
+					i++;
+				}
+			}
+		}
+		int recordCount = query.executeUpdate();
+		session.flush();
+		return recordCount;
+
+	}
+
+}

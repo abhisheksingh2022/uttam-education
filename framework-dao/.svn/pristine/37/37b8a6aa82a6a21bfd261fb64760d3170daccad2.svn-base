@@ -1,0 +1,52 @@
+package com.hixapi.pmp.dao.plan;
+
+import java.util.Collection;
+import java.util.List;
+
+import com.hixapi.pmp.api.model.criteria.PlanHistorySearchCriteria;
+import com.hixapi.pmp.api.model.criteria.PlanRateSearchCriteria;
+import com.hixapi.pmp.api.model.criteria.PlanSearchCriteria;
+import com.hixapi.pmp.entity.model.CarrierFormularyInfo;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+import com.hixapi.pmp.entity.model.CarrierNetwork;
+import com.hixapi.pmp.entity.model.PlanBenefitMstr;
+import com.hixapi.pmp.entity.model.PlanLifecycle;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanMstrHist;
+import com.hixapi.pmp.entity.model.PlanRateDetail;
+import com.hixapi.pmp.entity.model.PlanUploadHist;
+import com.hixapi.pmp.entity.model.TDsplPlanStg;
+
+public interface PlanDAO{
+	
+	List<PlanLifecycle> searchPlans(PlanSearchCriteria criteria);
+	List<PlanRateDetail> searchPlanRates(PlanRateSearchCriteria criteria);
+	PlanMstr retrievePlanByPlanIdAndLangCode(Long planId,String langCode); 
+	CarrierNetwork retrieveNetworkById(String nwId, Long carrierAdminInfoId);
+	CarrierFormularyInfo retrieveCarrierFormularyInfoById(String carrFormlryId, Long carrierAdminInfoId);
+	
+	void savePlan(PlanMstr planEntity);  
+	void updatePlan(PlanMstr planEntity);  
+	void deletePlan(PlanMstr planEntity);  
+	void updatePlanStatusByPlanId(Long planId,String status); 
+	public int updateEntity(@SuppressWarnings("rawtypes") Class clazz,String[] propertyName,Object[] propertyValue,String[] conditionPropertyName, Object[]conditionPropertyValue); //  common to update any Modal
+	
+	void lockPlan(Long planId);  
+	void unlockPlan(Long planId); 
+	List<PlanUploadHist> retrievePlanUploadHistory(Short coverageYear, Long carrierId);
+	
+	void savePlanUpdateHistory(PlanMstrHist history);
+	List<PlanMstrHist> retrievePlanUpdateHistoryByPlanId(Long planId);
+	List<PlanMstrHist> retrievePlanUpdateHistory(PlanHistorySearchCriteria criteria);
+	void saveDisplayPlans(Collection<TDsplPlanStg> displayPlans, CarrierMstr carrier);
+	Collection<TDsplPlanStg> retrieveDisplayPlanStagingRecords(String carrierId, String coverageYear);
+	TDsplPlanStg retrieveDisplayPlanStagingRecords(String planVariantHiosId, String localeCode, Short coverageYear);
+	Collection<CarrierNetwork> retrieveCarrierNetworks(long carrierAdminIdNbr);
+	Collection<CarrierFormularyInfo> retrieveCarrierFormularyInfo(long carrierAdminIdNbr);
+	
+	void updateDisplayPlans(List<TDsplPlanStgUpdate> updates);
+	List<PlanBenefitMstr> retrievePlanBenefit(Long planId, String langCode);
+	void updatePlanBenefit(PlanBenefitMstr benefitMstr);
+	boolean checkDuplicatePlan(Long planMstrid, String planId);
+	TDsplPlanStg retrieveDisplayPlanStagingRecord(String dsplPlanId, String localeCode);
+} 

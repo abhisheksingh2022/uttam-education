@@ -1,0 +1,30 @@
+/**
+ * 
+ */
+package com.uttam.framework.common.exception;
+
+import com.uttam.framework.common.model.BaseException;
+
+/**
+ * @author admin
+ *
+ */
+public class UnauthorizedAccessException extends BaseException {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1901539459756043223L;
+	
+	
+	
+	public UnauthorizedAccessException(){
+		super.setErrorCode ( "exception.unauthorized_error");
+	}
+
+	
+
+	
+	
+
+}

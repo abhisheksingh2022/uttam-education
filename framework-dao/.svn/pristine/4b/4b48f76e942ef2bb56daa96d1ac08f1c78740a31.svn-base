@@ -1,0 +1,49 @@
+package com.hixapi.pmp.dao.carrier;
+
+import java.sql.Blob;
+import java.util.List;
+
+import com.hixapi.pmp.api.model.criteria.CarrierSearchCriteria;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+
+public interface CarrierDAO {
+
+	List<CarrierMstr> searchCarrier(CarrierSearchCriteria criteria);
+
+	CarrierMstr retrieveCarrierByCarrierIdNumber(Long carrierIdNumber);
+
+	/**
+	 * save carrier into DB
+	 * 
+	 * @param carrierMstr
+	 */
+	void saveCarrier(CarrierMstr carrierMstr);
+
+	/**
+	 * update carrier into DB
+	 * 
+	 * @param carrierMstr
+	 */
+	void updateCarrier(CarrierMstr carrierMstr);
+
+	void deleteCarrier(CarrierMstr carrierMstr);
+
+	/**
+	 * Retrieve a pre-existing carrier
+	 * 
+	 * @param carrierIdNumber
+	 * @return
+	 */
+	Blob retrieveCarrierLogo(Long carrierIdNumber);
+
+	/**
+	 * save Existing carrier logo into DB
+	 * 
+	 * @param carrierMstr
+	 */
+	void saveCarrierLogo(CarrierMstr carrierMstr);
+
+	boolean checkDuplicateCarrier(Long carrierIdNbr, String carrierId);
+
+	byte[] retrieveCarrierLogo(String carrierId);
+}

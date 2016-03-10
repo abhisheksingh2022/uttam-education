@@ -1,0 +1,15 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.admin;
+
+import com.hixapi.framework.service.IService;
+import com.hixapi.pmp.entity.model.ExceptionLog;
+
+/**
+ * @author admin
+ *
+ */
+public interface SystemAdministrationService extends IService {
+	void saveExceptionLog(ExceptionLog log);
+}

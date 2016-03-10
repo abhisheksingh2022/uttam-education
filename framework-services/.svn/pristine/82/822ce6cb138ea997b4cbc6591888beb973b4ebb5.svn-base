@@ -1,0 +1,97 @@
+package com.hixapi.pmp.service.admin;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.List;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.pmp.api.model.SystemPreferenceVO;
+import com.hixapi.pmp.api.model.UserVO;
+import com.hixapi.pmp.dao.admin.SystemAdministrationDAO;
+import com.hixapi.pmp.entity.model.ExceptionLog;
+import com.hixapi.pmp.entity.model.FunctionRole;
+
+public class SystemAdministrationServiceImpl implements SystemAdministrationService {
+
+	private static final Logger LOG = LogManager.getLogger(SystemAdministrationServiceImpl.class);
+
+	private SystemAdministrationDAO systemAdinistrationDAO;
+	
+	
+	public boolean verifyNASConnectivity(String pathToCheck){
+		boolean result = false;
+		
+		try{
+			String serverName = InetAddress.getLocalHost().getHostName();
+			String dirToCheck = pathToCheck+"/" + serverName+"_" + APIUtil.getCurrentTimestampString();
+			APIUtil.mkdirs(dirToCheck);
+			File f = new File(dirToCheck + "/test.txt");
+			FileUtils.write(f, "testing connectivity");
+			if(f.exists() && f.isFile()){
+				LOG.info("Succesfully created test file at {}", f.getAbsolutePath());
+				result = true;
+			}
+			
+			FileUtils.deleteDirectory(new File(dirToCheck));
+		}catch(IOException ex){
+			LOG.error("Failed to verify NAS Connectivity, error below", ex);
+		}
+		
+		return result;
+	}
+
+	@Override
+	public List<SystemPreferenceVO> retrieveSystemPreferences() throws BusinessServiceException {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		LOG.exit();
+		return null;
+	}
+
+	@Override
+	public void updateSystemPreferences(List<SystemPreferenceVO> list) throws BusinessServiceException {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		LOG.exit();
+
+	}
+
+	@Override
+	public void saveLoginAudit(UserVO vo) throws BusinessServiceException {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		LOG.exit();
+
+	}
+
+	@Override
+	public List<FunctionRole> retrieveFunctionRoles() {
+		LOG.entry();
+		List<FunctionRole> frList = systemAdinistrationDAO.retrieveFunctionRoles();
+		return LOG.exit(frList);
+
+	}
+
+	public SystemAdministrationDAO getSystemAdinistrationDAO() {
+		return systemAdinistrationDAO;
+	}
+
+	public void setSystemAdinistrationDAO(SystemAdministrationDAO systemAdinistrationDAO) {
+		this.systemAdinistrationDAO = systemAdinistrationDAO;
+	}
+
+	@Override
+	public void saveExceptionLog(ExceptionLog log) {
+		LOG.entry();
+		systemAdinistrationDAO.saveExceptionLog(log);
+		LOG.exit();
+		
+	}
+
+}

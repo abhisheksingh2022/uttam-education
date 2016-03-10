@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bindings xmlns="http://java.sun.com/xml/ns/jaxb" version="2.1">
+	<bindings schemaLocation="XMLschemas/niem/niem-core.xsd">
+		<schemaBindings>
+			<package name="gov.niem.core" />
+		</schemaBindings>
+	</bindings>
+	<bindings schemaLocation="XMLschemas/subset/niem/appinfo/2.0/appinfo.xsd">
+		<schemaBindings>
+			<package name="gov.niem.appinfo.v2_0" />
+		</schemaBindings>
+	</bindings>
+	<bindings schemaLocation="XMLschemas/subset/niem/proxy/xsd/2.0/xsd.xsd">
+		<schemaBindings>
+			<package name="gov.niem.proxy.xsd.v2_0" />
+		</schemaBindings>
+	</bindings>
+	<bindings schemaLocation="XMLschemas/subset/niem/structures/2.0/structures.xsd">
+		<schemaBindings>
+			<package name="gov.niem.structures.v2_0" />
+		</schemaBindings>
+	</bindings>
+	<bindings schemaLocation="XMLschemas/subset/niem/appinfo/2.1/appinfo.xsd">
+		<schemaBindings>
+			<package name="gov.niem.appinfo.v2_1" />
+		</schemaBindings>
+	</bindings>
+	<!-- <bindings schemaLocation="XMLschemas/niem/usps_states/2.0/usps_states.xsd">
+		<schemaBindings>
+			<package name="gov.cms.ffe.admin_data.exchange.v1_0" />
+		</schemaBindings>
+	</bindings> -->
+	<!-- <bindings schemaLocation="XMLschemas/niem/domains/hix/0.1/hix-core/hix-core.xsd">
+		<schemaBindings>
+			<package name="gov.cms.hix.core" />
+		</schemaBindings>
+	</bindings> -->
+	<bindings schemaLocation="XMLschemas/niem/domains/hix/0.1/hix-pm/hix-pm.xsd">
+		<schemaBindings>
+			<package name="gov.cms.hix.pm" />
+		</schemaBindings>
+	</bindings>
+	<bindings schemaLocation="./XMLschemas/extension/ExtensionModel.xsd">
+		<schemaBindings>
+			<package name="gov.cms.ffe.rate_bus_rules.extension.v1_0" />
+		</schemaBindings>
+	</bindings>
+	<bindings schemaLocation="./XMLschemas/exchange/ExchangeModel.xsd">
+		<schemaBindings>
+			<package name="gov.cms.ffe.rate_bus_rules.exchange.v1_0" />
+		</schemaBindings>
+	</bindings>
+	
+</bindings>

@@ -1,0 +1,323 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp"%>
+<%@include file="/jsp/includes/datatable.jsp"%>
+
+<script>
+	var isFileSelected = false;
+	var isPlanTemplateSelected = false;
+	var isCoverageYearSelected = false;
+	var isCarrierSelected = false;
+
+	var selectedYear;
+	var selectedCarrier;
+	
+	$(document).ready(function(){
+		checkCoverageYearSelected();
+		selectedCarrier();
+		
+	});
+
+	function showModalDialog() {
+	
+		$("#fileUploadid").val('')
+		$("#planTemplateid").val('');
+	
+		$("#uploadid").prop('disabled', true);
+		$("#uploadid").css('background-color', 'grey');
+		$("#uploadid").css('border', 'grey');
+	
+	 	selectedYear = $("#coverageyear").val();
+		<%-- selectedCarrier = $("#carrier_id").val(); --%>
+		
+		var selectedCarrier = $('input[name="carrierIndicator"]:checked','#id_form_planUpload').attr("carrierId");
+		var selectedCarrierName = $('input[name="carrierIndicator"]:checked','#id_form_planUpload').attr("carrierName");
+		
+		$("#confirm_alert > span1").text(selectedYear);
+		$("#confirm_alert > span2").text(selectedCarrierName);
+		
+		$('#myModal').modal('show');
+		
+		return ajaxGet({
+			resource : 'plan-upload_ajaxGetPlanUploadHistory',
+			targetId : 'getting_plan_id',
+			blockId : 'getting_plan_id',
+			urlparams : {
+				"coverageYear" : selectedYear,
+				"carrierId" : selectedCarrier
+			}
+		}); 
+		return false;
+	}
+
+	function checkCoverageYearSelected() {
+		if ($("#coverageyear").val() != '') {
+			isCoverageYearSelected = true;
+		}else{
+			isCoverageYearSelected = false;
+		} 
+		
+		if(isCoverageYearSelected && isCarrierSelected){
+			$("#uploadPlanid").prop('disabled', false);
+			$("#uploadPlanid").css('background-color', '');
+			$("#uploadPlanid").attr("onclick","javascript:showModalDialog();");
+		}else{
+			$("#uploadPlanid").prop('disabled', true);
+			$("#uploadPlanid").css('background-color', 'grey');
+			$("#uploadPlanid").css('border', 'grey');
+			$("#uploadPlanid").attr("onclick", "");
+			
+		}
+	}
+
+	function selectedCarrier() {
+		$(".selectCarrier").each(
+			function() {
+				if ($(this)[0].checked) {
+					document.getElementById("carrier_id").value = $(this).attr("carrierId");
+
+					if($("#carrier_id").val() != ""){
+						isCarrierSelected = true;
+					}
+												
+					if (isCoverageYearSelected && isCarrierSelected) {
+						$("#uploadPlanid").prop('disabled', false);
+						$("#uploadPlanid").css('background-color', '');
+						$("#uploadPlanid").attr("onclick","javascript:showModalDialog();");
+					}else{
+						$("#uploadPlanid").prop('disabled', true);
+						$("#uploadPlanid").css('background-color', 'grey');
+						$("#uploadPlanid").css('border', 'grey');
+						$("#uploadPlanid").attr("onclick", "");
+					}
+				}
+			});
+	}
+	
+	function cancelUpload() {
+		
+		$('.selectCarrier').on('change',function(){
+			$(".selectCarrier").each(
+			function() {
+				if ($(this)[0].checked) {
+					document.getElementById("carrier_id").value = $(this).attr("carrierId");
+					if($("#carrier_id").val() != ""){
+						isCarrierSelected = true;
+					}
+												
+					if (isCoverageYearSelected && isCarrierSelected) {
+						$("#uploadPlanid").prop('disabled', false);
+						$("#uploadPlanid").css('background-color', '');
+						$("#uploadPlanid").attr("onclick","javascript:showModalDialog();");
+					}else{
+						$("#uploadPlanid").prop('disabled', true);
+						$("#uploadPlanid").css('background-color', 'grey');
+						$("#uploadPlanid").css('border', 'grey');
+						$("#uploadPlanid").attr("onclick", "");
+					}
+				}
+			});
+		}); 
+		
+	}
+
+	function chkPlanTemplateSelected() {
+		if ($("#planTemplateid").val() != "")
+			isPlanTemplateSelected = true;
+		else {
+			isPlanTemplateSelected = false;
+		}
+		if (isPlanTemplateSelected && isFileSelected) {
+			$("#uploadid").prop('disabled', false);
+			$("#uploadid").css('background-color', '');
+		} else {
+			$("#uploadid").prop('disabled', true);
+			$("#uploadid").css('background-color', 'grey');
+			$("#uploadid").css('border', 'grey');
+		}
+	}
+
+	function chkFileSelected(input) {
+		if (input.files && input.files[0]) {
+			isFileSelected = true;
+		} else
+			isFileSelected = false;
+
+		if (isPlanTemplateSelected && isFileSelected) {
+			$("#uploadid").prop('disabled', false);
+			$("#uploadid").css('background-color', '');
+		} else {
+			$("#uploadid").prop('disabled', true);
+			$("#uploadid").css('background-color', 'grey');
+			$("#uploadid").css('border', 'grey');
+		}
+	}
+
+	$(document).ready(function() {
+		var dataUploadSuccess = <s:property value="uploadDataResult"/>
+	
+		if(dataUploadSuccess){
+			$("#uploadPlanid").prop('disabled', false);
+			$("#uploadPlanid").css('background-color', '');
+			$("#uploadPlanid").attr("onclick","javascript:showModalDialog();");
+		}else{
+			$("#uploadPlanid").prop('disabled', true);
+			$("#uploadPlanid").css('background-color', 'grey');
+			$("#uploadPlanid").css('border', 'grey');
+			$("#uploadPlanid").attr("onclick", "");
+		}
+	
+		$("#uploadid").prop('disabled', true);
+		$("#uploadid").css('background-color', 'grey');
+		$("#uploadid").css('border', 'grey');
+		
+		$("#planTemplateid").val('');
+		
+	});
+</script>
+
+<div class="row">
+	<div class="body-bg">
+		<s:form autocomplete="off" action="plan-upload" id="id_form_planUpload" enctype="multipart/form-data" method="post">
+			<s:token />
+			<s:hidden name="ajaxRequest" value="false" />
+			<s:hidden name="formId" />
+			<div class="hedingsec">
+				<h2 class="inner-heading">
+					<s:text name="txt.planupload.title" />
+				</h2>
+			</div>
+			<div class="upload-plansbg">
+				<span><s:text name="txt.planupload.message" /></span>
+			</div>
+			<div class="uplodpangyear">
+				<div class="carrier-fieldA lange">
+					<label style="width: 150px"><s:text name="txt.planmanage.coverageyear" /></label><span><s:select
+							class="form-control" name="coverageYear" label="" headerKey="" headerValue="%{selectBoxHeader}" list="years"
+							id="coverageyear" style="width:150px" onchange="checkCoverageYearSelected();" /> </span>
+				</div>
+			</div>
+			<div class="plan-table content">
+				<div class="carrier-data">
+					
+					<table width="100%" border="0" cellpadding="0" cellspacing="0" id="datatable" class="pretty searchtabel">
+						<thead>
+							<tr class="ac-trHd serchtr">
+								<th class="plan-table-input padng10 nwidth">
+								<th class="padng10"><s:text name="txt.planupload.carrierid" /></th>
+								<th class="padng10"><s:text name="txt.planupload.carriername" /></th>
+								<th class="padng10"><s:text name="txt.planupload.contact" /></th>
+								<th class="padng10"><s:text name="txt.planupload.carrierurl" /></th>
+							</tr>
+						</thead>
+						<tbody>
+
+							<s:iterator value="carriers">
+								<tr>
+									<td class="plan-table-input padng10"><input class="selectCarrier"
+										carrierId="<s:property value="carrierIdNbr" />" carrierName="<s:property value="carrierName" />" type="radio" name="carrierIndicator" id="checKbox"
+										<s:if test="planUploadVO.carrierId==carrierIdNbr">
+											checked
+										</s:if>
+										
+										onchange="selectedCarrier();"></td>
+									<td class="padding-gav padng10"><s:property value="carrierId" /></td>
+									<td class="padng10"><s:property value="carrierName" /></td>
+									<td class="padng10"><s:property value="contactPhoneNo" /></td>
+									<td class="padng10"><a href="http://<s:property value='carrierUrl'/>" target="_blank"><s:property
+												value="carrierUrl" /></a></td>
+								</tr>
+							</s:iterator>
+						</tbody>
+					</table>
+					<s:hidden id="carrier_id" name="planUploadVO.carrierId" />
+					<s:hidden id="isPlanUploadValidate" name="isPlanUploadValidate" />
+
+					<div class="form-btn">
+						<!-- <a href="#" data-toggle="modal" data-target="#myModal" id="getPlanHistory" class="save-btn btn_enable_class" onclick="return setActionAndSubmit('id_form_planUpload', 'execute');">Upload Plan</a> -->
+						<a href="#" data-toggle="modal" id="uploadPlanid" class="save-btn btn_enable_class"
+							onclick="return showModalDialog();"><s:text name="txt.planupload.planUpload" /></a>
+						<!-- <button class="save-btn btn_enable_class" data-toggle="modal" onclick="return showPlanDialog();">Upload Plans</button> -->
+						<div class="modal fade modal1" id="myModal" role="dialog">
+							<div class="modal-dialog">
+								<!-- Modal content-->
+								<div class="modal-content"  style="min-width:700px;">
+									<div class="modal-header">
+										<h4 class="modal-title">
+											<s:text name="txt.planupload.title" />
+										</h4>
+									</div>
+									<div class="modal-body">
+										<h4 id="confirm_alert" class="warning_msg"><s:text name="msg.planupload.uploadconfirm"></s:text></h4>
+										<div class="carrier-field">
+											<span> <s:select name="planUploadVO.planTemplateType" list="lookups.PlanTemplateTypes"
+													class="form-control" headerKey="" headerValue="%{selectBoxHeader}" listValue="label" listKey="value"
+													id="planTemplateid" onchange="chkPlanTemplateSelected();" />
+											</span>
+										</div>
+										<div class="clear20"></div>
+										<s:file name="planUploadVO.uploadFile" cssClass="upload-input crlogo" id="fileUploadid"
+											onchange="chkFileSelected(this);" accept="text/xml" />
+										<button class="save-btn btn_enable_class" id="uploadid"
+											onclick="javascript:setActionAndSubmit('id_form_planUpload', 'upload');blockScreen();">
+											<s:text name="txt.global.upload" />
+										</button>
+										<a href="" data-toggle="modal" data-target="#myModal" class="save-btn" onclick="cancelUpload()"><s:text
+												name="txt.global.cancel"></s:text></a><br> <br>
+
+										<div class="modal-header">
+											<h4 class="modal-title">
+												<s:text name="txt.planuploaddialog.title" />
+											</h4>
+										</div>
+										<table width="100%" border="0" cellpadding="0" cellspacing="0" class="upload-table">
+											<tr class="ac-trHd">
+												<!-- <th class="plan-table-input">  -->
+												<th><s:text name="txt.planuploadhistory.planType" /></th>
+												<th><s:text name="txt.planuploadhistory.fileName" /></th>
+												<th><s:text name="txt.planuploadhistory.uploadDate" /></th>
+												<th><s:text name="txt.planuploadhistory.uploadBy" /></th>
+											</tr>
+											<tr>
+												<td colspan="6"><div class="uploadHistorydiv" id="getting_plan_id">
+														<img class="centeredLoading" src="<s:property value='contextRoot'/>static/custom/images/small_loader.gif" />
+													</div></td>
+											</tr>
+										</table>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</s:form>
+	</div>
+</div>
+<div class="modal fade modal1" id="uploadWait" role="dialog">
+	<div class="modal-dialog">
+		<!-- Modal content-->
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title">
+					<s:text name="txt.planupload.title" />
+				</h4>
+			</div>
+			<div class="modal-body">
+				<img src="<s:property value='contextRoot'/>static/custom/images/uploading.gif" /><br />
+				<s:text name="txt.planupload.wait_while_uploading" />
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+	function blockScreen() {
+		$("#myModal").hide();
+		$("#uploadWait").modal({
+			backdrop : 'static'
+		});
+	}
+</script>
+
+<%@include file="/jsp/includes/footer.jsp"%>
+

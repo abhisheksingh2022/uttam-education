@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 10:52:08 AM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.Attachment" table="ATTACHMENT" optimistic-lock="version">
+        <id name="attachmentId" type="java.lang.Long">
+            <column name="ATTACHMENT_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_ATTACHMENT_SEQ</param>
+    		</generator>
+        </id>
+        <property name="storagePath" type="string">
+            <column name="STORAGE_PATH" length="512" not-null="true" />
+        </property>
+        <property name="attachmentNm" type="string">
+            <column name="ATTACHMENT_NM" length="512" not-null="true" />
+        </property>
+        <property name="uploadTs" type="java.util.Date">
+            <column name="UPLOAD_TS" length="26" not-null="true" />
+        </property>
+        <property name="fileMimeTypeCd" type="string">
+            <column name="FILE_MIME_TYPE_CD" length="50" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,41 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+import java.util.Map;
+
+public class PlanBenefitVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	//Key will be the plan benefit code
+	private Map<String,PlanBenefitsDetailVO> planBenefitsDetailsMap;
+	//private List<PlanBenefitsDetailVO> planBenefitsdetails;
+	private Map<PlanVariantVO, PlanVariantDetailsVO> planVariants;
+	
+	private String planBenefitId;
+	
+	
+	public Map<String,PlanBenefitsDetailVO> getPlanBenefitsDetailsMap() {
+		return planBenefitsDetailsMap;
+	}
+	public void setPlanBenefitsDetailsMap(Map<String,PlanBenefitsDetailVO> planBenefitsDetailsMap) {
+		this.planBenefitsDetailsMap = planBenefitsDetailsMap;
+	}
+	public Map<PlanVariantVO, PlanVariantDetailsVO> getPlanVariants() {
+		return planVariants;
+	}
+	public void setPlanVariants(Map<PlanVariantVO, PlanVariantDetailsVO> planVariants) {
+		this.planVariants = planVariants;
+	}
+	public String getPlanBenefitId() {
+		return planBenefitId;
+	}
+	public void setPlanBenefitId(String planBenefitId) {
+		this.planBenefitId = planBenefitId;
+	}
+	
+	
+	
+}

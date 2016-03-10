@@ -1,0 +1,70 @@
+package com.hixapi.pmp.service.admin;
+
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.pmp.api.model.SystemPreferenceVO;
+import com.hixapi.pmp.api.model.UserVO;
+import com.hixapi.pmp.dao.admin.SystemAdministrationDAO;
+import com.hixapi.pmp.entity.model.ExceptionLog;
+import com.hixapi.pmp.entity.model.FunctionRole;
+import com.hixapi.pmp.service.admin.SystemAdministrationService;
+
+public class SystemAdministrationServiceImpl implements SystemAdministrationService {
+
+	private static final Logger LOG = LogManager.getLogger(SystemAdministrationServiceImpl.class);
+
+	private SystemAdministrationDAO systemAdinistrationDAO;
+
+	@Override
+	public List<SystemPreferenceVO> retrieveSystemPreferences() throws BusinessServiceException {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		LOG.exit();
+		return null;
+	}
+
+	@Override
+	public void updateSystemPreferences(List<SystemPreferenceVO> list) throws BusinessServiceException {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		LOG.exit();
+
+	}
+
+	@Override
+	public void saveLoginAudit(UserVO vo) throws BusinessServiceException {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		LOG.exit();
+
+	}
+
+	@Override
+	public List<FunctionRole> retrieveFunctionRoles() {
+		LOG.entry();
+		List<FunctionRole> frList = systemAdinistrationDAO.retrieveFunctionRoles();
+		return LOG.exit(frList);
+
+	}
+
+	public SystemAdministrationDAO getSystemAdinistrationDAO() {
+		return systemAdinistrationDAO;
+	}
+
+	public void setSystemAdinistrationDAO(SystemAdministrationDAO systemAdinistrationDAO) {
+		this.systemAdinistrationDAO = systemAdinistrationDAO;
+	}
+
+	@Override
+	public void saveExceptionLog(ExceptionLog log) {
+		LOG.entry();
+		systemAdinistrationDAO.saveExceptionLog(log);
+		LOG.exit();
+		
+	}
+
+}

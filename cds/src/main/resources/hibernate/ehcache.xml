@@ -1,0 +1,22 @@
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="ehcache.xsd"
+
+	updateCheck="true" monitoring="autodetect">
+
+	<diskStore path="cds-cache/ehcache/diskStore" />
+
+	<defaultCache maxElementsInMemory="1000000" eternal="false" timeToIdleSeconds="0" timeToLiveSeconds="0"
+
+		overflowToDisk="true" diskSpoolBufferSizeMB="30" maxElementsOnDisk="10000000" diskPersistent="false"
+
+		diskExpiryThreadIntervalSeconds="120" memoryStoreEvictionPolicy="LRU" />
+
+
+
+	<cache name="com.hixapi.web.framework.common.model.LookupBean" maxElementsInMemory="1000000" eternal="false"
+
+		timeToIdleSeconds="0" timeToLiveSeconds="0" overflowToDisk="true" diskSpoolBufferSizeMB="3000" maxElementsOnDisk="10000000"
+
+		diskPersistent="false" diskExpiryThreadIntervalSeconds="120" memoryStoreEvictionPolicy="LRU" />
+
+
+</ehcache>

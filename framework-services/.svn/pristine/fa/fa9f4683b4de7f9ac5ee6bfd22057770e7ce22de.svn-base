@@ -1,0 +1,25 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.prescreen;
+
+import java.util.Date;
+
+import com.hixapi.framework.service.IService;
+import com.hixapi.prescreening.api.model.Eligibility;
+import com.hixapi.prescreening.api.model.Household;
+
+/**
+ * @author Spoorthi
+ *
+ */
+public interface EligibilityService extends IService {
+	
+
+	Eligibility calculateEligibility(Household hs) throws Exception;
+	//double calculateHouseHoldFPL(Double totalAnnualIncome,int houseHoldSize, Date date) throws Exception;
+
+	double calculateHouseHoldFPL(Long householdIncome, int houseHoldSize,
+			Date firstDayOfCoverageYear);
+
+}

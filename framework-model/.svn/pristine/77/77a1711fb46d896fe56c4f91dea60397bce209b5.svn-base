@@ -1,0 +1,27 @@
+package com.hixapi.pmp.api.model.plandetails;
+
+import java.io.Serializable;
+
+public class CostSharingOverview implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3661803334803899064L;
+	private IndividualFamilyNetwork deductible;
+	private IndividualFamilyNetwork outOfPocketMax;
+	public IndividualFamilyNetwork getDeductible() {
+		return deductible;
+	}
+	public void setDeductible(IndividualFamilyNetwork deductable) {
+		this.deductible = deductable;
+	}
+	public IndividualFamilyNetwork getOutOfPocketMax() {
+		return outOfPocketMax;
+	}
+	public void setOutOfPocketMax(IndividualFamilyNetwork outOfPocketMax) {
+		this.outOfPocketMax = outOfPocketMax;
+	}
+	
+	
+}

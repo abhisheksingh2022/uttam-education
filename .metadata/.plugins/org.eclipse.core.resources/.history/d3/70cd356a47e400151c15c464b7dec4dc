@@ -1,0 +1,216 @@
+/*
+ * Copyright (c) 2002-2006 by OpenSymphony
+ * All rights reserved.
+ */
+package com.hixapi.web.framework.struts;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.struts2.ServletActionContext;
+import org.apache.struts2.dispatcher.RequestMap;
+import org.apache.struts2.dispatcher.ServletActionRedirectResult;
+import org.apache.struts2.dispatcher.ServletRedirectResult;
+import org.apache.struts2.dispatcher.SessionMap;
+import org.apache.struts2.views.util.UrlHelper;
+
+import com.opensymphony.xwork2.ActionInvocation;
+import com.uttam.framework.common.model.APIExceptionMessage;
+
+/**
+ * <!-- START SNIPPET: description --> A flash result, that save the current action into the http session before invoking
+ * <code>super.doExecute(...)</code>, which actually just do a redirect to a specific location just as a normal
+ * {@link ServletRedirectResult} would. <!-- END SNIPPET: description -->
+ * 
+ * <!-- START SNIPPET: params -->
+ * <ul>
+ * key - The key under which current action is stored in Http Session. Default to {@link FlashInterceptor#DEFAULT_KEY} which
+ * is the string '__flashAction'
+ * </ul>
+ * <!-- END SNIPPET: params -->
+ * 
+ * <pre>
+ *    &lt;!-- START SNIPPET: example --&gt;
+ *    
+ *    &lt;action name=&quot;store&quot;&gt;
+ *   	&lt;result type=&quot;flash&quot;&lt;/redirectToSomeWhere.jsp&lt;/result&gt;
+ *   &lt;/action&gt;
+ *   &lt;action name=&quot;retrieve&quot;&gt;
+ *   	&lt;interceptor-ref name=&quot;flash&quot;&gt;
+ *          &lt;param name=&quot;operation&quot;&gt;Retrieve&lt;/param&gt;
+ *       &lt;/interceptor-ref&gt;
+ *       &lt;interceptor-ref name=&quot;defaultStack&quot; /&gt;
+ *       &lt;result&gt;pageWhereWeNeedFlashActionStored.jsp&lt;/result&gt;
+ *   &lt;/action&gt;
+ *    
+ *    &lt;!-- END SNIPPET: example --&gt;
+ * </pre>
+ * 
+ * 
+ * @author Patrick Lightbody
+ * @version $Date: 2006-12-11 20:57:12 +0800 (Mon, 11 Dec 2006) $ $Id: FlashResult.java 2758 2006-12-11 12:57:12Z tmjee $
+ */
+public class FlashResult extends ServletActionRedirectResult {
+
+	private static final long serialVersionUID = -8956841683709714038L;
+
+	private String key = FlashInterceptor.DEFAULT_KEY;
+
+	private static final Logger LOG = LogManager.getLogger(FlashResult.class);
+
+	/**
+	 * A flash result, that save the current action into the http session before invoking <code>super.doExecute(...)</code>.
+	 * Remember that the sessionMap and requestMap are replaced with HashMaps to have them serializable during session
+	 * replication. No non-serializable object should be present in the Action class.
+	 * 
+	 * @author admin
+	 * 
+	 * @see com.opensymphony.webwork.dispatcher.ServletRedirectResult#doExecute(java.lang.String,
+	 *      com.opensymphony.xwork.ActionInvocation)
+	 */
+	public void execute(ActionInvocation invocation) throws Exception {
+
+		// before we redirect, let's save the state in to the session
+		Object action = invocation.getAction();
+		Map<String, Object> session = invocation.getInvocationContext().getSession();
+
+		convertToSerializableAction(action);
+		session.put(FlashInterceptor.DEFAULT_KEY, action);
+		// arapps - adding the overrides also the session
+		session.put(FlashInterceptor.EXPR_OVERRIDES, invocation.getStack().getExprOverrides());
+		Object top = invocation.getStack().peek();
+		if (top != null && top instanceof APIExceptionMessage) {
+			session.put(FlashInterceptor.EXCEPTION, invocation.getStack().peek());
+		}
+		// Now if its an hixBaseAction, add the redirectURLParameters
+		Map<String, Object> paramsToAppend = null;
+		if (invocation.getAction() instanceof BaseAction) {
+			Map<String, Object> urlParams = ((BaseAction) invocation.getAction()).getRedirectURLParameters();
+			if (urlParams != null && !urlParams.isEmpty()) {
+				paramsToAppend = addURLParameters(invocation, urlParams);
+			}
+		}
+		//Getting the lcation from the result in struts.xml
+		StringBuilder tmpLocation = new StringBuilder(StringUtils.trimToEmpty(actionName));
+		ServletActionContext.getContext().getInstance(UrlHelper.class)
+				.buildParametersString(paramsToAppend, tmpLocation, "&");
+
+		setLocation(tmpLocation.toString());
+		super.doExecute(tmpLocation.toString(), invocation);
+	}
+
+	private void convertToSerializableAction(Object action) {
+		//	 serialization work around for struts request wrapper
+
+		try {
+			if (action instanceof BaseAction) {
+				BaseAction hixAction = (BaseAction) action;
+				// Here we are replacing the request and session
+				// map.
+				// The assumption is that there will be no more
+				// calls on
+				// the request/session map to put()
+				// Put will have no effect on http rqst/session
+				// because,
+				// the
+				// put() is not carried over to the
+				// HttpRequest/session
+				Map<String, Object> requestMap = hixAction.getRequest();
+				if (requestMap instanceof RequestMap) {
+					hixAction.setRequest(buildSerializableMap((RequestMap) requestMap));
+				}
+				Map<String, Object> fullSessionMap = hixAction.getSession();
+				if (fullSessionMap instanceof SessionMap) {
+					hixAction.setSession(buildSerializableMap((SessionMap<String, Object>) fullSessionMap));
+				}
+				//		    if (LOG.isDebugEnabled()) {
+				//			SerializationUtils.serialize((Serializable) action);
+				//		    }
+
+			}
+
+		} catch (Exception nse) {
+			LOG.error("Exception in flash interceptor trying to make action instance serializable: '"
+					+ action.getClass().getName() + "'", nse);
+
+		}
+	}
+
+	private Map<String, Object> addURLParameters(ActionInvocation invocation, Map<String, Object> params) {
+		Map<String, Object> paramsToAppend = new LinkedHashMap<String, Object>();
+		for (Iterator<Entry<String, Object>> i = params.entrySet().iterator(); i.hasNext();) {
+			Map.Entry<String, Object> e = i.next();
+			String potentialValue = e.getValue() == null ? "" : conditionalParse(e.getValue().toString(), invocation);
+			if ((potentialValue != null) && (potentialValue.length() > 0)) {
+				paramsToAppend.put(e.getKey().toString(), potentialValue);
+			}
+		}
+		return paramsToAppend;
+	}
+
+	/**
+	 * Set the key used to store the current action in http session.
+	 * 
+	 * @param key
+	 */
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	/**
+	 * Get the key used to store the current action in http session.
+	 * 
+	 * @return String
+	 */
+	public String getKey() {
+		return key;
+	}
+
+	/*
+	     * (non-Javadoc)
+	     * 
+	     * @see java.lang.Object#toString()
+	     */
+	@Override
+	public String toString() {
+
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+	}
+
+	private Map<String, Object> buildSerializableMap(RequestMap requestMap) {
+
+		@SuppressWarnings("unchecked")
+		Set<Entry<String, Object>> entries = requestMap.entrySet();
+		Map<String, Object> reqMap = new HashMap<String, Object>();
+		if (entries != null) {
+			for (Entry<String, Object> entry : entries) {
+				if (!"struts.valueStack".equalsIgnoreCase(entry.getKey())) {
+					reqMap.put(entry.getKey(), entry.getValue());
+				}
+			}
+		}
+		return reqMap;
+	}
+
+	private Map<String, Object> buildSerializableMap(SessionMap<String, Object> sessionMap) {
+
+		Set<Entry<String, Object>> entries = sessionMap.entrySet();
+		Map<String, Object> sessMap = new HashMap<String, Object>();
+		if (entries != null) {
+			for (Entry<String, Object> entry : entries) {
+				sessMap.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return sessMap;
+	}
+
+}

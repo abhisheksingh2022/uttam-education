@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:hix-core="http://hix.cms.gov/0.1/hix-core" xmlns:hix-pm="http://hix.cms.gov/0.1/hix-pm" xmlns:i="http://niem.gov/niem/appinfo/2.0" xmlns:nc="http://niem.gov/niem/niem-core/2.0" xmlns:niem-xsd="http://niem.gov/niem/proxy/xsd/2.0" xmlns:s="http://niem.gov/niem/structures/2.0" xmlns:usps="http://niem.gov/niem/usps_states/2.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://hix.cms.gov/0.1/hix-pm" version="&quot;1&quot;">
+  <xsd:import namespace="http://niem.gov/niem/niem-core/2.0" schemaLocation="../../../../../.././XMLschemas/niem/niem-core.xsd"/>
+  <xsd:import namespace="http://hix.cms.gov/0.1/hix-core" schemaLocation="../../../../../.././XMLschemas/niem/domains/hix/0.1/hix-core/hix-core.xsd"/>
+  <xsd:import namespace="http://niem.gov/niem/usps_states/2.0" schemaLocation="../../../../../.././XMLschemas/niem/usps_states/2.0/usps_states.xsd"/>
+  <xsd:import namespace="http://niem.gov/niem/appinfo/2.0" schemaLocation="../../../../../../XMLschemas/subset/niem/appinfo/2.0/appinfo.xsd"/>
+  <xsd:import namespace="http://niem.gov/niem/appinfo/2.1" schemaLocation="../../../../../../XMLschemas/subset/niem/appinfo/2.1/appinfo.xsd"/>
+  <xsd:import namespace="http://niem.gov/niem/structures/2.0" schemaLocation="../../../../../../XMLschemas/subset/niem/structures/2.0/structures.xsd"/>
+  <xsd:import namespace="http://niem.gov/niem/proxy/xsd/2.0" schemaLocation="../../../../../../XMLschemas/subset/niem/proxy/xsd/2.0/xsd.xsd"/>
+  <xsd:annotation>
+    <xsd:appinfo>
+      <i:ConformantIndicator>true</i:ConformantIndicator>
+    </xsd:appinfo>
+    <xsd:documentation source="">Reference Model for Health Information Exchange (HIX) Plan Management (PM)</xsd:documentation>
+  </xsd:annotation>
+  <xsd:complexType abstract="false" mixed="false" name="InsuranceCompanyType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for an organization that issues and underwrites insurance policies. (It may offer policies directly as an issuer or indirectly as a parent company.)</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="s:ComplexObjectType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyEnrollmentContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyPrimaryOnlineEnrollmentCenterContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanySecondaryOnlineEnrollmentCenterContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanySystemContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyAppealOrGrievanceContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyCustomerServiceOperationsContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyMarketingContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyMedicalDirectorContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyPaymentContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyGovernmentRelationsContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyHIPAASecurityOfficerContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyFinancialReportingContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyComplaintTrackingContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyQualityContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyComplianceOfficerContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyAptcCsrContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyRiskCorridorsContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyUserAccessPrimaryContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyUserAccessSecondaryContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyChiefDentalDirectorContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyPharmacyBenefitManagerContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyFinancialTransfersContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyReinsuranceContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyRiskAdjustmentContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyTIN-ID"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyNAIC-ID"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceCompanyNAICGroupID"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:RoleOfOrganizationReference"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element abstract="false" name="InsuranceCompanyEnrollmentContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of enrollment at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="true" name="InsuranceCompanyContact">
+    <xsd:annotation>
+      <xsd:documentation source="">A data concept for a contact information; a type of contact in the Insurance Company.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyPrimaryOnlineEnrollmentCenterContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A primary person in charge of the online enrollment center at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanySecondaryOnlineEnrollmentCenterContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A secondary person in charge of the online enrollment center at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanySystemContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of the system at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyAppealOrGrievanceContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of appeals or grievances at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyCustomerServiceOperationsContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of customer service operations at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyMarketingContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of marketing at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyMedicalDirectorContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A medical director at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyPaymentContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of payments at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyGovernmentRelationsContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of government relations at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyHIPAASecurityOfficerContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A HIPAA Security officer at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyFinancialReportingContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of financial reporting at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyComplaintTrackingContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of complaint tracking at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyQualityContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of quality at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyComplianceOfficerContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A compliance officer at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyAptcCsrContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">An APTC/CSR contact at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyRiskCorridorsContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of risk corridors at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyUserAccessPrimaryContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of risk corridors at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyUserAccessSecondaryContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of risk corridors at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyChiefDentalDirectorContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A chief or high ranking executive of a dental organization.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyPharmacyBenefitManagerContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">An individual who is responsible for managing pharmacy benefits.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyFinancialTransfersContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">An individual who is responsible for financial transfers.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyReinsuranceContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">An individual who is responsible for reinsurance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyRiskAdjustmentContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">An individual who is responsible for risk adjustment.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyTIN-ID" type="nc:TextType">
+    <xsd:annotation>
+      <xsd:documentation source="">An identifier assigned by the Internal Revenue Service (IRS) for the purpose of tax filing.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyNAIC-ID" type="nc:TextType">
+    <xsd:annotation>
+      <xsd:documentation source="">An identifier assigned by the National Association of Insurance Commissioners (NAIC) to a US domiciled company that files an annual finanical statement with the NAIC.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyNAICGroupID" type="nc:TextType">
+    <xsd:annotation>
+      <xsd:documentation source="">An identifier assigned by the National Association of Insurance Commissioners (NAIC) to identify a group of companies within a holding company.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="RoleOfOrganizationReference" nillable="false" type="s:ReferenceType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:ReferenceTarget i:name="OrganizationType" i:namespace="http://hix.cms.gov/0.1/hix-core"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A reference to information about the issuer's organization. </xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:complexType abstract="false" mixed="false" name="IssuerType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for a licensed health insurance issuing organization registered in a specific state.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="s:ComplexObjectType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:IssuerIndividualMarketContact"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:IssuerSmallGroupMarketContact"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:IssuerIdentification"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:IssuerStateCode"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:IssuerSHOPCustomerService"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:IssuerIndividualMarketCustomerService"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:RoleOfOrganizationReference"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:IssuerEnrollmentThirdPartyAdministrationIndicator"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:IssuerClaimsProcessingThirdPartyAdministrationIndicator"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:IssuerEdgeServerHostThirdPartyAdministrationIndicator"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:IssuerCurrentSalesMarketCode"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:IssuerProposedExchangeMarketCoverageCode"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element abstract="false" name="IssuerIndividualMarketContact" nillable="false" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:documentation source="">A contact person in charge of the individual market at the issuer level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerSmallGroupMarketContact" nillable="false" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:documentation source="">A contact person in charge of the small group market at the issuer level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerIdentification" nillable="false" type="nc:IdentificationType">
+    <xsd:annotation>
+      <xsd:documentation source="">An identifier for the issuer.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerStateCode" nillable="false" type="usps:USStateCodeType">
+    <xsd:annotation>
+      <xsd:documentation source="">A state where the issuer is authorized to do business.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerSHOPCustomerService" nillable="false" type="nc:ContactInformationType">
+    <xsd:annotation>
+      <xsd:documentation source="">A customer service contact for the Small Business Health Options Program (SHOP) at the issuer level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerIndividualMarketCustomerService" nillable="false" type="nc:ContactInformationType">
+    <xsd:annotation>
+      <xsd:documentation source="">A customer service contact for the individual market at the issuer level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerEnrollmentThirdPartyAdministrationIndicator" nillable="false" type="niem-xsd:boolean">
+    <xsd:annotation>
+      <xsd:documentation source="">True if the issuer organization has third party administrator organizations for enrollment processing; false otherwise.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerClaimsProcessingThirdPartyAdministrationIndicator" nillable="false" type="niem-xsd:boolean">
+    <xsd:annotation>
+      <xsd:documentation source="">True if the issuer organization has third party administrator organizations for claims processing; false otherwise.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerEdgeServerHostThirdPartyAdministrationIndicator" nillable="false" type="niem-xsd:boolean">
+    <xsd:annotation>
+      <xsd:documentation source="">True if the issuer organization has third party administrator organizations for edge server mart processing; false otherwise.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerCurrentSalesMarketCode" nillable="false" substitutionGroup="hix-pm:IssuerMarketCoverageCode" type="hix-pm:InsurancePlanLevelCodeType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="IssuerMarketCoverageCode" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A kind of market in which this issuer currently participates.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerMarketCoverageCode" nillable="false" type="hix-pm:InsurancePlanLevelCodeType">
+    <xsd:annotation>
+      <xsd:documentation source="">A kind of market in which this issuer participates.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:complexType abstract="false" mixed="false" name="InsurancePlanLevelCodeType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for a code indicating different values of market coverage that an issuer can have. Example include Individual, SHOP (for small business), Both.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleContent>
+      <xsd:extension base="hix-pm:InsurancePlanLevelCodeSimpleType">
+        <xsd:attributeGroup ref="s:SimpleObjectAttributeGroup"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <xsd:simpleType name="InsurancePlanLevelCodeSimpleType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for a code indicating different values of market coverage that an issuer can have. Example include Individual, SHOP (for small business), Both.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:token">
+      <xsd:enumeration value="Individual">
+        <xsd:annotation>
+          <xsd:documentation source="">A value indicating the market coverage for individuals.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="SHOP">
+        <xsd:annotation>
+          <xsd:documentation source="">A value indicating the market coverage for small businesses</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Both">
+        <xsd:annotation>
+          <xsd:documentation source="">A value indicating the market coverage for both individuals and small businesses.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:element abstract="false" name="IssuerProposedExchangeMarketCoverageCode" nillable="false" substitutionGroup="hix-pm:IssuerMarketCoverageCode" type="hix-pm:InsurancePlanLevelCodeType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="IssuerMarketCoverageCode" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A kind of market in which this issuer intends to participate.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyBackupUserAccessContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A backup person in charge of user access at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceCompanyUserAccessContact" substitutionGroup="hix-pm:InsuranceCompanyContact" type="hix-core:PersonType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="InsuranceCompanyContact" i:namespace="http://hix.cms.gov/0.1/hix-pm"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A person in charge of user access at the company level.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+</xsd:schema>

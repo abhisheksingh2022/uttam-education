@@ -1,0 +1,29 @@
+package com.hixapi.prescreening.api.model.plan;
+
+import java.io.Serializable;
+
+public class IndividualFamilyNetwork implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -842617105127631647L;
+	private InAndOutNetwork individualInAndOutNetwork;
+	private InAndOutNetwork familyInAndOutNetwork;
+	public InAndOutNetwork getIndividualInAndOutNetwork() {
+		return individualInAndOutNetwork;
+	}
+	public void setIndividualInAndOutNetwork(InAndOutNetwork individualInAndOutNetwork) {
+		this.individualInAndOutNetwork = individualInAndOutNetwork;
+	}
+	public InAndOutNetwork getFamilyInAndOutNetwork() {
+		return familyInAndOutNetwork;
+	}
+	public void setFamilyInAndOutNetwork(InAndOutNetwork familyinAndOutNetwork) {
+		this.familyInAndOutNetwork = familyinAndOutNetwork;
+	}
+	
+	
+
+	
+}

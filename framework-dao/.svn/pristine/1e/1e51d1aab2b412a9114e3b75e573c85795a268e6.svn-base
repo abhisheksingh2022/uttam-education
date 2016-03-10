@@ -1,0 +1,14 @@
+package com.hixapi.pmp.dao.admin;
+
+import java.util.List;
+
+import com.hixapi.pmp.entity.model.ExceptionLog;
+import com.hixapi.pmp.entity.model.FunctionRole;
+
+public interface SystemAdministrationDAO {
+
+	List<FunctionRole> retrieveFunctionRoles();
+	
+	void saveExceptionLog(ExceptionLog log);
+
+}

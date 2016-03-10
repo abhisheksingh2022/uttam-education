@@ -1,0 +1,496 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 29, 2015 6:45:01 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.TDsplPlanStg" table="T_DSPL_PLAN_STG" optimistic-lock="version">
+        <composite-id name="id" class="com.hixapi.pmp.entity.model.TDsplPlanStgId">
+            <key-property name="dsplPlanId" type="string">
+                <column name="DSPL_PLAN_ID" length="22" />
+            </key-property>
+            <key-property name="langCdTx" type="string">
+                <column name="LANG_CD_TX" length="5" />
+            </key-property>
+        </composite-id>
+      
+        <property name="hlthPlanId" type="java.lang.Long">
+            <column name="HLTH_PLAN_ID" precision="12" scale="0" />
+        </property>
+        <property name="planId" type="string">
+            <column name="PLAN_ID" length="14" not-null="true" />
+        </property>
+        <property name="csrVarId" type="string">
+            <column name="CSR_VAR_ID" length="2" not-null="true" />
+        </property>
+        <property name="planNa" type="string">
+            <column name="PLAN_NA" length="75" />
+        </property>
+        <property name="carrNa" type="string">
+            <column name="CARR_NA" length="50" />
+        </property>
+        <property name="carrierId" type="string">
+            <column name="CARRIER_ID" length="5" />
+        </property>
+        <property name="hlthPrvdrUrlTx" type="string">
+            <column name="HLTH_PRVDR_URL_TX" />
+        </property>
+        <property name="planTypeNa" type="string">
+            <column name="PLAN_TYPE_NA" length="50" />
+        </property>
+        <property name="planLevelNa" type="string">
+            <column name="PLAN_LEVEL_NA" length="20" />
+        </property>
+        <property name="qltyRatingNb" type="java.lang.Integer">
+            <column name="QLTY_RATING_NB" />
+        </property>
+        <property name="csrDdbleInTx" type="string">
+            <column name="CSR_DDBLE_IN_TX" length="125" />
+        </property>
+        <property name="csrDdbleOutTx" type="string">
+            <column name="CSR_DDBLE_OUT_TX" length="125" />
+        </property>
+        <property name="csrPrescDrgDdbleInTx" type="string">
+            <column name="CSR_PRESC_DRG_DDBLE_IN_TX" length="125" />
+        </property>
+        <property name="csrPrescDrgDdbleOutTx" type="string">
+            <column name="CSR_PRESC_DRG_DDBLE_OUT_TX" length="125" />
+        </property>
+        <property name="csrOutOfPcktMaxInTx" type="string">
+            <column name="CSR_OUT_OF_PCKT_MAX_IN_TX" length="125" />
+        </property>
+        <property name="csrOutOfPcktMaxOutTx" type="string">
+            <column name="CSR_OUT_OF_PCKT_MAX_OUT_TX" length="125" />
+        </property>
+        <property name="csrPresDrgOutOfPcktInTx" type="string">
+            <column name="CSR_PRES_DRG_OUT_OF_PCKT_IN_TX" length="125" />
+        </property>
+        <property name="csrPresDrgOutOfPcktOutTx" type="string">
+            <column name="CSR_PRES_DRG_OUT_OF_PCKT_OUT_TX" length="125" />
+        </property>
+        <property name="csrPcpCopayInTx" type="string">
+            <column name="CSR_PCP_COPAY_IN_TX" length="200" />
+        </property>
+        <property name="csrPcpCopayOutTx" type="string">
+            <column name="CSR_PCP_COPAY_OUT_TX" length="125" />
+        </property>
+        <property name="csrSplstCopayInTx" type="string">
+            <column name="CSR_SPLST_COPAY_IN_TX" length="125" />
+        </property>
+        <property name="csrSplstCopayOutTx" type="string">
+            <column name="CSR_SPLST_COPAY_OUT_TX" length="125" />
+        </property>
+        <property name="psPrvntvCareImmnInTx" type="string">
+            <column name="PS_PRVNTV_CARE_IMMN_IN_TX" length="125" />
+        </property>
+        <property name="psPrvntvCareImmnOutTx" type="string">
+            <column name="PS_PRVNTV_CARE_IMMN_OUT_TX" length="125" />
+        </property>
+        <property name="prntlPostntlInTx" type="string">
+            <column name="PRNTL_POSTNTL_IN_TX" length="125" />
+        </property>
+        <property name="prntlPostntlOutTx" type="string">
+            <column name="PRNTL_POSTNTL_OUT_TX" length="125" />
+        </property>
+        <property name="prfrrdBrandDrgInTx" type="string">
+            <column name="PRFRRD_BRAND_DRG_IN_TX" length="125" />
+        </property>
+        <property name="prfrrdBrandDrgOutTx" type="string">
+            <column name="PRFRRD_BRAND_DRG_OUT_TX" length="125" />
+        </property>
+        <property name="nonPrfrrdBrandDrgInTx" type="string">
+            <column name="NON_PRFRRD_BRAND_DRG_IN_TX" length="125" />
+        </property>
+        <property name="nonPrfrrdBrandDrgOutTx" type="string">
+            <column name="NON_PRFRRD_BRAND_DRG_OUT_TX" length="125" />
+        </property>
+        <property name="spcltyDrgInTx" type="string">
+            <column name="SPCLTY_DRG_IN_TX" length="125" />
+        </property>
+        <property name="spcltyDrgOutTx" type="string">
+            <column name="SPCLTY_DRG_OUT_TX" length="125" />
+        </property>
+        <property name="nonPrfrrdGnrcDrgInTx" type="string">
+            <column name="NON_PRFRRD_GNRC_DRG_IN_TX" length="125" />
+        </property>
+        <property name="nonPrfrrdGnrcDrgOutTx" type="string">
+            <column name="NON_PRFRRD_GNRC_DRG_OUT_TX" length="125" />
+        </property>
+        <property name="prfrrdGnrcDrgInTx" type="string">
+            <column name="PRFRRD_GNRC_DRG_IN_TX" length="125" />
+        </property>
+        <property name="prfrrdGnrcDrgOutTx" type="string">
+            <column name="PRFRRD_GNRC_DRG_OUT_TX" length="125" />
+        </property>
+        <property name="prescDrgFrmlryUrlTx" type="string">
+            <column name="PRESC_DRG_FRMLRY_URL_TX" />
+        </property>
+        <property name="urgntCareFacInTx" type="string">
+            <column name="URGNT_CARE_FAC_IN_TX" length="125" />
+        </property>
+        <property name="urgntCareFacOutTx" type="string">
+            <column name="URGNT_CARE_FAC_OUT_TX" length="125" />
+        </property>
+        <property name="urgntCareFacLmtTx" type="string">
+            <column name="URGNT_CARE_FAC_LMT_TX" length="125" />
+        </property>
+        <property name="emrgncyRmSrvceInTx" type="string">
+            <column name="EMRGNCY_RM_SRVCE_IN_TX" length="125" />
+        </property>
+        <property name="emrgncyRmSrvceOutTx" type="string">
+            <column name="EMRGNCY_RM_SRVCE_OUT_TX" length="125" />
+        </property>
+        <property name="emrgncyTrnsprtInTx" type="string">
+            <column name="EMRGNCY_TRNSPRT_IN_TX" length="125" />
+        </property>
+        <property name="emrgncyTrnsprtOutTx" type="string">
+            <column name="EMRGNCY_TRNSPRT_OUT_TX" length="125" />
+        </property>
+        <property name="inPntHospSrvcsInTx" type="string">
+            <column name="IN_PNT_HOSP_SRVCS_IN_TX" length="125" />
+        </property>
+        <property name="inPntHospSrvcsOutTx" type="string">
+            <column name="IN_PNT_HOSP_SRVCS_OUT_TX" length="125" />
+        </property>
+        <property name="mtrntyNewBornSrvcInTx" type="string">
+            <column name="MTRNTY_NEW_BORN_SRVC_IN_TX" length="125" />
+        </property>
+        <property name="mtrntyNewBornSrvcOutTx" type="string">
+            <column name="MTRNTY_NEW_BORN_SRVC_OUT_TX" length="125" />
+        </property>
+        <property name="skilledNrsngSrvcInTx" type="string">
+            <column name="SKILLED_NRSNG_SRVC_IN_TX" length="125" />
+        </property>
+        <property name="skilledNrsngSrvcOutTx" type="string">
+            <column name="SKILLED_NRSNG_SRVC_OUT_TX" length="125" />
+        </property>
+        <property name="outPntSrvcInTx" type="string">
+            <column name="OUT_PNT_SRVC_IN_TX" length="125" />
+        </property>
+        <property name="outPntSrvcOutTx" type="string">
+            <column name="OUT_PNT_SRVC_OUT_TX" length="125" />
+        </property>
+        <property name="homeHlthCareSrvcInTx" type="string">
+            <column name="HOME_HLTH_CARE_SRVC_IN_TX" length="125" />
+        </property>
+        <property name="homeHlthCareSrvcOutTx" type="string">
+            <column name="HOME_HLTH_CARE_SRVC_OUT_TX" length="125" />
+        </property>
+        <property name="advImgngSrvcInTx" type="string">
+            <column name="ADV_IMGNG_SRVC_IN_TX" length="125" />
+        </property>
+        <property name="advImgngSrvcOutTx" type="string">
+            <column name="ADV_IMGNG_SRVC_OUT_TX" length="125" />
+        </property>
+        <property name="xrayAndImgngSrvcInTx" type="string">
+            <column name="XRAY_AND_IMGNG_SRVC_IN_TX" length="125" />
+        </property>
+        <property name="xrayAndImgngSrvcOutTx" type="string">
+            <column name="XRAY_AND_IMGNG_SRVC_OUT_TX" length="125" />
+        </property>
+        <property name="labOutPntProfSrvcInTx" type="string">
+            <column name="LAB_OUT_PNT_PROF_SRVC_IN_TX" length="125" />
+        </property>
+        <property name="labOutPntProfSrvcOutTx" type="string">
+            <column name="LAB_OUT_PNT_PROF_SRVC_OUT_TX" length="125" />
+        </property>
+        <property name="mntlHlthInPntInTx" type="string">
+            <column name="MNTL_HLTH_IN_PNT_IN_TX" length="125" />
+        </property>
+        <property name="mntlHlthInPntOutTx" type="string">
+            <column name="MNTL_HLTH_IN_PNT_OUT_TX" length="125" />
+        </property>
+        <property name="mntlHlthOutPntInTx" type="string">
+            <column name="MNTL_HLTH_OUT_PNT_IN_TX" length="200" />
+        </property>
+        <property name="mntlHlthOutPntOutTx" type="string">
+            <column name="MNTL_HLTH_OUT_PNT_OUT_TX" length="125" />
+        </property>
+        <property name="rehabOutPntSrvcInTx" type="string">
+            <column name="REHAB_OUT_PNT_SRVC_IN_TX" length="125" />
+        </property>
+        <property name="rehabOutPntSrvcOutTx" type="string">
+            <column name="REHAB_OUT_PNT_SRVC_OUT_TX" length="125" />
+        </property>
+        <property name="rehabOutPntSrvcLmtTx" type="string">
+            <column name="REHAB_OUT_PNT_SRVC_LMT_TX" length="125" />
+        </property>
+        <property name="chrpcSrvcInTx" type="string">
+            <column name="CHRPC_SRVC_IN_TX" length="125" />
+        </property>
+        <property name="chrpcSrvcOutTx" type="string">
+            <column name="CHRPC_SRVC_OUT_TX" length="125" />
+        </property>
+        <property name="chrpcSrvcLmtTx" type="string">
+            <column name="CHRPC_SRVC_LMT_TX" length="125" />
+        </property>
+        <property name="eyeExamInTx" type="string">
+            <column name="EYE_EXAM_IN_TX" length="125" />
+        </property>
+        <property name="eyeExamOutTx" type="string">
+            <column name="EYE_EXAM_OUT_TX" length="125" />
+        </property>
+        <property name="eyeExamLmtTx" type="string">
+            <column name="EYE_EXAM_LMT_TX" length="125" />
+        </property>
+        <property name="eyeGlassForChildInTx" type="string">
+            <column name="EYE_GLASS_FOR_CHILD_IN_TX" length="125" />
+        </property>
+        <property name="eyeGlassForChildOutTx" type="string">
+            <column name="EYE_GLASS_FOR_CHILD_OUT_TX" length="125" />
+        </property>
+        <property name="eyeGlassForChildLmtTx" type="string">
+            <column name="EYE_GLASS_FOR_CHILD_LMT_TX" length="125" />
+        </property>
+        <property name="havingBabyDdbleTx" type="string">
+            <column name="HAVING_BABY_DDBLE_TX" length="125" />
+        </property>
+        <property name="havingBabyCopayTx" type="string">
+            <column name="HAVING_BABY_COPAY_TX" length="125" />
+        </property>
+        <property name="havingBabyCoInsTx" type="string">
+            <column name="HAVING_BABY_CO_INS_TX" length="125" />
+        </property>
+        <property name="havingBabyLmtTx" type="string">
+            <column name="HAVING_BABY_LMT_TX" length="125" />
+        </property>
+        <property name="type2DiabitiesDdbleTx" type="string">
+            <column name="TYPE2_DIABITIES_DDBLE_TX" length="125" />
+        </property>
+        <property name="type2DiabitiesCopayTx" type="string">
+            <column name="TYPE2_DIABITIES_COPAY_TX" length="125" />
+        </property>
+        <property name="type2DiabitiesCoInsTx" type="string">
+            <column name="TYPE2_DIABITIES_CO_INS_TX" length="125" />
+        </property>
+        <property name="type2DiabitiesLmtTx" type="string">
+            <column name="TYPE2_DIABITIES_LMT_TX" length="125" />
+        </property>
+        <property name="planEvidCovTx" type="string">
+            <column name="PLAN_EVID_COV_TX" />
+        </property>
+        <property name="planSumOfBnftsTx" type="string">
+            <column name="PLAN_SUM_OF_BNFTS_TX" />
+        </property>
+        <property name="planEffvDt" type="java.util.Date">
+            <column name="PLAN_EFFV_DT" length="26" />
+        </property>
+        <property name="planExpDt" type="java.util.Date">
+            <column name="PLAN_EXP_DT" length="26" />
+        </property>
+        <property name="planStatusCd" type="string">
+            <column name="PLAN_STATUS_CD" length="2" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+        <property name="versNb" type="string">
+            <column name="VERS_NB" length="100" />
+        </property>
+        <property name="planCarrLogoNa" type="string">
+            <column name="PLAN_CARR_LOGO_NA" length="100" />
+        </property>
+        <property name="addlDtls1Tx" type="string">
+            <column name="ADDL_DTLS1_TX" length="125" />
+        </property>
+        <property name="addlDtls2Tx" type="string">
+            <column name="ADDL_DTLS2_TX" length="125" />
+        </property>
+        <property name="logclDeleteIn" type="java.lang.Character">
+            <column name="LOGCL_DELETE_IN" length="1" />
+        </property>
+        <property name="rateEffDt" type="java.util.Date">
+            <column name="RATE_EFF_DT" length="26" />
+        </property>
+        <property name="rateExpDt" type="java.util.Date">
+            <column name="RATE_EXP_DT" length="26" />
+        </property>
+        <property name="dsplPlanIn" type="java.lang.Character">
+            <column name="DSPL_PLAN_IN" length="1" />
+        </property>
+        <property name="plnsummAnnualOopocketMaxAm" type="string">
+            <column name="PLNSUMM_ANNUAL_OOPOCKET_MAX_AM" length="25" />
+        </property>
+        <property name="plnsummPrmryCareCopayAm" type="string">
+            <column name="PLNSUMM_PRMRY_CARE_COPAY_AM" length="25" />
+        </property>
+        <property name="plnsummEmrgncyRoomAm" type="string">
+            <column name="PLNSUMM_EMRGNCY_ROOM_AM" length="25" />
+        </property>
+        <property name="plnsummAnnualDeductAm" type="java.lang.Double">
+            <column name="PLNSUMM_ANNUAL_DEDUCT_AM" precision="12">
+                <comment>This column represents the deductible amount in the enrollment explore your options page.</comment>
+            </column>
+        </property>
+        <property name="habiliationSrvcInTx" type="string">
+            <column name="HABILIATION_SRVC_IN_TX" length="100" />
+        </property>
+        <property name="habiliationSrvcOutTx" type="string">
+            <column name="HABILIATION_SRVC_OUT_TX" length="100" />
+        </property>
+        <property name="habiliationSrvcLmtTx" type="string">
+            <column name="HABILIATION_SRVC_LMT_TX" length="100" />
+        </property>
+        <property name="adultOrChildIn" type="string">
+            <column name="ADULT_OR_CHILD_IN" length="1" />
+        </property>
+        <property name="homeHlthCareSrvcLmtTx" type="string">
+            <column name="HOME_HLTH_CARE_SRVC_LMT_TX" length="125">
+                <comment>Represents limit on home health care service.</comment>
+            </column>
+        </property>
+        <property name="prfrrdBrandDrgLmtTx" type="string">
+            <column name="PRFRRD_BRAND_DRG_LMT_TX" length="125">
+                <comment>Represents limit on preferred brand drugs.</comment>
+            </column>
+        </property>
+        <property name="nonPrfrrdBrandDrgLmtTx" type="string">
+            <column name="NON_PRFRRD_BRAND_DRG_LMT_TX" length="125">
+                <comment>Represents limit on non-preferred brand drugs.</comment>
+            </column>
+        </property>
+        <property name="spcltyDrgLmtTx" type="string">
+            <column name="SPCLTY_DRG_LMT_TX" length="125">
+                <comment>Represents limit on specialty drugs.</comment>
+            </column>
+        </property>
+        <property name="nonPrfrrdGnrcDrgLmtTx" type="string">
+            <column name="NON_PRFRRD_GNRC_DRG_LMT_TX" length="125">
+                <comment>Represents limit on non-preferred generic drugs.</comment>
+            </column>
+        </property>
+        <property name="prfrrdGnrcDrgLmtTx" type="string">
+            <column name="PRFRRD_GNRC_DRG_LMT_TX" length="125">
+                <comment>Represents limit on preferred generic drugs.</comment>
+            </column>
+        </property>
+        <property name="childDntlChkupInNetCopCoinsTx" type="string">
+            <column name="CHILD_DNTL_CHKUP_IN_NET_COP_COINS_TX" length="125">
+                <comment>Coinsurance or Copay for benefit: Dental Check-Up for Children(in Network)</comment>
+            </column>
+        </property>
+        <property name="childDntlChkupOutNetCopCoinsTx" type="string">
+            <column name="CHILD_DNTL_CHKUP_OUT_NET_COP_COINS_TX" length="125">
+                <comment>Coinsurance or copay for benefit: Dental Check-Up for Children(Out Of Network)</comment>
+            </column>
+        </property>
+        <property name="childDntlChkupLimitQtyTx" type="string">
+            <column name="CHILD_DNTL_CHKUP_LIMIT_QTY_TX" length="125">
+                <comment>Limit Quantity for benefit: Dental Check-Up for Children</comment>
+            </column>
+        </property>
+        <property name="childDntlBasicInNetCopCoinsTx" type="string">
+            <column name="CHILD_DNTL_BASIC_IN_NET_COP_COINS_TX" length="125">
+                <comment>Coinsurance or Copay for benefit: Basic Dental Care - Child(in Network)</comment>
+            </column>
+        </property>
+        <property name="childDntlBasicOutNetCopCoinsTx" type="string">
+            <column name="CHILD_DNTL_BASIC_OUT_NET_COP_COINS_TX" length="125">
+                <comment>Coinsurance or Copay for benefit: Basic Dental Care - Child(Out Of Network)</comment>
+            </column>
+        </property>
+        <property name="childDntlBasicLimitQtyTx" type="string">
+            <column name="CHILD_DNTL_BASIC_LIMIT_QTY_TX" length="125">
+                <comment>Limit Quantity for benefit: Basic Dental Care - Child</comment>
+            </column>
+        </property>
+        <property name="childDntlMajorInNetCopCoinsTx" type="string">
+            <column name="CHILD_DNTL_MAJOR_IN_NET_COP_COINS_TX" length="125">
+                <comment>Coinsurance or Copay for benefit: Major Dental Care - Child (In Network)</comment>
+            </column>
+        </property>
+        <property name="childDntlMajorOutNetCopCoinsTx" type="string">
+            <column name="CHILD_DNTL_MAJOR_OUT_NET_COP_COINS_TX" length="125">
+                <comment>Coinsurance or Copay for benefit: Major Dental Care - Child (Out Of Network)</comment>
+            </column>
+        </property>
+        <property name="childDntlMajorLimitQtyTx" type="string">
+            <column name="CHILD_DNTL_MAJOR_LIMIT_QTY_TX" length="125">
+                <comment>Limit Quantity for benefit: Major Dental Care - Child</comment>
+            </column>
+        </property>
+        <property name="csrAm" type="java.lang.Double">
+            <column name="CSR_AM" precision="12" />
+        </property>
+        <property name="csrDdblFmlyInTx" type="string">
+            <column name="CSR_DDBL_FMLY_IN_TX" length="125">
+                <comment>This column will store family deductible in network amount.</comment>
+            </column>
+        </property>
+        <property name="csrDdblFmlyOutTx" type="string">
+            <column name="CSR_DDBL_FMLY_OUT_TX" length="125">
+                <comment>This column will store family deductible out network amount.</comment>
+            </column>
+        </property>
+        <property name="csrPrescDrgDdblFmlyInTx" type="string">
+            <column name="CSR_PRESC_DRG_DDBL_FMLY_IN_TX" length="125">
+                <comment>This column will store prescription drug deductible in network amount.</comment>
+            </column>
+        </property>
+        <property name="csrPrescDrgDdblFmlyOutTx" type="string">
+            <column name="CSR_PRESC_DRG_DDBL_FMLY_OUT_TX" length="125">
+                <comment>This column will store prescription drug deductible out network amount.</comment>
+            </column>
+        </property>
+        <property name="csrOutOfPcktMaxFmlyInTx" type="string">
+            <column name="CSR_OUT_OF_PCKT_MAX_FMLY_IN_TX" length="125">
+                <comment>This column will store out of pocket in network amount.</comment>
+            </column>
+        </property>
+        <property name="csrOutOfPcktMaxFmlyOutTx" type="string">
+            <column name="CSR_OUT_OF_PCKT_MAX_FMLY_OUT_TX" length="125">
+                <comment>This column will store out of pocket out network amount.</comment>
+            </column>
+        </property>
+        <property name="csrPrescDrgOutOfPcktFmlyInTx" type="string">
+            <column name="CSR_PRESC_DRG_OUT_OF_PCKT_FMLY_IN_TX" length="125">
+                <comment>This column will store prescription drug out of pocket maximum in network amount.</comment>
+            </column>
+        </property>
+        <property name="csrPrescDrgOutOfPcktFmlyOutTx" type="string">
+            <column name="CSR_PRESC_DRG_OUT_OF_PCKT_FMLY_OUT_TX" length="125">
+                <comment>This column will store prescription drug out of pocket maximum out network amount.</comment>
+            </column>
+        </property>
+        <property name="skilledNrsngSrvcLimitTx" type="string">
+            <column name="SKILLED_NRSNG_SRVC_LIMIT_TX" length="125">
+                <comment>To store Limit value of Skilled Nursing Facility</comment>
+            </column>
+        </property>
+        <property name="year" type="java.lang.Short">
+            <column name="YEAR" precision="4" scale="0">
+                <comment>Represents the year for which the plans are applicable for</comment>
+            </column>
+        </property>
+        <property name="ehbNb" type="big_decimal">
+            <column name="EHB_NB" precision="12" scale="5">
+                <comment>The column represents Essential Health Benefits amount.</comment>
+            </column>
+        </property>
+        <property name="orthodonticServsInNetTx" type="string">
+            <column name="ORTHODONTIC_SERVS_IN_NET_TX" length="125">
+                <comment>As per new Plan Management Enhancements we are providing option to enter the Orthodontic Services In Network benefits data and storing into the DB.
+                Example data to be stored in these new columns:In/Out-Network: 0% coinsurance after Deductible.</comment>
+            </column>
+        </property>
+        <property name="orthodonticServsOutNetTx" type="string">
+            <column name="ORTHODONTIC_SERVS_OUT_NET_TX" length="125">
+                <comment>As per new Plan Management Enhancements we are providing option to enter the Orthodontic Services out Network benefits data and storing into the DB.
+                Example data to be stored in these new columns:In/Out-Network: 0% coinsurance after Deductible.</comment>
+            </column>
+        </property>
+        <property name="planVarncNa" type="string">
+            <column name="PLAN_VARNC_NA" length="75">
+                <comment>As per new Plan Management Enhancements we are providing option to enter the Variance Name into the DB. Example: Standard Catastrophic On.</comment>
+            </column>
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,56 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+public class RoleVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private Long roleId;
+	private String roleCode;
+	private String roleName;
+	private String roleHeaderName;
+
+	public String getRoleHeaderName() {
+		return roleHeaderName;
+	}
+
+	public void setRoleHeaderName(String roleHeaderName) {
+		this.roleHeaderName = roleHeaderName;
+	}
+
+	public Long getRoleId() {
+		return roleId;
+	}
+
+	public void setRoleId(Long roleId) {
+		this.roleId = roleId;
+	}
+
+	public String getRoleCode() {
+		return roleCode;
+	}
+
+	public void setRoleCode(String roleCode) {
+		this.roleCode = roleCode;
+	}
+
+	public String getRoleName() {
+		return roleName;
+	}
+
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
+	}
+
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+	}
+
+}

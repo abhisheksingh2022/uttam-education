@@ -1,0 +1,318 @@
+package com.hixapi.pmp.struts.planmgmt;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.model.LookupBean;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanStatus;
+import com.hixapi.pmp.api.model.APICodeConstants.UserRole;
+import com.hixapi.pmp.api.model.CarrierVO;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.api.model.criteria.PlanSearchCriteria;
+import com.hixapi.pmp.common.util.PMPAccessController;
+import com.hixapi.pmp.common.util.PMPUtil;
+import com.hixapi.pmp.service.carrier.CarrierService;
+import com.hixapi.pmp.service.plan.PlanManagerService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+import com.hixapi.web.framework.struts.SessionController;
+
+public class PlanSearchAction extends BaseSecureAction {
+
+	private static final Logger LOG = LogManager.getLogger(PlanSearchAction.class);
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7296331027656555878L;
+	private static final String RESULT_PLAN_MANAGE = "plan-manage";
+
+	private List<PlanVO> planList;
+	private String updatedIds;
+	private String newStatus;
+	
+	private List<Long> planIds;
+	private List<CarrierVO> carriers;
+	private List<Integer> years;
+	private PlanSearchCriteria criteria;
+	private String planId;
+	Map<Integer, String> manageStatusMap;
+	private String role;
+	
+	private boolean searchFlag = false;
+
+	public Map<Integer, String> getManageStatusMap() {
+		return manageStatusMap;
+	}
+
+	public void setManageStatusMap(Map<Integer, String> manageStatusMap) {
+		this.manageStatusMap = manageStatusMap;
+	}
+
+	public String getNewStatus() {
+		return newStatus;
+	}
+
+	public void setNewStatus(String newStatus) {
+		this.newStatus = newStatus;
+	}
+
+	private UserRole getUserRole() {
+		return PMPAccessController.getInstance().getHighestRole();
+	}
+
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		LOG.entry();
+		newStatus = null;
+		SessionController.setPlanManagePlan(null);
+		criteria = new PlanSearchCriteria();
+		// Get exchange status from Lookups
+		List<LookupBean> lookupBeans = getLookups().get("ExchangeStatus");
+		manageStatusMap = new HashMap<Integer, String>();
+		for (LookupBean lookupBean : lookupBeans) {
+			manageStatusMap.put(lookupBean.getSortOrder(), lookupBean.getLabel());
+		}
+		LOG.debug("*****************" + manageStatusMap + "***********************");
+		try {
+			//Retrieve all the carriers from service.(Based on no criteria)
+			carriers = ServiceLocator.getInstance().getService(CarrierService.class).searchCarriers(null);
+		} catch (BusinessServiceException bex) {
+			LOG.error("Caught error in plan search", bex);
+			super.addBusinessServiceErrorMessage(bex);
+		}
+		years = PMPUtil.getCoverageYearList();
+		//Get User roles from session.
+		UserRole userRole = getUserRole();
+		setRole(userRole.getCode());
+		//Check if the user is a carrier and apply rules for searching and changing the status.
+		CarrierVO carrier = isACarrier(userRole);
+		//Set search criteria if user is a carrier
+		if (carrier != null) {
+			carriers.clear();
+			carriers.add(carrier);
+			criteria.setSearchCarrierNbr(carrier.getCarrierIdNbr());
+		}
+		LOG.debug("************************************************ Carriers: " + carriers);
+		LOG.debug("Years: " + years);
+		LOG.debug("***********************************" + " Plan Id: " + planId);
+		LOG.exit();
+	}
+	
+	//Check if the user is a carrier and apply rules for searching and changing the status.
+	private PlanSearchCriteria updateCriteriaForCarrierSpecificUser(PlanSearchCriteria criteria) {
+		CarrierVO carrierVO = isACarrier(getUserRole());
+		if (carrierVO != null) {
+			criteria.setSearchCarrierNbr(carrierVO.getCarrierIdNbr());
+		}
+		return criteria;
+	}
+
+	//Method called when user search for plans.
+	public String search() throws Exception {
+		setSearchFlag(true);
+		LOG.entry();
+		LOG.debug("*************************************Before Plans***************************************************");
+		LOG.debug("Plan Id: " + criteria.getSearchPlanId() + " Carrier Name: " + criteria.getSearchCarrierNbr() + " Year: "
+				+ criteria.getSearchYear() + " Plan Name: " + criteria.getSearchPlanName());
+		LOG.debug("************************************After Plans***************************************************");
+
+		/*
+		 * Search using the incoming criteria
+		 */
+		List<LookupBean> lookupBeans = getLookups().get("ExchangeStatus");
+		Map<String, String> manageStatusMap = new HashMap<String, String>();
+		for (LookupBean lookupBean : lookupBeans) {
+			manageStatusMap.put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+		
+		List<LookupBean> lookupBeansMetalLevel = getLookups().get("MetalLevel");
+		Map<String, String> metalLevelsMap = new HashMap<String, String>();
+		
+		for (LookupBean lookupBean : lookupBeansMetalLevel) {
+			metalLevelsMap.put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+		
+		for (LookupBean lookupBean : lookupBeans) {
+			manageStatusMap.put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+		List<PlanVO> planList1 = new ArrayList<PlanVO>();
+		planList = new ArrayList<PlanVO>();
+
+		criteria = updateCriteriaForCarrierSpecificUser(criteria);
+
+		try {
+			//Search plans on basis of criteria specified by user.
+			planList1 = ServiceLocator.getInstance().getService(PlanManagerService.class).searchPlans(criteria);
+		} catch (BusinessServiceException bex) {
+			LOG.error("Caught error in plan search", bex);
+			super.addBusinessServiceErrorMessage(bex);
+		}
+		for (PlanVO plan : planList1) {
+			plan.setExchangeStatus(manageStatusMap.get(plan.getExchangeStatus()));
+			plan.setMetalLevel(metalLevelsMap.get(plan.getMetalLevel()));
+			planList.add(plan);
+		}
+		loadDisplayContents();
+		LOG.debug("Plans: " + planList);
+		return LOG.exit(FLASH);
+	}
+
+	// Get the carrier ID of the user if the user is logged in as a Carrier.
+	private CarrierVO isACarrier(UserRole userRole) {
+		if (userRole.getCode().equalsIgnoreCase(UserRole.CARRIER.getCode())) {
+			Long carrierId = PMPAccessController.getInstance().getCurrentUserCarrierId();
+			CarrierVO carrierVO = new CarrierVO();
+			try {
+				carrierVO = ServiceLocator.getInstance().getService(CarrierService.class).retrieveCarrier(carrierId);
+			} catch (BusinessServiceException bex) {
+				LOG.error("Caught error in plan search", bex);
+				super.addBusinessServiceErrorMessage(bex);
+			}
+			LOG.debug(carrierId + carrierVO.getCarrierId());
+			return carrierVO;
+		}
+		return null;
+	}
+
+	public String changeStatus() throws Exception {
+		LOG.entry();
+
+		LOG.debug("********************************STATUS UPDATE********************************************************");
+		LOG.debug(newStatus);
+		LOG.debug(updatedIds);
+		LOG.debug("ENUM " + PlanStatus.getEnum(newStatus) + " CODE: " + PlanStatus.getEnum(newStatus).getCode() + " "
+				+ PlanStatus.getEnum(newStatus).getDescription());
+		LOG.debug("********************************STATUS UPDATE********************************************************");
+
+		/*		for(int count = 0;i<updatedIds.)
+		*/
+		List<PlanVO> list = new ArrayList<PlanVO>();
+		String[] str = updatedIds.split(",");
+		for (int count = 0; count < str.length; count++) {
+			PlanVO planVO = new PlanVO();
+			planVO.setPlanId(str[count]);
+			list.add(planVO);
+		}
+		List<LookupBean> lookupBeans = getLookups().get("ExchangeStatus");
+		Map<String, String> manageStatusMap = new HashMap<String, String>();
+		for (LookupBean lookupBean : lookupBeans) {
+			manageStatusMap.put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+		planList = new ArrayList<PlanVO>();
+		List<PlanVO> list1 = new ArrayList<PlanVO>(0);
+//		try {
+//			ServiceLocator.getInstance().getService(PlanManagerService.class)
+//					.updatePlanStatus(list, PlanStatus.getEnum(newStatus));
+//			list1 = ServiceLocator.getInstance().getService(PlanManagerService.class).searchPlans(criteria);
+//		} catch (BusinessServiceException bex) {
+//			LOG.error("Caught error in plan search", bex);
+//			super.addBusinessServiceErrorMessage(bex);
+//		}
+
+		for (PlanVO plan : list1) {
+			plan.setExchangeStatus(manageStatusMap.get(plan.getExchangeStatus()));
+			planList.add(plan);
+		}
+		loadDisplayContents();
+		return LOG.exit(FLASH);
+	}
+
+	public String view() throws Exception {
+		LOG.entry();
+		return LOG.exit(RESULT_PLAN_MANAGE);
+	}
+
+	public String edit() throws Exception {
+		LOG.entry();
+		return LOG.exit(RESULT_PLAN_MANAGE);
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		return LOG.exit(null);
+	}
+
+	public List<PlanVO> getPlanList() {
+		return planList;
+	}
+
+	public void setPlanList(List<PlanVO> planList) {
+		this.planList = planList;
+	}
+
+	public List<Long> getPlanIds() {
+		return planIds;
+	}
+
+	public void setPlanIds(List<Long> planIds) {
+		this.planIds = planIds;
+	}
+
+	public List<Integer> getYears() {
+		return years;
+	}
+
+	public void setYears(List<Integer> years) {
+		this.years = years;
+	}
+
+	public List<CarrierVO> getCarriers() {
+		return carriers;
+	}
+
+	public void setCarriers(List<CarrierVO> carriers) {
+		this.carriers = carriers;
+	}
+
+	public void setCriteria(PlanSearchCriteria criteria) {
+		this.criteria = criteria;
+	}
+
+	public PlanSearchCriteria getCriteria() {
+		return criteria;
+	}
+
+	public String getPlanId() {
+		return planId;
+	}
+
+	public void setPlanId(String planId) {
+		this.planId = planId;
+	}
+
+	public String getUpdatedIds() {
+		return updatedIds;
+	}
+
+	public void setUpdatedIds(String updatedIds) {
+		this.updatedIds = updatedIds;
+	}
+
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
+	}
+
+	public boolean isSearchFlag() {
+		return searchFlag;
+	}
+
+	public void setSearchFlag(boolean searchFlag) {
+		this.searchFlag = searchFlag;
+	}
+
+	
+
+}

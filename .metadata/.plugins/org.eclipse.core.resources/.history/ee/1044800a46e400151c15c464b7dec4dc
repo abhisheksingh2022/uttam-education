@@ -1,0 +1,109 @@
+package com.hixapi.framework.common.context;
+
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
+
+import com.hixapi.framework.service.ServiceLocator;
+import com.uttam.framework.common.APIConstants;
+
+public class MetricEvent implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final Logger log = LogManager.getLogger(MetricEvent.class);
+	private static final long serialVersionUID = 1L;
+
+	private String serviceProviderId;
+	private MetricKeyEnum eventName;
+	private boolean success;
+	private String detail;
+
+	public MetricEvent(MetricKeyEnum event) {
+		this(event, true);
+	}
+
+	public MetricEvent(MetricKeyEnum event, boolean success) {
+		this.eventName = Validate.notNull(event);
+		this.success = success;
+	}
+
+	public String getServiceProviderId() {
+		return serviceProviderId;
+	}
+
+	public MetricEvent setServiceProviderId(String serviceProviderId) {
+		this.serviceProviderId = serviceProviderId;
+		return this;
+	}
+
+	public boolean isSuccess() {
+		return success;
+	}
+
+	public MetricEvent setSuccess(boolean success) {
+		this.success = success;
+		return this;
+	}
+
+	public String getDetail() {
+		return detail;
+	}
+
+	public MetricEvent setDetail(String detail) {
+		this.detail = detail;
+		return this;
+	}
+
+	public MetricKeyEnum getEventName() {
+		return eventName;
+	}
+
+	public void log() {
+		if (log.isInfoEnabled()) {
+			if (detail != null) {
+				if (detail.endsWith("|")) {
+					//remove | at end
+					detail = detail.substring(0, detail.length() - 1);
+				}
+				ThreadContext.put(APIConstants.LOG4JCONTEXT_EVENT_DETAIL, detail);
+			}
+			ThreadContext.put(APIConstants.LOG4JCONTEXT_EVENT_SUCCESS_IND, success ? "Y" : "N");
+			ThreadContext.put(APIConstants.LOG4JCONTEXT_EVENT_NM, eventName.getCode());
+			if (StringUtils.isBlank(serviceProviderId)) {
+				serviceProviderId = StringUtils.isNotBlank(ServiceLocator.getInstance().getApplicationId()) ? ServiceLocator
+						.getInstance().getApplicationId() : "NA";
+			}
+			ThreadContext.put(APIConstants.LOG4JCONTEXT_CLIENT_IP,
+					ContextProvider.getContextField(ContextKeyEnum.CLIENT_IP, String.class));
+			log.info(eventName.getDescription());
+		}
+	}
+
+	public MetricEvent buildDetail(Map<String, String> params) {
+		if (params != null && params.size() > 0) {
+			StringBuilder str = new StringBuilder(params.size() * 20);
+			// Assuming 20 characters per parameter
+			for (Entry<String, String> entry : params.entrySet()) {
+				str.append(entry.getKey()).append(" : ").append(entry.getValue()).append('|');
+			}
+			detail = str.toString();
+		}
+		return this;
+	}
+
+	public MetricEvent addDetail(String name, String value) {
+		StringBuilder str = new StringBuilder(detail == null ? "" : detail);
+		str.append(name).append(" : ").append(value).append('|');
+		detail = str.toString();
+		return this;
+	}
+
+}

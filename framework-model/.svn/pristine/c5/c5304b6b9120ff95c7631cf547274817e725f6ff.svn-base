@@ -1,0 +1,170 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.File;
+import java.io.Serializable;
+
+public class CarrierVO implements Serializable {
+
+	//fileType means planTemplates
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	/**
+	 * 
+	 */
+	//	private String coverageYear;
+	private String carrierId;
+	private String carrierIdNbr;
+	private String carrierName;
+	private String contactPhoneNo;
+	private String carrierUrl;
+	private String fileType;
+	private String naicCompanyCode;
+	private String naicGroupCode;
+	private String taxId;
+	private String contactAddressLine1;
+	private String contactAddressLine2;
+	private String city;
+	private String state;
+	private String zip;
+	private File file;
+	private byte[] icon;
+
+	/*public String getCoverageYear() {
+		return coverageYear;
+	}
+
+	public void setCoverageYear(String coverageYear) {
+		this.coverageYear = coverageYear;
+	}*/
+
+	public String getCarrierId() {
+		return carrierId;
+	}
+
+	public File getFile() {
+		return file;
+	}
+
+	public void setFile(File file) {
+		this.file = file;
+	}
+
+	public void setCarrierId(String carrierId) {
+		this.carrierId = carrierId;
+	}
+
+	public String getCarrierName() {
+		return carrierName;
+	}
+
+	public void setCarrierName(String carrierName) {
+		this.carrierName = carrierName;
+	}
+
+	public String getContactPhoneNo() {
+		return contactPhoneNo;
+	}
+
+	public void setContactPhoneNo(String contactPhoneNo) {
+		this.contactPhoneNo = contactPhoneNo;
+	}
+
+	public String getCarrierUrl() {
+		return carrierUrl;
+	}
+
+	public void setCarrierUrl(String carrierUrl) {
+		this.carrierUrl = carrierUrl;
+	}
+
+	public String getNaicCompanyCode() {
+		return naicCompanyCode;
+	}
+
+	public void setNaicCompanyCode(String naicCompanyCode) {
+		this.naicCompanyCode = naicCompanyCode;
+	}
+
+	public String getNaicGroupCode() {
+		return naicGroupCode;
+	}
+
+	public void setNaicGroupCode(String naicGroupCode) {
+		this.naicGroupCode = naicGroupCode;
+	}
+
+	public String getTaxId() {
+		return taxId;
+	}
+
+	public void setTaxId(String taxId) {
+		this.taxId = taxId;
+	}
+
+	public String getState() {
+		return state;
+	}
+
+	public void setState(String state) {
+		this.state = state;
+	}
+
+	public String getZip() {
+		return zip;
+	}
+
+	public void setZip(String zip) {
+		this.zip = zip;
+	}
+
+	public String getFileType() {
+		return fileType;
+	}
+
+	public void setFileType(String fileType) {
+		this.fileType = fileType;
+	}
+
+	public byte[] getIcon() {
+		return icon;
+	}
+
+	public void setIcon(byte[] icon) {
+		this.icon = icon;
+	}
+
+	public String getCarrierIdNbr() {
+		return carrierIdNbr;
+	}
+
+	public void setCarrierIdNbr(String carrierIdNbr) {
+		this.carrierIdNbr = carrierIdNbr;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getContactAddressLine1() {
+		return contactAddressLine1;
+	}
+
+	public void setContactAddressLine1(String contactAddressLine1) {
+		this.contactAddressLine1 = contactAddressLine1;
+	}
+
+	public String getContactAddressLine2() {
+		return contactAddressLine2;
+	}
+
+	public void setContactAddressLine2(String contactAddressLine2) {
+		this.contactAddressLine2 = contactAddressLine2;
+	}
+
+}

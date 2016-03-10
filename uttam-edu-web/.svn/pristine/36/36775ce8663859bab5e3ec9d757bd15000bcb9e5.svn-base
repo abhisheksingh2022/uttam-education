@@ -1,0 +1,651 @@
+package com.hixapi.pmp.struts.usermgmt;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLConnection;
+import java.sql.SQLException;
+
+import javax.sql.rowset.serial.SerialException;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.exception.UnauthorizedAccessException;
+import com.hixapi.framework.common.model.UserMessage;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants.AccessCheckMode;
+import com.hixapi.pmp.api.model.APICodeConstants.RecordMode;
+import com.hixapi.pmp.api.model.APICodeConstants.UserFunction;
+import com.hixapi.pmp.api.model.CarrierVO;
+import com.hixapi.pmp.common.util.PMPAccessController;
+import com.hixapi.pmp.common.util.PMPUtil;
+import com.hixapi.pmp.service.carrier.CarrierService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+import com.hixapi.web.framework.struts.SessionController;
+
+public class CarrierProfileAction extends BaseSecureAction {
+
+	private static final Logger LOG = LogManager.getLogger(CarrierProfileAction.class);
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7296331027656555878L;
+
+	private static final String RESULT_CARRIER_SEARCH = "carrier-search";
+	//	private static final String RESULT_LOGO_PREVIEW = "logo-preview";
+	//	private static final String RESULT_LOGO_UPDATE = "logo-update";
+	public static final String CARRIER_ID = "carrierId";
+	public static final String CARRIER_ID_NBR = "carrierIdNbr";
+	public static final String RECORD_MODE = "mode";
+
+	private static final String IMAGE = "Image";
+
+	private CarrierVO carrier = new CarrierVO();
+
+	//	private File file;
+	private Long carrierId;
+	private Long carrierIdNbr;
+	private Long selectedCarrier;
+	private boolean imagePreviewToBeShown;
+	private String mode;
+	private byte[] imagePreview;
+
+	private String userImageFileName = "";
+
+	private boolean validImage;
+	InputStream imageInputStream;
+
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		LOG.entry(carrierIdNbr);
+		/*
+		 * First check if the user has access to perform the requested mode on the carrier - admin will do this using global code
+		 */
+		if ((isEditMode() && !isEditAccess()) || (isViewMode() && !isViewAccess()) || (isAddMode() && !isAddAccess())) {
+			throw new UnauthorizedAccessException();
+		} else if (!isAddMode() && !isEditMode() && !isViewMode()) {
+			throw new UnauthorizedAccessException();
+		} else if ((isEditMode() && isEditAccess()) || (isViewMode() && isViewAccess())) {
+			carrier = ServiceLocator.getInstance().getService(CarrierService.class).retrieveCarrier(carrierIdNbr);
+			//			setFilePathToDisplay();
+			if (!PMPAccessController.getInstance().hasAllCarrierAccessForCurrentUser()
+					&& (PMPAccessController.getInstance().getCurrentUserCarrierId() != Long.parseLong(carrier
+							.getCarrierIdNbr()))) {
+				throw new UnauthorizedAccessException();
+			}
+			if (carrier != null) {
+				ServiceLocator.getInstance().getService(CarrierService.class).retrieveCarrierLogo(carrier);
+			}
+		}
+
+		if ((isEditMode() && isEditAccess()) || (isAddMode() && isAddAccess())) {
+			setReadOnly(false);
+		} else {
+			setReadOnly(true);
+		}
+		//carrier.setCarrierIdNbr(carrierIdNbr + "");
+
+		if (null != carrier.getFile())
+			SessionController.setCarrierIcon(getArrayFromFile(carrier.getFile()));
+		else if (null != carrier.getIcon())
+			SessionController.setCarrierIcon(carrier.getIcon());
+		else
+			SessionController.setCarrierIcon(null);
+		LOG.debug("Mode: " + mode);
+		LOG.debug("Number: " + carrierIdNbr);
+		LOG.debug("Carrier Id: " + carrier.getCarrierId());
+		LOG.exit();
+	}
+
+	/**
+	 * if current user has Edit Access or not
+	 * 
+	 * @return Boolean value regarding access
+	 */
+	public boolean isEditAccess() {
+		if (PMPAccessController.getInstance().isAllowedForCurrentUser(AccessCheckMode.USER_ACTION,
+				UserFunction.CARRIER_EDIT.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * if current user has Add Access or not
+	 * 
+	 * @return Boolean value regarding access
+	 */
+	public boolean isAddAccess() {
+		if (PMPAccessController.getInstance().isAllowedForCurrentUser(AccessCheckMode.USER_ACTION,
+				UserFunction.CARRIER_ADD.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * if current user has View Access or not
+	 * 
+	 * @return Boolean value regarding access
+	 */
+	public boolean isViewAccess() {
+		if (PMPAccessController.getInstance().isAllowedForCurrentUser(AccessCheckMode.USER_ACTION,
+				UserFunction.CARRIER_VIEW.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * validation for save method Called: before actual save method and show errors if any
+	 * 
+	 * @throws IOException
+	 */
+	public void validate_save() throws IOException {
+		if (StringUtils.isEmpty(carrier.getCarrierId())) {
+			super.addValidationError("msg.carrier.id_required", "carrier.carrierId");
+		} else if (carrier.getCarrierId().length() > 5) {
+			super.addValidationError("msg.carrier.id_length", "carrier.carrierId");
+		}
+		if (StringUtils.isEmpty(carrier.getCarrierName())) {
+			super.addValidationError("msg.carrier.name_required", "carrier.carrierName");
+		} else if (carrier.getCarrierName().length() > 50) {
+			super.addValidationError("msg.carrier.name_length", "carrier.carrierName");
+		}
+		/*if (StringUtils.isEmpty(carrier.getNaicCompanyCode())) {
+			super.addValidationError("msg.carrier.company_required", "carrier.naicCompanyCode");
+		} else if (carrier.getNaicCompanyCode().length() > 6) {
+			super.addValidationError("msg.carrier.company_length", "carrier.naicCompanyCode");
+		}
+		if (StringUtils.isEmpty(carrier.getNaicGroupCode())) {
+			super.addValidationError("msg.carrier.group_required", "carrier.naicGroupCode");
+		} else if (carrier.getNaicGroupCode().length() > 6) {
+			super.addValidationError("msg.carrier.group_length", "carrier.naicGroupCode");
+		}*/
+		if (!StringUtils.isEmpty(carrier.getNaicCompanyCode()) && carrier.getNaicCompanyCode().length() > 6) {
+			super.addValidationError("msg.carrier.company_length", "carrier.naicCompanyCode");
+		}
+		if (!StringUtils.isEmpty(carrier.getNaicGroupCode()) && carrier.getNaicGroupCode().length() > 6) {
+			super.addValidationError("msg.carrier.group_length", "carrier.naicGroupCode");
+		}
+		if (StringUtils.isEmpty(carrier.getTaxId())) {
+			super.addValidationError("msg.carrier.tax_required", "carrier.taxId");
+		} else if (carrier.getTaxId().length() > 10) {
+			super.addValidationError("msg.carrier.tax_length", "carrier.taxId");
+		}
+		if (!StringUtils.isEmpty(carrier.getContactPhoneNo()) && !PMPUtil.isPhoneNumberValid(carrier.getContactPhoneNo())) {
+			super.addValidationError("msg.carrier.phone_format", "carrier.contactPhoneNo");
+		}
+		if (StringUtils.isEmpty(carrier.getCarrierUrl())) {
+			super.addValidationError("msg.carrier.url_required", "carrier.carrierUrl");
+		} else if (carrier.getCarrierUrl().length() > 255) {
+			super.addValidationError("msg.carrier.url_length", "carrier.carrierUrl");
+		}
+		/*if (!StringUtils.isEmpty(carrier.getCarrierUrl()) && !PMPUtil.isUrlValid(carrier.getCarrierUrl())) {
+			super.addValidationError("msg.carrier.url_format", "carrier.carrierUrl");
+		}*/
+		if (StringUtils.isEmpty(carrier.getContactAddressLine1())) {
+			super.addValidationError("msg.carrier.address_required", "carrier.contactAddressLine1");
+		} else if (carrier.getContactAddressLine1().length() > 64) {
+			super.addValidationError("msg.carrier.address_length", "carrier.contactAddressLine1");
+		}
+		/*if (!StringUtils.isEmpty(carrier.getContactAddressLine1()) && carrier.getContactAddressLine1().length() > 64) {
+			super.addValidationError("msg.carrier.address_length", "carrier.contactAddressLine1");
+		}*/
+		if (!StringUtils.isEmpty(carrier.getContactAddressLine2()) && carrier.getContactAddressLine2().length() > 64) {
+			super.addValidationError("msg.carrier.address_length_line2", "carrier.contactAddressLine2");
+		}
+		if (StringUtils.isEmpty(carrier.getCity())) {
+			super.addValidationError("msg.carrier.city_required", "carrier.city");
+		} else if (carrier.getCity().length() > 28) {
+			super.addValidationError("msg.carrier.city_length", "city.city");
+		}
+		if (StringUtils.isEmpty(carrier.getState())) {
+			super.addValidationError("msg.carrier.state_required", "carrier.state");
+		}
+		if (StringUtils.isEmpty(carrier.getZip())) {
+			super.addValidationError("msg.carrier.zip_required", "carrier.zip");
+		} else if (!PMPUtil.isZipcodeValid(carrier.getZip())) {
+			super.addValidationError("msg.carrier.zip_length", "carrier.zip");
+		}
+		if (isAddMode()) {
+			if (null == carrier.getFile()) {
+				super.addValidationError("msg.carrier.file_not_found", "carrier.file");
+			} else if (carrier.getFile().length() > 1000000) {
+				super.addValidationError("msg.carrier.filesize_Exceeded", "carrier.file");
+			} else {
+				String mimeType = "";
+				InputStream is = new BufferedInputStream(new FileInputStream(carrier.getFile()));
+				mimeType = URLConnection.guessContentTypeFromStream(is);
+
+				if (!"image/jpeg".equals(mimeType) && !"image/png".equals(mimeType)) {
+					super.addValidationError("msg.carrier.mime_error", "carrier.file");
+				}
+			}
+		}
+	}
+
+	/**
+	 * Save current user after checking for appropriate permissions and mode for user Called: When user Save/Edit page.
+	 * 
+	 * @return FLASH/UNAUTHORIZED
+	 * @throws Exception
+	 */
+	public String save() throws Exception {
+		LOG.entry(carrier);
+		if ((isEditMode() && isEditAccess()) || (isAddMode() && isAddAccess())) {
+
+			try {
+				carrier.setContactPhoneNo(PMPUtil.getStringWithoutMask(carrier.getContactPhoneNo()));
+				/*if (isEditMode() && isEditAccess()) {
+					String carrierName = "";
+					for (CarrierVO carrierVO : carriers) {
+						if (carrierVO.getCarrierIdNbr().equals(selectedCarrier)) {
+
+							carrier.setCarrierName(carrierVO.getCarrierName());
+						}
+					}
+				}*/
+				if (isAddMode()) {
+					SessionController.setCarrierIcon(getArrayFromFile(carrier.getFile()));
+					carrier.setIcon(SessionController.getCarrierIcon());
+					ServiceLocator.getInstance().getService(CarrierService.class).saveCarrier(carrier);
+					ServiceLocator.getInstance().getService(CarrierService.class).saveCarrierLogo(carrier);
+					carrierIdNbr = Long.parseLong(carrier.getCarrierIdNbr());
+				} else if (isEditMode()) {
+
+					ServiceLocator.getInstance().getService(CarrierService.class).updateCarrier(carrier);
+
+				}
+				mode = RecordMode.EDIT.getCode();
+				//SessionController.setCarrierIcon(carrier.getIcon());
+				//SessionController.getCarrierIcon()
+				super.addBusinessMessage(new UserMessage(UserMessage.SEVERITY_INFO, "msg.carrier.savesuccess", null, null),
+						"");
+
+			} catch (BusinessServiceException bex) {
+				super.addBusinessServiceErrorMessage(bex);
+			}
+
+			addDefaultRedirectParameters();
+			return LOG.exit(FLASH);
+		} else {
+			return LOG.exit(UNAUTHORIZED);
+		}
+
+	}
+
+	/*
+			private BufferedImage getFileFromArray(byte[] bFile) {
+				BufferedImage img = null;
+				try {
+					img = ImageIO.read(new ByteArrayInputStream(bFile));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return img;
+			}
+		*/
+	/**
+	 * Clear required resources and navigates user back Called: When user selects back
+	 * 
+	 * @return RESULT_CARRIER_SEARCH
+	 * @throws Exception
+	 */
+	public String back() throws Exception {
+		LOG.entry();
+		SessionController.setCarrierIcon(null);
+		return LOG.exit(RESULT_CARRIER_SEARCH);
+	}
+
+	/**
+	 * get byte array from file
+	 * 
+	 * @param inputFile
+	 *            : file to convert into byte array
+	 * @return byte[]
+	 * @throws IOException
+	 */
+	private byte[] getArrayFromFile(File inputFile) throws IOException {
+		byte[] bFile = new byte[(int) inputFile.length()];
+		//convert file into array of bytes
+		FileInputStream fileInputStream = new FileInputStream(inputFile);
+		fileInputStream.read(bFile);
+		fileInputStream.close();
+
+		//for (int i = 0; i < bFile.length; i++) {
+		// 	System.out.print((char)bFile[i]);
+		//}
+		//System.out.println("Done");
+
+		return bFile;
+	}
+
+	/**
+	 * checks if page is opened in Edit mode or not
+	 * 
+	 * @return Boolean
+	 */
+	public boolean isEditMode() {
+		if (RecordMode.EDIT.getCode().equalsIgnoreCase(mode)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * checks if page is opened in View mode or not
+	 * 
+	 * @return Boolean
+	 */
+	public boolean isViewMode() {
+		if (RecordMode.VIEW.getCode().equalsIgnoreCase(mode)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * checks if page is opened in Add mode or not
+	 * 
+	 * @return Boolean
+	 */
+	public boolean isAddMode() {
+		if (RecordMode.ADD.getCode().equalsIgnoreCase(mode)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Validation for carrier logo for its type and size
+	 * 
+	 * @throws IOException
+	 */
+	public void validate_ajaxPreviewLogo() throws IOException {
+		if (null == carrier.getFile()) {
+			super.addValidationError("msg.carrier.file_not_found", "carrier.file");
+		} else if (carrier.getFile().length() > 1000000) {
+			super.addValidationError("msg.carrier.filesize_Exceeded", "carrier.file");
+		} else {
+			String mimeType = "";
+			InputStream is = new BufferedInputStream(new FileInputStream(carrier.getFile()));
+			mimeType = URLConnection.guessContentTypeFromStream(is);
+
+			if (!"image/jpeg".equals(mimeType) && !"image/png".equals(mimeType)) {
+				super.addValidationError("msg.carrier.mime_error", "carrier.file");
+			}
+		}
+	}
+
+	/**
+	 * set Preview Logo for preview in session Called: When carrier logo is selected for preview
+	 * 
+	 * @return FLASH/UNAUTHORIZED
+	 * @throws IOException
+	 */
+	public String ajaxPreviewLogo() throws IOException {
+		LOG.entry();
+		if (isAddAccess() || isEditAccess()) {
+			try {
+
+				byte[] fileArray;
+				fileArray = getArrayFromFile(carrier.getFile());
+				SessionController.setCarrierIconPreview(fileArray);
+				setValidImage(true);
+
+				//		LOG.debug(carrierIdNbr);
+			} catch (BusinessServiceException bex) {
+				super.addBusinessServiceErrorMessage(bex);
+			}
+			//setImagePreviewToBeShown(true);
+			addDefaultRedirectParameters();
+			return LOG.exit(FLASH);
+		} else {
+			return LOG.exit(UNAUTHORIZED);
+		}
+	}
+
+	/**
+	 * check if logo was verified during preview
+	 */
+	public void validate_ajaxUploadLogo() {
+		if (!isValidImage()) {
+			super.addValidationError("msg.carrier.invalid_image", "carrier.file");
+
+		}
+	}
+
+	/**
+	 * Called: When user selects cancel whe popup for upload Logo is Visible
+	 * 
+	 * @return FLASH
+	 */
+	public String cancelUpload() {
+		setValidImage(false);//for further uploads
+		//setImagePreview(SessionController.getCarrierIcon());
+		SessionController.setCarrierIconPreview(null);
+
+		addDefaultRedirectParameters();
+		return FLASH;
+	}
+
+	/**
+	 * Checks for proper access and modes and saves logo accordingly Called: when userselects save logo from popup
+	 * 
+	 * @return FLASH/UNAUTHORIZED
+	 * @throws SerialException
+	 * @throws SQLException
+	 */
+	public String ajaxUploadLogo() throws SerialException, SQLException {
+
+		LOG.entry();
+		//		LOG.debug("ajax call for file recieved");
+		setValidImage(false);//for further uploads
+		//		if (isAddAccess() || isEditAccess()) {
+		if ((isEditMode() && isEditAccess()) || (isAddMode() && isAddAccess())) {
+
+			try {
+				CarrierVO carrierVO = new CarrierVO();
+				carrierVO.setCarrierIdNbr(carrier.getCarrierIdNbr());
+				SessionController.setCarrierIcon(SessionController.getCarrierIconPreview());
+				SessionController.setCarrierIconPreview(null);
+				carrierVO.setIcon(SessionController.getCarrierIcon());
+				ServiceLocator.getInstance().getService(CarrierService.class).saveCarrierLogo(carrierVO);
+				super.addBusinessMessage(new UserMessage(UserMessage.SEVERITY_INFO, "msg.carrier.savesuccessimage", null,
+						null), "");
+			} catch (BusinessServiceException bex) {
+				super.addBusinessServiceErrorMessage(bex);
+			}
+			addDefaultRedirectParameters();
+			return LOG.exit(FLASH);
+		} else {
+			return LOG.exit(UNAUTHORIZED);
+		}
+	}
+
+	public InputStream getImageInputStream() {
+		return imageInputStream;
+	}
+
+	public void setImageInputStream(InputStream imageInputStream) {
+		this.imageInputStream = imageInputStream;
+	}
+
+	/**
+	 * Streams image for carrier
+	 * 
+	 * @return IMAGE
+	 * @throws IOException
+	 */
+	public String displayImage() throws IOException {
+		/*HttpServletResponse response = ServletActionContext.getResponse();
+		//		LOG.debug(carrierIdNbr);
+		response.reset();
+		byte[] byteArray = SessionController.getCarrierIcon();
+		//		byte[] byteArray = carrier.getIcon();
+		if (null != byteArray) {
+			InputStream is = new ByteArrayInputStream(byteArray);
+
+			response.setContentType(URLConnection.guessContentTypeFromStream(is));
+
+			response.setContentLength(byteArray.length);
+			response.getOutputStream().write(byteArray);
+			response.getOutputStream().flush();
+			response.getOutputStream().close();
+			Thread.currentThread().getContextClassLoader().getResourceAsStream("logoUnavailable_en.png");
+		}*/
+		//		setImageInputStream(ClassLoader.getSystemResourceAsStream("logoUnavailable_en.png"));
+
+		setImageInputStream(Thread.currentThread().getContextClassLoader().getResourceAsStream("logoUnavailable_en.png"));
+		byte[] byteArray = SessionController.getCarrierIcon();
+		if (null != byteArray) {
+			setImageInputStream(new ByteArrayInputStream(byteArray));
+		}
+		return LOG.exit(IMAGE);
+
+	}
+
+	/**
+	 * Streams image for carrier Preview
+	 * 
+	 * @return IMAGE
+	 * @throws IOException
+	 */
+	public String displayPreview() throws IOException {
+		/*HttpServletResponse response = ServletActionContext.getResponse();
+		//		LOG.debug(carrierIdNbr);
+		response.reset();
+		//		byte[] byteArray = getImagePreview();
+		byte[] byteArray = SessionController.getCarrierIconPreview();
+		if (null != byteArray) {
+			InputStream is = new ByteArrayInputStream(byteArray);
+
+			response.setContentType(URLConnection.guessContentTypeFromStream(is));
+			response.setContentLength(byteArray.length);
+			response.getOutputStream().write(byteArray);
+			response.getOutputStream().flush();
+			response.getOutputStream().close();
+
+		}*/
+		//		setImageInputStream(ClassLoader.getSystemResourceAsStream("logoUnavailable_en.png"));
+
+		setImageInputStream(Thread.currentThread().getContextClassLoader().getResourceAsStream("logoUnavailable_en.png"));
+		byte[] byteArray = SessionController.getCarrierIconPreview();
+		if (null != byteArray) {
+			setImageInputStream(new ByteArrayInputStream(byteArray));
+		}
+		return LOG.exit(IMAGE);
+
+	}
+
+	/*public boolean isImageUploaded() {
+		if (RecordMode.VIEW.getCode().equals(mode)) {
+			return false;
+		} else {
+			return true;
+		}
+	}*/
+
+	/**
+	 * add redirect parameters on page reload
+	 */
+	@Override
+	public void addDefaultRedirectParameters() {
+		addRedirectURLParameter(RECORD_MODE, mode);
+		if (null != carrier.getCarrierIdNbr()) {
+			addRedirectURLParameter(CARRIER_ID_NBR, carrier.getCarrierIdNbr());
+		}
+	}
+
+	public String getUserImageFileName() {
+		return userImageFileName;
+	}
+
+	public void setUserImageFileName(String userImageFileName) {
+		this.userImageFileName = userImageFileName;
+	}
+
+	public Long getCarrierIdNbr() {
+		return carrierIdNbr;
+	}
+
+	public void setCarrierIdNbr(Long carrierIdNbr) {
+		this.carrierIdNbr = carrierIdNbr;
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		return null;
+	}
+
+	public CarrierVO getCarrier() {
+		return carrier;
+	}
+
+	public void setCarrier(CarrierVO carrier) {
+		this.carrier = carrier;
+	}
+
+	public Long getCarrierId() {
+		return carrierId;
+	}
+
+	public void setCarrierId(Long carrierId) {
+		this.carrierId = carrierId;
+	}
+
+	public String getMode() {
+		return mode;
+	}
+
+	public void setMode(String mode) {
+		this.mode = mode;
+	}
+
+	public Long getSelectedCarrier() {
+		return selectedCarrier;
+	}
+
+	public void setSelectedCarrier(Long selectedCarrier) {
+		this.selectedCarrier = selectedCarrier;
+	}
+
+	public boolean isImagePreviewToBeShown() {
+		return imagePreviewToBeShown;
+	}
+
+	public void setImagePreviewToBeShown(boolean imagePreviewToBeShown) {
+		this.imagePreviewToBeShown = imagePreviewToBeShown;
+	}
+
+	public boolean isValidImage() {
+		return validImage;
+	}
+
+	public void setValidImage(boolean validImage) {
+		this.validImage = validImage;
+	}
+
+	public byte[] getImagePreview() {
+		return imagePreview;
+	}
+
+	public void setImagePreview(byte[] imagePreview) {
+		this.imagePreview = imagePreview;
+	}
+
+}

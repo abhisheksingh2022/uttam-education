@@ -1,0 +1,340 @@
+/**
+ * @author ujjalb
+ * Jul 21, 2015 2015
+ */
+package com.hixapi.pmp.service.plan.mapping;
+
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.pm.admin_data.extension.v1_0.InsuranceCompanyType;
+import com.hixapi.pm.admin_data.extension.v1_0.PayloadType;
+import com.hixapi.pm.admin_data.gov.cms.hix.core.OrganizationType;
+import com.hixapi.pm.admin_data.gov.niem.core.AddressType;
+import com.hixapi.pmp.entity.model.Address;
+import com.hixapi.pmp.entity.model.CarrierAdminInfo;
+
+/**
+ * @author ujjalb
+ *
+ */
+public class CarrierAdminMapping extends BaseMapper{
+
+	
+
+	private static final Logger log = LogManager.getLogger(CarrierAdminMapping.class);
+
+	/**
+	 * @param adminPayload
+	 * @param entity
+	 * @return
+	 */
+	public CarrierAdminInfo convertAdminTemplateToCarrierAdminInfo(PayloadType adminPayload, CarrierAdminInfo entity) {
+		log.entry();
+		if (adminPayload == null) {
+			return entity;
+		}
+
+		Validate.notNull(entity, "adminInfo cannot be null");
+
+		//		List<ContactInformationType> contactInfoList = adminPayload.getContactInformation();
+		//		List<PersonContactInformationAssociationType> contactAssociationList = adminPayload
+		//				.getPersonContactInformationAssociation();
+
+		//Rows 6, 7**************
+		if (adminPayload.getIssuer() != null && adminPayload.getIssuer().getIssuerStateCode() != null
+				&& adminPayload.getIssuer().getIssuerStateCode().getValue() != null) {
+			entity.setStateCd(adminPayload.getIssuer().getIssuerStateCode().getValue().value());
+		}
+		if (adminPayload.getIssuer() != null
+				&& adminPayload.getIssuer().getIssuerProposedExchangeMarketCoverageCode() != null
+				&& adminPayload.getIssuer().getIssuerProposedExchangeMarketCoverageCode().getValue() != null) {
+			entity.setProposedXchngMktCvgType(APIUtil.truncateString(adminPayload.getIssuer()
+					.getIssuerProposedExchangeMarketCoverageCode().getValue().value(), 100));
+		}
+		if (adminPayload.getIssuer() != null && adminPayload.getIssuer().getIssuerCurrentSalesMarketCode() != null
+				&& adminPayload.getIssuer().getIssuerCurrentSalesMarketCode().getValue() != null) {
+			entity.setCurrSalesMktType(APIUtil.truncateString(adminPayload.getIssuer().getIssuerCurrentSalesMarketCode()
+					.getValue().value(), 100));
+		}
+
+		//Bare minimum now.
+		{
+			OrganizationType org = adminPayload.getIssuerOrganization();
+			if (org != null) {
+				if (org.getOrganizationLocation() != null && org.getOrganizationLocation().getLocationAddress() != null) {
+					AddressType address = org.getOrganizationLocation().getLocationAddress();
+					Address entityIssuerAddress = entity.getAddressByIssuerAddressId();
+					if (entityIssuerAddress == null) {
+						entityIssuerAddress = new Address();
+						entity.setAddressByIssuerAddressId(entityIssuerAddress);
+					}
+					if (address.getStructuredAddress() != null && address.getStructuredAddress().getLocationStreet() != null
+							&& address.getStructuredAddress().getLocationStreet().getStreetFullText().getValue() != null) {
+						entityIssuerAddress.setAdrLine1(APIUtil.truncateString(address.getStructuredAddress()
+								.getLocationStreet().getStreetFullText().getValue(), 100));
+					}
+					if (address.getStructuredAddress() != null
+							&& address.getStructuredAddress().getLocationStreet() != null
+							&& address.getStructuredAddress().getLocationStreet().getStreetExtensionText().getValue() != null) {
+						entityIssuerAddress.setAdrLine2(APIUtil.truncateString(address.getStructuredAddress()
+								.getLocationStreet().getStreetExtensionText().getValue(), 100));
+					}
+					if (address.getStructuredAddress() != null
+							&& address.getStructuredAddress().getLocationCityName() != null
+							&& address.getStructuredAddress().getLocationCityName().getValue() != null) {
+						entityIssuerAddress.setCityNm(APIUtil.truncateString(address.getStructuredAddress()
+								.getLocationCityName().getValue(), 100));
+					}
+					if (address.getStructuredAddress() != null
+							&& address.getStructuredAddress().getLocationStateUSPostalServiceCode() != null
+							&& address.getStructuredAddress().getLocationStateUSPostalServiceCode().getValue() != null) {
+						entityIssuerAddress.setStateCd(address.getStructuredAddress().getLocationStateUSPostalServiceCode()
+								.getValue().value());
+					}
+					if (address.getStructuredAddress() != null
+							&& address.getStructuredAddress().getLocationPostalCode() != null
+							&& address.getStructuredAddress().getLocationPostalCode().getValue() != null) {
+						entityIssuerAddress.setZipCd(APIUtil.truncateString(address.getStructuredAddress().getLocationPostalCode()
+								.getValue(), 10));
+					}
+				}
+
+				//Names
+				if (org.getOrganizationAugmentation() != null
+						&& org.getOrganizationAugmentation().getOrganizationLegalName() != null) {
+					entity.setIssuerLegalNm(APIUtil.truncateString(org.getOrganizationAugmentation()
+							.getOrganizationLegalName().getValue(), 200));
+				}
+				if (org.getOrganizationAugmentation() != null
+						&& org.getOrganizationAugmentation().getOrganizationMarketingName() != null) {
+					entity.setIssuerMktingNm(APIUtil.truncateString(org.getOrganizationAugmentation()
+							.getOrganizationMarketingName().getValue(), 200));
+				}
+			}
+		}
+		OrganizationType company = adminPayload.getInsuranceCompanyOrganization();
+		if (company != null) {
+			if (company.getOrganizationLocation() != null && company.getOrganizationLocation().getLocationAddress() != null) {
+				AddressType address = company.getOrganizationLocation().getLocationAddress();
+				Address entityCompanyAddress = entity.getAddressByCompanyAddrId();
+				if (entityCompanyAddress == null) {
+					entityCompanyAddress = new Address();
+					entity.setAddressByCompanyAddrId(entityCompanyAddress);
+				}
+				if (address.getStructuredAddress() != null && address.getStructuredAddress().getLocationStreet() != null
+						&& address.getStructuredAddress().getLocationStreet().getStreetFullText().getValue() != null) {
+					entityCompanyAddress.setAdrLine1(APIUtil.truncateString(address.getStructuredAddress()
+							.getLocationStreet().getStreetFullText().getValue(), 100));
+				}
+				if (address.getStructuredAddress() != null && address.getStructuredAddress().getLocationStreet() != null
+						&& address.getStructuredAddress().getLocationStreet().getStreetExtensionText().getValue() != null) {
+					entityCompanyAddress.setAdrLine2(APIUtil.truncateString(address.getStructuredAddress()
+							.getLocationStreet().getStreetExtensionText().getValue(), 100));
+				}
+				if (address.getStructuredAddress() != null && address.getStructuredAddress().getLocationCityName() != null
+						&& address.getStructuredAddress().getLocationCityName().getValue() != null) {
+					entityCompanyAddress.setCityNm(APIUtil.truncateString(address.getStructuredAddress()
+							.getLocationCityName().getValue(), 100));
+				}
+				if (address.getStructuredAddress() != null
+						&& address.getStructuredAddress().getLocationStateUSPostalServiceCode() != null
+						&& address.getStructuredAddress().getLocationStateUSPostalServiceCode().getValue() != null) {
+					entityCompanyAddress.setStateCd(address.getStructuredAddress()
+							.getLocationStateUSPostalServiceCode().getValue().value());
+				}
+				if (address.getStructuredAddress() != null
+						&& address.getStructuredAddress().getLocationPostalCode() != null
+						&& address.getStructuredAddress().getLocationPostalCode().getValue() != null) {
+					entityCompanyAddress.setZipCd(APIUtil.truncateString(address.getStructuredAddress().getLocationPostalCode()
+							.getValue(), 10));
+				}
+				
+			}
+		}
+		
+		InsuranceCompanyType companyType = adminPayload.getInsuranceCompany();
+		if(companyType != null){
+			if(companyType.getInsuranceCompanyNAICGroupID()!= null){
+				entity.setNaicGrpCd(APIUtil.truncateString(companyType.getInsuranceCompanyNAICGroupID().getValue(), 10));
+			}
+			if(companyType.getInsuranceCompanyNAICID()!= null){
+				entity.setNaicCmpnyCd(APIUtil.truncateString(companyType.getInsuranceCompanyNAICID().getValue(), 10));
+			}
+			if(companyType.getInsuranceCompanyTINID()!= null){
+				entity.setTin(APIUtil.truncateString(companyType.getInsuranceCompanyTINID().getValue(), 30));
+			}
+			
+		}
+
+		//end Rows 6, 7**************
+		//		if (adminPayload.getIssuer() != null && adminPayload.getIssuer().getIssuerIndividualMarketContact() != null) {
+		//			String id = adminPayload.getIssuer().getIssuerIndividualMarketContact().getId();
+		//			PersonContactInformationAssociationType contact = findContactAssociation(contactInfoList, id);
+		//			//entity.setUsrContactDetailByIssuerIndvMktCid();
+		//		}
+
+		//Row 31- Small Group contact
+
+		//Row 31- Small Group contact - end
+		//ceo
+		/*{
+			UsrContactDetail contactEntity = entity.getUsrContactDetailByCeoCid();
+			ContactInformationType vo = findContactInformation(contactInfoList, APIConstants.MAPPING_ADMIN_CEO);
+			if (vo != null) {
+				if (contactEntity == null) {
+					contactEntity = new UsrContactDetail();
+					entity.setUsrContactDetailByCeoCid(contactEntity);
+				}
+				updateContactInfoFields(contactEntity, vo);
+				if (adminPayload.getInsuranceCompanyOrganization() != null
+						&& adminPayload.getInsuranceCompanyOrganization().getOrganizationCEO() != null
+						&& adminPayload.getInsuranceCompanyOrganization().getOrganizationCEO().getPersonName() != null) {
+					if (adminPayload.getInsuranceCompanyOrganization().getOrganizationCEO().getPersonName()
+							.getPersonGivenName() != null) {
+						contactEntity.setFrstNm(adminPayload.getInsuranceCompanyOrganization().getOrganizationCEO()
+								.getPersonName().getPersonGivenName().getValue());
+					}
+					if (adminPayload.getInsuranceCompanyOrganization().getOrganizationCEO().getPersonName()
+							.getPersonSurName() != null) {
+						contactEntity.setLastNm(adminPayload.getInsuranceCompanyOrganization().getOrganizationCEO()
+								.getPersonName().getPersonSurName().getValue());
+					}
+				}
+			} else {
+				entity.setUsrContactDetailByCeoCid(null);
+			}
+		}
+
+		//cfo
+		{
+			UsrContactDetail contactEntity = entity.getUsrContactDetailByCfoCid();
+			ContactInformationType vo = findContactInformation(contactInfoList, APIConstants.MAPPING_ADMIN_CEO);
+			if (vo != null) {
+				if (contactEntity == null) {
+					contactEntity = new UsrContactDetail();
+					entity.setUsrContactDetailByCfoCid(contactEntity);
+				}
+				updateContactInfoFields(contactEntity, vo);
+				if (adminPayload.getInsuranceCompanyOrganization() != null
+						&& adminPayload.getInsuranceCompanyOrganization().getOrganizationCFO() != null
+						&& adminPayload.getInsuranceCompanyOrganization().getOrganizationCFO().getPersonName() != null) {
+					if (adminPayload.getInsuranceCompanyOrganization().getOrganizationCFO().getPersonName()
+							.getPersonGivenName() != null) {
+						contactEntity.setFrstNm(adminPayload.getInsuranceCompanyOrganization().getOrganizationCFO()
+								.getPersonName().getPersonGivenName().getValue());
+					}
+					if (adminPayload.getInsuranceCompanyOrganization().getOrganizationCFO().getPersonName()
+							.getPersonSurName() != null) {
+						contactEntity.setLastNm(adminPayload.getInsuranceCompanyOrganization().getOrganizationCFO()
+								.getPersonName().getPersonSurName().getValue());
+					}
+				}
+			} else {
+				entity.setUsrContactDetailByCfoCid(null);
+			}
+		}
+
+		//		InsuranceCompany insuranceCompany = adminPayload.getInsuranceCompany();
+		//		String adminId = adminPayload.getId();
+		//		InsuranceCompanyOrganization insuranceCompOrg = adminPayload.getInsuranceCompanyOrganization();
+		//		Issuer issuer = adminPayload.getIssuer();
+		//		IssuerOrganization issuerOrg = adminPayload.getIssuerOrganization();
+		//		List<PersonContactInformationAssociation> pContactInfoAssociationList = adminPayload
+		//				.getPersonContactInformationAssociation();
+		//		PrimaryContactInformationReference primaryContact = adminPayload.getIssuer().getPrimaryContactInformationReference();
+
+		if (entity.getAddressByCompanyAddrId() == null) {
+			entity.setAddressByCompanyAddrId(new Address());
+		}
+
+				adminInfo.setAddressByCompanyAddrId(addressByCompanyAddrId);
+				adminInfo.setAddressByIssuerAddressId(addressByIssuerAddressId);
+				adminInfo.setAssocHlthPlnId(assocHlthPlnId);
+				adminInfo.setCarrierAdminInfoIdNbr(carrierAdminInfoIdNbr);
+				adminInfo.setCarrierMstr(carrierMstr);
+				adminInfo.setClmPrcssngTpaFlg(clmPrcssngTpaFlg);
+				adminInfo.setCmpnyLegalNm(cmpnyLegalNm);
+				adminInfo.setCoverageYear(coverageYear);
+				adminInfo.setCreateUsrId(createUsrId);
+				adminInfo.setCurrSalesMktType(currSalesMktType);
+				adminInfo.setCustomerServiceCenterByCustSvcIndvId(customerServiceCenterByCustSvcIndvId);
+				adminInfo.setCustomerServiceCenterByCustSvcShopId(customerServiceCenterByCustSvcShopId);
+				adminInfo.setDelInd(delInd);
+				adminInfo.setEdgeServerHostTpaFlg(edgeServerHostTpaFlg);
+				adminInfo.setEnrtTpaFlg(enrtTpaFlg);
+				adminInfo.setIssuerLegalNm(issuerLegalNm);
+				adminInfo.setIssuerMktingNm(issuerMktingNm);
+				adminInfo.setLogoAttchmntBlob(logoAttchmntBlob);
+				adminInfo.setNaicCmpnyCd(naicCmpnyCd);
+				adminInfo.setNaicGrpCd(naicGrpCd);
+				adminInfo.setPrimaryContactType(primaryContactType);
+				adminInfo.setProposedXchngMktCvgType(proposedXchngMktCvgType);
+				adminInfo.setStateCd(stateCd);
+				adminInfo.setTin(tin);
+				adminInfo.setUpdtDt(updtDt);
+				adminInfo.set
+		
+		*/
+		return log.exit(entity);
+
+	}
+
+	/*private PersonContactInformationAssociationType findContactAssociation(
+			List<PersonContactInformationAssociationType> list, String key) {
+		log.entry();
+		if (CollectionUtils.isNotEmpty(list)) {
+			for (PersonContactInformationAssociationType entry : list) {
+				if (StringUtils.trimToEmpty(key).equalsIgnoreCase(StringUtils.trimToEmpty(entry.getId()))) {
+					log.debug("Found matching contact information record for {}", key);
+					return entry;
+				}
+			}
+		}
+		log.info("Did not find a matching contact information record for {}", key);
+		return log.exit(null);
+	}
+
+	private void updateContactInfoFields(UsrContactDetail entity, ContactInformationType vo) {
+		if (vo.getContactEmailID() != null) {
+			entity.setEmailAdr(vo.getContactEmailID().getValue());
+		}
+		if (vo.getContactTelephoneNumber() != null && vo.getContactTelephoneNumber().getFullTelephoneNumber() != null) {
+			if (vo.getContactTelephoneNumber().getFullTelephoneNumber().getTelephoneNumberFullID() != null) {
+				entity.setPhoneNum(vo.getContactTelephoneNumber().getFullTelephoneNumber().getTelephoneNumberFullID()
+						.getValue());
+			}
+			if (vo.getContactTelephoneNumber().getFullTelephoneNumber().getTelephoneSuffixID() != null) {
+				entity.setPhoneExtn(vo.getContactTelephoneNumber().getFullTelephoneNumber().getTelephoneSuffixID()
+						.getValue());
+			}
+		}
+
+	}
+
+	private ContactInformationType findContactInformation(List<ContactInformationType> list, String key) {
+		log.entry();
+		if (CollectionUtils.isNotEmpty(list)) {
+			for (ContactInformationType entry : list) {
+				if (StringUtils.trimToEmpty(key).equalsIgnoreCase(StringUtils.trimToEmpty(entry.getId()))) {
+					log.debug("Found matching contact information record for {}", key);
+					return entry;
+				}
+			}
+		}
+		log.info("Did not find a matching contact information record for {}", key);
+		return log.exit(null);
+	}*/
+
+	
+
+	/*private void addError(String errorCode, Severity severity) {
+		BusinessServiceErrorVO vo = new BusinessServiceErrorVO();
+		vo.setErrorKey(errorCode);
+		vo.setSeverity(severity.getCode());
+		this.errors.add(vo);
+	}*/
+
+}

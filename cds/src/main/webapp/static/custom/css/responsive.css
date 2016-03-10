@@ -1,0 +1,301 @@
+/* 240 + 320px */
+
+@media screen and (min-width : 240px) and (max-width : 360px) {
+	.container{ width:98%;} 
+	.maincont{ width:98%;}
+	.logopart{ width:100%;}
+	.logopart img{ width:100%;}
+	.logopart p{ font-size:11px;}
+	.iconpart{ float:none; width:100%; text-align:center;}
+	.iconpart ul{ display:inline-block;}
+	.marginmaintop{ margin-top:20px;}
+	.mainlevelbody{ width:100%; float:left; text-align:center;}
+	.mainlevelbody label { width:100%; padding-left:0px;}
+	.drop_boxpart{ width:100%;}
+	.heading1part h2{ font-size:12px; width:100%;}
+	.agepart{ width:25%; text-align:center;}
+	.agepart h2 { font-size:12px;}
+	.agepart1{ width:25%; text-align:center;}
+	.agepart1 h2 { font-size:12px;}
+	.agepart2{ width:25%; text-align:center;}
+	.agepart2 h2 { font-size:12px;}
+	.mainpannelpart1{ float:left; width:100%;}
+	.heading1part22{ width:100%!important;}
+	.heading1part22 input[type="text"], .heading1part22 select{ width:100%;}
+	.heading1part22 h3{ padding-left:0px!important; font-size:12px;}
+	.minuspart{ left:5px;}
+	.minuspart i{ font-size:13px;}
+	.addhouseholdbutton a i{ font-size:13px; margin-top:3px;}
+	.addhouseholdbutton a{ font-size:13px;}
+	.mainadditionalpart{ width:100%; margin:10px 0 0 0;}
+	.mainadditionalpart label{ width:100%; padding-left:0px; text-align:center;}
+	.mainleftinputpart1{ float:none; width:80%; display:inline-block;}
+	.mainleftinputpart1 span{ width:100% !important;}
+	.selectspan1{ width:auto !important; margin:10px 0 0 0 !important;}
+	.mainleftinputpart1 span input[type="text"]{ width:100%;}
+	
+	a.checkprot{ float:none; display:inline-block;}
+	.leftfootpart{ text-align:center;}
+	.resmid{ text-align:center;}
+	
+	.tax h2{ width:100%;}
+	.tax p{ width:100%;}
+	.tax span{ width:100%;}
+	
+	.bt-header-lft h2, .bt-header-rht h2{ font-size:14px;}
+	.bt-header-lft, .bt-header-rht{ width:100%;}
+	.bt-header-lft div img{ width:100%;}
+	.bt-header-rht span p{ font-size:12px; margin:10px 0 0;}
+	.subscribe{ font-size:14px;}
+	#content{ width:90%;}
+	.ac-Hdng h2{ font-size:12px;}
+	.ac-dis-con{overflow-y:scroll;}
+	.page_collapsible a img{ width:100%;}
+	.page_collapsible p{ font-size:12px; padding:3px 0 0 0;}
+	.ac-trHd td, .ac-trCon a, .ac-trCon{font-size:12px;}
+}
+
+/* 480px */
+
+@media screen and (min-width : 361px) and (max-width : 480px) {
+	
+	
+	.container{ width:98%;} 
+	.maincont{ width:98%;}
+	.logopart{ width:100%;}
+	.logopart img{ width:100%;}
+	.logopart p{ font-size:11px;}
+	.iconpart{ float:none; width:100%; text-align:center;}
+	.iconpart ul{ display:inline-block;}
+	.marginmaintop{ margin-top:20px;}
+	.mainlevelbody{ width:100%; float:left; text-align:center;}
+	.mainlevelbody label { width:100%; padding-left:0px;}
+	.drop_boxpart{ width:100%;}
+	.heading1part h2{ font-size:12px; width:100%;}
+	.agepart{ width:25%; text-align:center;}
+	.agepart h2 { font-size:12px;}
+	.agepart1{ width:25%; text-align:center;}
+	.agepart1 h2 { font-size:12px;}
+	.agepart2{ width:25%; text-align:center;}
+	.agepart2 h2 { font-size:12px;}
+	.mainpannelpart1{ float:left; width:100%;}
+	.heading1part22{ width:100%!important;}
+	.heading1part22 input[type="text"], .heading1part22 select{ width:100%;}
+	.heading1part22 h3{ padding-left:0px!important; font-size:12px;}
+	.minuspart{ left:5px;}
+	.minuspart i{ font-size:13px;}
+	.addhouseholdbutton a i{ font-size:13px; margin-top:3px;}
+	.addhouseholdbutton a{ font-size:13px;}
+	.mainadditionalpart{ width:100%; margin:10px 0 0 0;}
+	.mainadditionalpart label{ width:100%; padding-left:0px; text-align:center;}
+	.mainleftinputpart1{ float:none; width:80%; display:inline-block;}
+	.mainleftinputpart1 span{ width:100% !important;}
+	.selectspan1{ width:auto !important; margin:10px 0 0 0 !important;}
+	.mainleftinputpart1 span input[type="text"]{ width:100%;}
+	
+	a.checkprot{ float:none; display:inline-block;}
+	.leftfootpart{ text-align:center;}
+	.resmid{ text-align:center;}
+	
+	.tax h2{ width:100%;}
+	.tax p{ width:100%;}
+	.tax span{ width:100%;}
+	
+	
+	
+	.bt-header-lft h2, .bt-header-rht h2{ font-size:14px;}
+	.bt-header-lft, .bt-header-rht{ width:100%;}
+	.bt-header-lft div img{ width:100%;}
+	.bt-header-rht span p{ font-size:13px; margin:10px 0 0;}
+	.subscribe{ font-size:14px;}
+	#content{ width:90%;}
+	.ac-Hdng h2{ font-size:13px;}
+	.ac-dis-con{overflow-y:scroll;}
+	.page_collapsible a img{ width:100%;}
+	.page_collapsible p{ font-size:13px; padding:3px 0 0 0;}
+	.ac-trHd td, .ac-trCon a, .ac-trCon{font-size:13px;}
+}
+
+
+@media screen and (min-width : 481px) and (max-width : 600px) {
+	
+	
+	.container{ width:98%;} 
+	.maincont{ width:98%;}
+	.logopart{ width:46%;}
+	.logopart img{ width:100%;}
+	.logopart p{ font-size:11px;}
+	.iconpart{ margin-top:43px;}
+	.iconpart ul{ display:inline-block;}
+	.marginmaintop{ margin-top:20px;}
+	.mainlevelbody{ width:100%; float:left; text-align:center;}
+	.mainlevelbody label { width:48%; padding-left:0px; text-align:left; font-size:13px;}
+	.drop_boxpart{ width:41%; float:right;}
+	.heading1part{ width:100%;}
+	.heading1part h2{ font-size:12px; padding-left:0px!important;}
+	.agepart{ width:25%; text-align:center;}
+	.agepart h2 { font-size:12px;}
+	.agepart1{ width:25%; text-align:center;}
+	.agepart1 h2 { font-size:12px;}
+	.agepart2{ width:25%; text-align:center;}
+	.agepart2 h2 { font-size:12px;}
+	.mainpannelpart1{ float:left; width:100%;}
+	.heading1part22 h3{font-size:12px;}
+	.minuspart{ left:0px;}
+	.minuspart i{ font-size:13px;}
+	.addhouseholdbutton a i{ font-size:13px; margin-top:5px;}
+	.addhouseholdbutton a{ font-size:13px;}
+	.mainadditionalpart{ width:100%; margin:20px 0 0 0;}
+	.mainadditionalpart label{ width:40%; padding-left:0px; text-align:left;}
+	.resmid{ text-align:center;}
+	.mainleftinputpart1 span{ width:44%;}
+	.mainleftinputpart1 span input[type="text"]{ width:100%;}
+	
+	a.checkprot{ float:none; display:inline-block;}
+	.leftfootpart{ text-align:center; float:none;}
+	
+	
+	footer{ text-align:center;}
+	.rightfootpart{ display:inline-block; float:none; margin-top:10px;}
+	
+	.tax h2{ width:100%;}
+	.tax p{ width:100%;}
+	.tax span{ width:100%;}
+	
+	
+	
+	.bt-header-lft h2, .bt-header-rht h2{ font-size:14px;}
+	.bt-header-lft, .bt-header-rht{ width:100%;}
+	.bt-header-lft div img{ width:100%;}
+	.bt-header-rht span p{ font-size: 15px;margin: 7px 0 0;}
+	.subscribe{ font-size:15px;}
+	#content{ width:90%;}
+	.ac-Hdng h2{ font-size:14px;}
+	.ac-dis-con{overflow-y:scroll;}
+	.page_collapsible a img{ width:100%;}
+	.page_collapsible p{ font-size:13px; padding:3px 0 0 0;}
+	.ac-trHd td, .ac-trCon a, .ac-trCon{font-size:13px;}
+}
+
+
+
+@media screen and (min-width : 601px) and (max-width : 700px) {
+	
+	
+	.container{ width:98%;} 
+	.maincont{ width:98%;}
+	.logopart{ width:46%;}
+	.logopart img{ width:100%;}
+	.logopart p{ font-size:11px;}
+	.iconpart{ margin-top:43px;}
+	.iconpart ul{ display:inline-block;}
+	.marginmaintop{ margin-top:20px;}
+	.mainlevelbody{ width:100%; float:left; text-align:center;}
+	.mainlevelbody label { width:48%; padding-left:0px; text-align:left; font-size:13px;}
+	.drop_boxpart{ width:41%; float:right;}
+	.heading1part{ width:100%;}
+	.heading1part h2{ font-size:12px; padding-left:0px!important;}
+	.agepart{ width:25%; text-align:center;}
+	.agepart h2 { font-size:12px;}
+	.agepart1{ width:25%; text-align:center;}
+	.agepart1 h2 { font-size:12px;}
+	.agepart2{ width:25%; text-align:center;}
+	.agepart2 h2 { font-size:12px;}
+	.mainpannelpart1{ float:left; width:100%;}
+	.heading1part22 h3{font-size:12px;}
+	.minuspart{ left:0px;}
+	.minuspart i{ font-size:13px;}
+	.addhouseholdbutton a i{ font-size:13px; margin-top:5px;}
+	.addhouseholdbutton a{ font-size:13px;}
+	.mainadditionalpart{ width:100%; margin:20px 0 0 0;}
+	.mainadditionalpart label{ width:40%; padding-left:0px; text-align:left;}
+	.resmid{ text-align:center;}
+	.mainleftinputpart1 span{ width:44%;}
+	.mainleftinputpart1 span input[type="text"]{ width:100%;}
+	
+	a.checkprot{ float:none; display:inline-block;}
+	.leftfootpart{ text-align:center; float:none;}
+	
+	
+	footer{ text-align:center;}
+	.rightfootpart{ display:inline-block; float:none; margin-top:10px;}
+	
+	.tax h2{ width:100%;}
+	.tax p{ width:100%;}
+	.tax span{ width:100%;}
+	
+	.bt-header-lft h2, .bt-header-rht h2{ font-size:14px;}
+	.bt-header-lft, .bt-header-rht{ width:100%;}
+	.bt-header-lft div img{ width:100%;}
+	.bt-header-rht span p{ font-size: 15px;margin: 7px 0 0;}
+	.subscribe{ font-size:15px;}
+	#content{ width:90%;}
+	.ac-Hdng h2{ font-size:14px;}
+	.ac-dis-con{overflow-y:scroll;}
+	.page_collapsible a img{ width:100%;}
+	.ac-trHd td, .ac-trCon a, .ac-trCon{font-size:13px;}
+	
+}
+
+
+/* 768px */
+
+
+
+@media screen and (min-width : 701px) and (max-width : 1000px) {
+	
+	
+	.container{ width:98%;} 
+	.maincont{ width:98%;}
+	.logopart{ width:46%;}
+	.logopart img{ width:100%;}
+	.logopart p{ font-size:11px;}
+	.iconpart{ margin-top:43px;}
+	.iconpart ul{ display:inline-block;}
+	.marginmaintop{ margin-top:20px;}
+	.mainlevelbody{ width:100%; float:left; text-align:center;}
+	.mainlevelbody label { width:48%; padding-left:0px; text-align:left; font-size:13px;}
+	.drop_boxpart{ width:41%; float:right;}
+	.heading1part{ width:100%;}
+	.heading1part h2{ font-size:12px; padding-left:0px!important;}
+	.agepart{ width:25%; text-align:center;}
+	.agepart h2 { font-size:12px;}
+	.agepart1{ width:25%; text-align:center;}
+	.agepart1 h2 { font-size:12px;}
+	.agepart2{ width:25%; text-align:center;}
+	.agepart2 h2 { font-size:12px;}
+	.mainpannelpart1{ float:left; width:100%;}
+	.heading1part22 h3{font-size:12px;}
+	.minuspart{ left:0px;}
+	.minuspart i{ font-size:13px;}
+	.addhouseholdbutton a i{ font-size:13px; margin-top:5px;}
+	.addhouseholdbutton a{ font-size:13px;}
+	.mainadditionalpart{ width:100%; margin:20px 0 0 0;}
+	.mainadditionalpart label{ width:40%; padding-left:0px; text-align:left;}
+	.resmid{ text-align:center;}
+	.mainleftinputpart1 span{ width:44%;}
+	.mainleftinputpart1 span input[type="text"]{ width:100%;}
+	
+	a.checkprot{ float:none; display:inline-block;}
+	.leftfootpart{ text-align:center; float:none;}
+	
+	
+	footer{ text-align:center;}
+	.rightfootpart{ display:inline-block; float:none; margin-top:10px;}
+	
+	.tax h2{ width:100%;}
+	.tax p{ width:100%;}
+	.tax span{ width:100%;}
+
+	
+}
+
+
+@media screen and (min-width: 868px) and (max-width:968px}{
+}
+
+@media screen and (min-width: 969px) and (max-width:999px}{
+}
+
+
+

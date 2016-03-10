@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="ASCII"?>
+<_2:WantList xmlns:_2="http://niem.gov/niem/wantlist/2" xmlns:nc="http://niem.gov/niem/niem-core/2.0" xmlns:unece="http://niem.gov/niem/unece_rec20-misc/2.0" _2:product="NIEM" _2:release="2.1">
+  <_2:Element _2:isReference="false" _2:name="nc:IdentificationID"/>
+  <_2:Element _2:isReference="false" _2:name="nc:MeasurePointValue"/>
+  <_2:Element _2:isReference="false" _2:name="nc:MeasureValue"/>
+  <_2:Element _2:isReference="false" _2:name="nc:TimeUnitCode"/>
+  <_2:Element _2:isReference="false" _2:name="nc:IdentificationID"/>
+  <_2:Element _2:isReference="false" _2:name="nc:MeasurePointValue"/>
+  <_2:Element _2:isReference="false" _2:name="nc:MeasureValue"/>
+  <_2:Element _2:isReference="false" _2:name="nc:TimeUnitCode"/>
+  <_2:Type _2:isRequested="false" _2:name="nc:IdentificationType">
+    <_2:ElementInType _2:isReference="false" _2:maxOccurs="1" _2:minOccurs="1" _2:name="nc:IdentificationID"/>
+  </_2:Type>
+  <_2:Type _2:isRequested="false" _2:name="nc:MeasurePointValueType"/>
+  <_2:Type _2:isRequested="false" _2:name="nc:MeasureType">
+    <_2:ElementInType _2:isReference="false" _2:maxOccurs="1" _2:minOccurs="1" _2:name="nc:MeasurePointValue"/>
+  </_2:Type>
+  <_2:Type _2:isRequested="false" _2:name="nc:TimeMeasureType">
+    <_2:ElementInType _2:isReference="false" _2:maxOccurs="1" _2:minOccurs="1" _2:name="nc:TimeUnitCode"/>
+  </_2:Type>
+  <_2:Type _2:isRequested="false" _2:name="unece:TimeCodeSimpleType">
+    <_2:Facet _2:facet="enumeration" _2:value="D42"/>
+    <_2:Facet _2:facet="enumeration" _2:value="B52"/>
+    <_2:Facet _2:facet="enumeration" _2:value="HUR"/>
+    <_2:Facet _2:facet="enumeration" _2:value="WEE"/>
+    <_2:Facet _2:facet="enumeration" _2:value="C26"/>
+    <_2:Facet _2:facet="enumeration" _2:value="ANN"/>
+    <_2:Facet _2:facet="enumeration" _2:value="MON"/>
+    <_2:Facet _2:facet="enumeration" _2:value="DAY"/>
+    <_2:Facet _2:facet="enumeration" _2:value="MIN"/>
+    <_2:Facet _2:facet="enumeration" _2:value="B98"/>
+    <_2:Facet _2:facet="enumeration" _2:value="C47"/>
+    <_2:Facet _2:facet="enumeration" _2:value="SEC"/>
+  </_2:Type>
+  <_2:Type _2:isRequested="false" _2:name="unece:TimeCodeType"/>
+  <_2:Type _2:isRequested="false" _2:name="nc:IdentificationType">
+    <_2:ElementInType _2:isReference="false" _2:maxOccurs="1" _2:minOccurs="1" _2:name="nc:IdentificationID"/>
+  </_2:Type>
+  <_2:Type _2:isRequested="false" _2:name="nc:MeasurePointValueType"/>
+  <_2:Type _2:isRequested="false" _2:name="nc:MeasureType">
+    <_2:ElementInType _2:isReference="false" _2:maxOccurs="1" _2:minOccurs="1" _2:name="nc:MeasurePointValue"/>
+  </_2:Type>
+  <_2:Type _2:isRequested="false" _2:name="nc:TimeMeasureType">
+    <_2:ElementInType _2:isReference="false" _2:maxOccurs="1" _2:minOccurs="1" _2:name="nc:TimeUnitCode"/>
+  </_2:Type>
+  <_2:Type _2:isRequested="false" _2:name="unece:TimeCodeSimpleType">
+    <_2:Facet _2:facet="enumeration" _2:value="D42"/>
+    <_2:Facet _2:facet="enumeration" _2:value="B52"/>
+    <_2:Facet _2:facet="enumeration" _2:value="HUR"/>
+    <_2:Facet _2:facet="enumeration" _2:value="WEE"/>
+    <_2:Facet _2:facet="enumeration" _2:value="C26"/>
+    <_2:Facet _2:facet="enumeration" _2:value="ANN"/>
+    <_2:Facet _2:facet="enumeration" _2:value="MON"/>
+    <_2:Facet _2:facet="enumeration" _2:value="DAY"/>
+    <_2:Facet _2:facet="enumeration" _2:value="MIN"/>
+    <_2:Facet _2:facet="enumeration" _2:value="B98"/>
+    <_2:Facet _2:facet="enumeration" _2:value="C47"/>
+    <_2:Facet _2:facet="enumeration" _2:value="SEC"/>
+  </_2:Type>
+  <_2:Type _2:isRequested="false" _2:name="unece:TimeCodeType"/>
+</_2:WantList>

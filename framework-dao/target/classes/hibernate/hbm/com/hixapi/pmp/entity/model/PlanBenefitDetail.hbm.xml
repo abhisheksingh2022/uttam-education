@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.PlanBenefitDetail" table="PLAN_BENEFIT_DETAIL" optimistic-lock="version">
+        <id name="benefitDetailId" type="java.lang.Long">
+            <column name="BENEFIT_DETAIL_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_PLAN_BENEFIT_DETAIL_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="planBenefitMstr" class="com.hixapi.pmp.entity.model.PlanBenefitMstr" fetch="select">
+            <column name="BENEFIT_MSTR_ID" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="lkBnftId" type="string">
+            <column name="LK_BNFT_ID" length="3" not-null="true" />
+        </property>
+        <property name="ehbYn" type="string">
+            <column name="EHB_YN" length="5" />
+        </property>
+        <property name="stateReqdBnftCd" type="string">
+            <column name="STATE_REQD_BNFT_CD" length="5" />
+        </property>
+        <property name="cvrdFlg" type="string">
+            <column name="CVRD_FLG" length="20" />
+        </property>
+        <property name="quantitativeLimitFlg" type="java.lang.Character">
+            <column name="QUANTITATIVE_LIMIT_FLG" length="1" />
+        </property>
+        <property name="limitQntyTxt" type="string">
+            <column name="LIMIT_QNTY_TXT" length="100" />
+        </property>
+        <property name="limitUnitTxt" type="string">
+            <column name="LIMIT_UNIT_TXT" length="100" />
+        </property>
+        <property name="minStayTxt" type="string">
+            <column name="MIN_STAY_TXT" length="100" />
+        </property>
+        <property name="exclTxt" type="string">
+            <column name="EXCL_TXT" length="200" />
+        </property>
+        <property name="bnftExplTxt" type="string">
+            <column name="BNFT_EXPL_TXT" length="200" />
+        </property>
+        <property name="lkEhbVarRsnCd" type="string">
+            <column name="LK_EHB_VAR_RSN_CD" length="3" />
+        </property>
+        <property name="exclInNtwrkMoopFlg" type="java.lang.Character">
+            <column name="EXCL_IN_NTWRK_MOOP_FLG" length="1" />
+        </property>
+        <property name="exclOutNtwrkMoopFlg" type="java.lang.Character">
+            <column name="EXCL_OUT_NTWRK_MOOP_FLG" length="1" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

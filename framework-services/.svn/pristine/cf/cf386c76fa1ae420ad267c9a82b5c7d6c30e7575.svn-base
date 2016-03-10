@@ -1,0 +1,172 @@
+/**
+ * @author ujjalb
+ * Jul 23, 2015 2015
+ */
+package com.hixapi.pmp.service.plan;
+
+import gov.hhs.cms.ffe.pbt.vo.PlanBenefitTemplateVO;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.List;
+
+import javax.xml.bind.ValidationEvent;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.transform.sax.SAXSource;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.pmp.common.util.xml.JAXBUtil;
+import com.hixapi.pmp.common.util.xml.ValidationEventHandlerImpl;
+
+/**
+ * @author ujjalb
+ *
+ */
+public class PlanUploadUnmarshaller {
+
+	private static final Logger LOG = LogManager.getLogger(PlanUploadUnmarshaller.class);
+
+	/**
+	 * This is the default implementation of the JAXB Marshalling. For more info follow the javadoc
+	 * http://docs.oracle.com/javaee/5/api/javax/xml/bind/Unmarshaller.html
+	 * 
+	 * @param fileTemplate
+	 * @param templateVOClass
+	 *            - this is the class for the JAXB template class. For eg: {@link PlanBenefitTemplateVO} eg:
+	 *            //PlanBenefitTemplateVO pbtVO = (PlanBenefitTemplateVO)
+	 *            PlanUploadUnmarshaller.unmarshalFile(vo.getUploadFile(), PlanBenefitTemplateVO.class);
+	 * @return
+	 */
+	public static <T> T unmarshalFile(File fileTemplate, Class<T> clazz) throws Exception {
+		LOG.entry();
+		long startTime = System.nanoTime();
+
+		T templateVO = null;
+
+		templateVO = JAXBUtil.unmarshal(fileTemplate, clazz);
+
+		//calculate time and memory
+		long endTime = System.nanoTime();
+		LOG.debug("Took " + (endTime - startTime) + " ns ");
+
+		LOG.exit();
+		return templateVO;
+	}
+
+	/**
+	 * This is the StAX implementation of JAXB. Supposed to have faster processing time.
+	 * 
+	 * @param fileTemplate
+	 * @return
+	 */
+	public static <T> T unmarshallWithStax(File fileTemplate, Class<T> type, boolean validate) throws Exception {
+		LOG.entry();
+
+		long startTime = System.nanoTime();
+
+		T templateVO = null;
+
+		//javax.xml.stream.XMLStreamReader xmlStreamReader = javax.xml.stream.XMLInputFactory().newInstance().createXMLStreamReader( ... );
+		InputStream is = null;
+		try {
+			is = new FileInputStream(fileTemplate);
+			javax.xml.stream.XMLStreamReader xmlStreamReader = XMLInputFactory.newInstance().createXMLStreamReader(is);
+
+			if (validate) {
+				ValidationEventHandlerImpl handler = new ValidationEventHandlerImpl();
+				templateVO = JAXBUtil.validatingUnmarshal(xmlStreamReader, handler, type);
+				final List<ValidationEvent> events = handler.getEvents();
+				if (CollectionUtils.isNotEmpty(events)) {
+					LOG.debug("Validations failed for XML : \n{}", APIUtil.printValidationEvents(handler));
+				}
+			} else {
+				templateVO = JAXBUtil.unmarshal(xmlStreamReader, type);
+			}
+		} finally {
+			if (is != null) {
+				is.close();
+			}
+		}
+
+		//calculate time and memory
+		long endTime = System.nanoTime();
+		LOG.debug("Took " + (endTime - startTime) + " ns ");
+
+		LOG.exit();
+		return templateVO;
+	}
+
+	/**
+	 * 
+	 * @param fileTemplate
+	 * @return
+	 */
+	public static <T> T unmarshalSAXSource(File fileTemplate, Class<T> type, boolean validate) throws Exception {
+		LOG.entry();
+
+		long startTime = System.nanoTime();
+
+		T templateVO = null;
+		final String JAXP_SCHEMA_LANGUAGE = "http://java.sun.com/xml/jaxp/properties/schemaLanguage";
+		//		final String JAXP_SCHEMA_LOCATION = "http://java.sun.com/xml/jaxp/properties/schemaSource";
+		final String W3C_XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
+		//		System.setProperty("javax.xml.parsers.SAXParserFactory", "org.apache.xerces.jaxp.SAXParserFactoryImpl");
+
+		SAXParserFactory spf = SAXParserFactory.newInstance();
+		spf.setNamespaceAware(true);
+		if (validate) {
+			spf.setValidating(true);
+		}
+		SAXParser saxParser = spf.newSAXParser();
+		//		saxParser.
+		saxParser.setProperty(JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+		//saxParser.setProperty(JAXP_SCHEMA_LOCATION, "http://....");
+
+		XMLReader xmlReader = saxParser.getXMLReader();
+
+		InputStream is = null;
+		try {
+			is = new FileInputStream(fileTemplate);
+			Reader reader = new InputStreamReader(is, "UTF-8");
+			InputSource source = new InputSource(reader);
+			SAXSource saxSource = new SAXSource(xmlReader, source);
+
+			// Setup JAXB to unmarshal
+
+			// unmarshal
+			if (validate) {
+				ValidationEventHandlerImpl handler = new ValidationEventHandlerImpl();
+				templateVO = JAXBUtil.validatingUnmarshal(saxSource, handler, type);
+				// check for events
+				final List<ValidationEvent> events = handler.getEvents();
+				if (CollectionUtils.isNotEmpty(events)) {
+					LOG.debug("Validations failed for XML : \n{}", APIUtil.printValidationEvents(handler));
+				}
+			} else {
+				templateVO = JAXBUtil.unmarshal(saxSource, type);
+			}
+			//calculate time and memory
+			long endTime = System.nanoTime();
+			LOG.debug("Took " + (endTime - startTime) + " ns");
+		} finally {
+			if (is != null) {
+				is.close();
+			}
+		}
+		LOG.exit();
+
+		return templateVO;
+	}
+
+}

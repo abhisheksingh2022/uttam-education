@@ -1,0 +1,58 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+import org.apache.commons.lang3.StringUtils;
+
+public class PlanVariantVO implements Serializable, Comparable<PlanVariantVO>{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private String varId;
+	private String varTypTxt;
+	private String variantHiosId;
+	private String planSecondaryName;
+
+	public String getVarId() {
+		return varId;
+	}
+
+	public void setVarId(String varId) {
+		this.varId = varId;
+	}
+
+	public String getVarTypTxt() {
+		return varTypTxt;
+	}
+
+	public void setVarTypTxt(String varTypTxt) {
+		this.varTypTxt = varTypTxt;
+	}
+
+	public String getVariantHiosId() {
+		return variantHiosId;
+	}
+
+	public void setVariantHiosId(String variantHiosId) {
+		this.variantHiosId = variantHiosId;
+	}
+
+	public String getPlanSecondaryName() {
+		return planSecondaryName;
+	}
+
+	public void setPlanSecondaryName(String planSecondaryName) {
+		this.planSecondaryName = planSecondaryName;
+	}
+
+	@Override
+	public int compareTo(PlanVariantVO o) {
+		if(o == null){
+			return 1;
+		}
+		return StringUtils.trimToEmpty(varId).compareTo(StringUtils.trimToEmpty(o.varId));
+	}
+
+}

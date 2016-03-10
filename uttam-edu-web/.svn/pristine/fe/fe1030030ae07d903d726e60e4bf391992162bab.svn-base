@@ -1,0 +1,66 @@
+<%@page import="java.net.InetAddress"%>
+<%@page import="com.hixapi.framework.common.env.IEnvironmentProvider"%>
+<%@page import="com.hixapi.framework.service.ServiceLocator"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/header.jsp"%>
+<body>
+	<div id="wrapper">
+
+
+
+
+
+		<div class="body-con">
+
+
+			<div class="container maincont">
+				<div class="ui-state-error errorMessageDiv"></div>
+				<br /> <br /> <b>Verification Details @ <s:property value="sysDate" />
+				</b>
+
+
+				<table style="width: 300px; border-color: black;" border="1">
+					<tr>
+						<td style="padding: 10px;">Web Framework:</td>
+						<td style="padding: 10px;"><b> <font color="green">Success</font></b></td>
+					</tr>
+					<tr>
+						<td style="padding: 10px;">Service Framework:</td>
+						<td style="padding: 10px;"><s:property value="springVerified" escapeHtml="false" /></td>
+					</tr>
+					<tr>
+						<td style="padding: 10px;">Database:</td>
+						<td style="padding: 10px;"><s:property value="dbVerified" escapeHtml="false" /></td>
+					</tr>
+					<tr>
+						<td style="padding: 10px;">Network Storage:</td>
+						<td style="padding: 10px;"><s:property value="nasVerified" escapeHtml="false" /></td>
+					</tr>
+					<tr>
+						<td style="padding: 10px;">Environment Configuration:</td>
+						<td style="padding: 10px;"><s:property value="envVerified" escapeHtml="false" /></td>
+					</tr>
+					<tr>
+						<td style="padding: 10px;">Build Id:</td>
+						<td style="padding: 10px;"><b> <font color="green"><s:property
+										value="getEnvProperty('GLOBAL',@com.hixapi.framework.common.APIConstants@PROPKEY_BUILD_ID)" /></font></b></td>
+					</tr>
+					<s:if test="dbVerified && !production">
+						<tr>
+							<td style="padding: 10px;">Server :</td>
+							<td style="padding: 10px;"><%=InetAddress.getLocalHost().getHostAddress()%> / <%=InetAddress.getLocalHost().getHostName()%></td>
+						</tr>
+					</s:if>
+				</table>
+
+			</div>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="/pmp/static/custom/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="/pmp/static/custom/js/script.js"></script>
+
+</body>
+</html>

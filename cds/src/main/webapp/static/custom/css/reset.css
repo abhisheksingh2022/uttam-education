@@ -1,0 +1,330 @@
+/*---------------------------------------------- GLOBAL SETTINGS */
+
+html {
+	border:0;
+	margin:0;
+	padding:0;
+	min-height:100%;
+}
+body {
+	border:0;
+	margin:0;
+	padding:0;
+	height:100%;
+	background:#fff;
+	position:relative;
+	color:#fff;
+}
+::selection {color:#fff;background:#02bfa7;}
+::-moz-selection {color:#fff;background:#02bfa7;} 
+/* -------------------------------------------------------------- HTML5 TAGS */
+
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section{display:block;}
+img {width: auto\9;	height: auto; max-width: 100%; vertical-align: middle; border: 0; -ms-interpolation-mode: bicubic;}
+
+/* -------------------------------------------------------------- LINKS */
+
+a {
+	color: #07b1e9;
+	text-decoration: none;
+	font-family: 'aaarghnormal';
+	font-size:13px;
+	-webkit-transition: all 0.4s ease-in-out;
+	-moz-transition: all 0.3s ease-in-out;
+	-o-transition: all 0.3s ease-in-out;	
+	transition: all 0.3s ease-in-out;
+}
+a:hover {
+	text-decoration: none;
+}
+
+/* ----------------------------------------------------------- HEADINGS */
+
+h1, h2, h3, h4, h5, h6 {
+	margin:0;
+	padding:0;
+	font-weight:normal !important;
+	font-family: 'aaarghnormal';
+	font-weight: bold;
+	margin: 0;
+	padding: 0;
+	width:auto;
+}
+h1 {
+	font-size: 48px;
+}
+h2 {
+	font-size: 22px;
+}
+h3 {
+	font-size: 15px;
+}
+h4 {
+	font-size: 13px;
+}
+h5 {
+	font-size: 12px;
+}
+h6 {
+	font-size: 12px;
+}
+
+/*-----------------------------------Padding----------------------------*/
+
+.pad5{ padding:5px 0;}
+.pad10{ padding:10px 0;}
+
+/* ----------------------------------------------------- BASE TYPOGRAPHY */
+
+p {
+	font-size: 13px;
+	line-height: 18px;
+	font-family: 'open_sansregular';
+	color:#666666;
+}
+ul li {
+	list-style:none;
+	color:#666;
+	font-family: 'aaarghnormal';
+}
+ul li a {
+	font-family: 'aaarghnormal';
+	color:#666;
+}
+ol li {
+	list-style: decimal;
+}
+/*-- nested lists --*/
+ul ul {
+	padding: 0;
+}
+ol ol {
+	padding: 0;
+}
+/*-------------------------------------------- COMMON FORMATTING */
+
+p, ul, ol {
+	margin:0;
+	padding:0 0 0 0;
+}
+ul, ol {
+	padding:0 0 0 0;
+}
+blockquote {
+	margin:1.25em;
+	padding:1.25em 1.25em 0 1.25em;
+}
+
+sup {
+	position:relative;
+	bottom:0.3em;
+	vertical-align:baseline;
+}
+sub {
+	position:relative;
+	bottom:-0.2em;
+	vertical-align:baseline;
+}
+acronym, abbr {
+	cursor:help;
+	letter-spacing:1px;
+	border-bottom:1px dashed;
+}
+.fleft {
+	float:left;
+}
+.fright {
+	float:right;
+}
+.tcenter {
+	text-align:center;
+}
+.tright {
+	text-align:right;
+}
+.tleft {
+	text-align:left;
+}
+.posi_global {
+	position:relative;
+}
+.valign {
+	vertical-align:middle;
+}
+hr {
+	background: #e5e5e5;/*NS FF OP */
+	color: #e5e5e5;/*IE*/
+	border: none;/*FF NS OP*/
+	height: 1px;/*FF NS OP*/
+	width: 100%;
+	margin-top:10px;
+}
+/*-------------------------------------------------------- LINK */
+
+a, a:link, a:visited, a:hover, a:active {
+	outline: none;
+}
+/*------------------------------------------------------- FORMS */
+
+form {
+	margin:0;
+	padding:0;
+	display:inline;
+}
+label, textarea, input[type=text], input[type=password]{cursor:text; font-family: 'aaarghnormal';}
+input[type=submit], input[type=button], select, {
+	cursor:pointer;
+	font-family: 'aaarghnormal';
+}
+input[type=text], input[type=password] {
+	outline: none;
+	color:#666;
+}
+.clearfix:after {
+	content: ".";
+	display: block;
+	height: 0;
+	clear: both;
+	visibility: hidden;
+}
+.clearfix {
+	display: block;
+	zoom: 1;
+}
+/* Regular clearing, just in case! */
+.clear {
+	clear: both;
+	overflow:hidden;
+	font-size:0;
+	height:0;
+}
+.clear1 {
+	clear: both;
+	height:1px;
+	overflow:hidden;
+	font-size:0
+}
+.clear2 {
+	clear: both;
+	height:2px;
+	overflow:hidden;
+	font-size:0
+}
+.clear5 {
+	clear: both;
+	height:5px;
+	overflow:hidden;
+	font-size:0
+}
+.clear4 {
+	clear: both;
+	height:4px;
+	overflow:hidden;
+	font-size:0
+}
+.clear10 {
+	clear: both;
+	height:10px;
+	overflow:hidden;
+	font-size:0
+}
+.clear15 {
+	clear: both;
+	height:15px;
+	overflow:hidden;
+	font-size:0
+}
+.clear20 {
+	clear: both;
+	height:20px;
+	overflow:hidden;
+	font-size:0
+}
+.clear25 {
+	clear: both;
+	height:25px;
+	overflow:hidden;
+	font-size:0
+}
+.clear30 {
+	clear: both;
+	height:30px;
+	overflow:hidden;
+	font-size:0
+}
+.clear35 {
+	clear: both;
+	height:35px;
+	overflow:hidden;
+	font-size:0
+}
+.clear40 {
+	clear: both;
+	height:40px;
+	overflow:hidden;
+	font-size:0
+}
+.clear50 {
+	clear: both;
+	height:50px;
+	overflow:hidden;
+	font-size:0
+}
+/* Specific font color, just in case! */
+
+
+/* Specific registration  error text */
+
+.noPad{padding:0 !important;}
+
+
+
+
+/*------------------------------------------------------- CUSTOM FONT */
+
+
+@font-face {
+    font-family: 'aaarghnormal';
+    src: url('fonts/aaargh-webfont.eot');
+    src: url('fonts/aaargh-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/aaargh-webfont.woff') format('woff'),
+         url('fonts/aaargh-webfont.ttf') format('truetype'),
+         url('fonts/aaargh-webfont.svg#aaarghnormal') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+@font-face {
+    font-family: 'aller_displayregular';
+    src: url('fonts/allerdisplay-webfont.eot');
+    src: url('fonts/allerdisplay-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/allerdisplay-webfont.woff') format('woff'),
+         url('fonts/allerdisplay-webfont.ttf') format('truetype'),
+         url('fonts/allerdisplay-webfont.svg#aller_displayregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'open_sansregular';
+    src: url('fonts/opensans-regular-webfont.eot');
+    src: url('fonts/opensans-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/opensans-regular-webfont.woff') format('woff'),
+         url('fonts/opensans-regular-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'open_sanslight';
+    src: url('fonts/opensans-light-webfont.eot');
+    src: url('fonts/opensans-light-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/opensans-light-webfont.woff') format('woff'),
+         url('fonts/opensans-light-webfont.ttf') format('truetype'),
+         url('fonts/opensans-light-webfont.svg#open_sanslight') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}

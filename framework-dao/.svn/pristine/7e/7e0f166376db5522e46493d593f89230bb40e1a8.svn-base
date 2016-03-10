@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.PlanMstrHist" table="PLAN_MSTR_HIST" optimistic-lock="version">
+        <id name="planHistId" type="java.lang.Long">
+            <column name="PLAN_HIST_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_PLAN_MSTR_HIST_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="planMstr" class="com.hixapi.pmp.entity.model.PlanMstr" fetch="select">
+            <column name="PLAN_MSTR_ID" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="chngByUsr" type="string">
+            <column name="CHNG_BY_USR" length="30" not-null="true" />
+        </property>
+        <property name="comments" type="string">
+            <column name="COMMENTS" length="2000" />
+        </property>
+        <property name="dtChng" type="java.util.Date">
+            <column name="DT_CHNG" length="26" not-null="true" />
+        </property>
+        <property name="changeLocationTxt" type="string">
+            <column name="CHANGE_LOCATION_TXT" length="200" not-null="true" />
+        </property>
+        <property name="changeDetailTxt" type="string">
+            <column name="CHANGE_DETAIL_TXT" length="4000" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

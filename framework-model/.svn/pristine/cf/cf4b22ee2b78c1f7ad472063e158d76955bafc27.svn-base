@@ -1,0 +1,26 @@
+package com.hixapi.pmp.api.model.plandetails;
+
+import java.io.Serializable;
+
+public class CopayAndCoinsurance implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6706105389499828924L;
+	private InAndOutNetwork copay;
+	private InAndOutNetwork coinsurance;
+	public InAndOutNetwork getCopay() {
+		return copay;
+	}
+	public void setCopay(InAndOutNetwork copay) {
+		this.copay = copay;
+	}
+	public InAndOutNetwork getCoinsurance() {
+		return coinsurance;
+	}
+	public void setCoinsurance(InAndOutNetwork coinsurance) {
+		this.coinsurance = coinsurance;
+	}
+	
+}

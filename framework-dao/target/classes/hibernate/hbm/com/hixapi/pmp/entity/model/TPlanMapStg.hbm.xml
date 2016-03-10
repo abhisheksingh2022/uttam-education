@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 29, 2015 6:45:01 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.TPlanMapStg" table="T_PLAN_MAP_STG" optimistic-lock="version">
+        <comment>The table is used to store the details of plans availability next year.</comment>
+        <id name="planMapId" type="java.lang.Long">
+            <column name="PLAN_MAP_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_T_PLAN_MAP_STG_SEQ</param>
+    		</generator>
+        </id>
+        <property name="currYrDsplPlanIdTx" type="string">
+            <column name="CURR_YR_DSPL_PLAN_ID_TX" length="22" not-null="true">
+                <comment>Represents the plan identifier for current year, which is mapped to the next years plan identifier.</comment>
+            </column>
+        </property>
+        <property name="nextYrDsplPlanIdTx" type="string">
+            <column name="NEXT_YR_DSPL_PLAN_ID_TX" length="22">
+                <comment>Represents the plan identifier for next year which corresponds to the same plan as of the previous year.</comment>
+            </column>
+        </property>
+        <property name="effvStartDt" type="java.util.Date">
+            <column name="EFFV_START_DT" length="26">
+                <comment>Represents the effective start date of the record from which it is considered valid.</comment>
+            </column>
+        </property>
+        <property name="effvEndDt" type="java.util.Date">
+            <column name="EFFV_END_DT" length="26">
+                <comment>Represents the effective end date of the record from which it is considered invalid.</comment>
+            </column>
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+        <property name="versNb" type="java.lang.Long">
+            <column name="VERS_NB" precision="12" scale="0">
+                <comment>Represents audit column value for the version of the record in the table.</comment>
+            </column>
+        </property>
+    </class>
+</hibernate-mapping>

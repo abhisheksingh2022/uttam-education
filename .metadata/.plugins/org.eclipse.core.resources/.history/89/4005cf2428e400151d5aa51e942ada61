@@ -1,0 +1,32 @@
+package com.hixapi.pmp.dao.admin.impl;
+
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hibernate.Criteria;
+import org.hibernate.Session;
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.sql.JoinType;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.dao.BaseDAO;
+import com.hixapi.pmp.dao.admin.SystemAdministrationDAO;
+import com.hixapi.pmp.entity.model.ExceptionLog;
+import com.hixapi.pmp.entity.model.FunctionRole;
+
+public class SystemAdministrationDAOImpl extends BaseDAO implements SystemAdministrationDAO {
+	
+	private static final Logger log =LogManager.getLogger(SystemAdministrationDAOImpl.class);
+	
+	@Override
+	public void saveExceptionLog(ExceptionLog exception) {
+		log.entry();
+		Session session = getCurrentSession();
+		session.save(exception);
+		session.flush();
+		log.exit();
+		
+	}
+
+}

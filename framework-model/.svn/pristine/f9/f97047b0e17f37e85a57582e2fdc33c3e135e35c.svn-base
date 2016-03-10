@@ -1,0 +1,114 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+
+public class IndividualEligibilityResults implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private int individualSequenceNumber;
+	private String name;
+	private String program1;
+	private String subProgram1;
+	private String program2;
+	private String subProgram2;
+	private boolean medicaidEligibility = false;
+	private boolean chipEligibility = false;
+	private boolean csrEligibilty = false;
+	private boolean aptcEligibility = false;
+	private boolean qhpEligibility = false;
+	private Double aptcAmount;
+	private boolean eligible = false;
+	private String age;
+
+	
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getIndividualSequenceNumber() {
+		return individualSequenceNumber;
+	}
+	public void setIndividualSequenceNumber(int individualSequenceNumber) {
+		this.individualSequenceNumber = individualSequenceNumber;
+	}
+	
+	public String getProgram1() {
+		return program1;
+	}
+	public void setProgram1(String program1) {
+		this.program1 = program1;
+	}
+	public String getSubProgram1() {
+		return subProgram1;
+	}
+	public void setSubProgram1(String subProgram1) {
+		this.subProgram1 = subProgram1;
+	}
+	public String getProgram2() {
+		return program2;
+	}
+	public void setProgram2(String program2) {
+		this.program2 = program2;
+	}
+	public String getSubProgram2() {
+		return subProgram2;
+	}
+	public void setSubProgram2(String subProgram2) {
+		this.subProgram2 = subProgram2;
+	}
+	public boolean getMedicaidEligibility() {
+		return medicaidEligibility;
+	}
+	public void setMedicaidEligibility(boolean medicaidEligibility) {
+		this.medicaidEligibility = medicaidEligibility;
+	}
+	public boolean getChipEligibility() {
+		return chipEligibility;
+	}
+	public void setChipEligibility(boolean chipEligibility) {
+		this.chipEligibility = chipEligibility;
+	}
+	public boolean getCsrEligibilty() {
+		return csrEligibilty;
+	}
+	public void setCsrEligibilty(boolean csrEligibilty) {
+		this.csrEligibilty = csrEligibilty;
+	}
+	public boolean getAptcEligibility() {
+		return aptcEligibility;
+	}
+	public void setAptcEligibility(boolean aptcEligibility) {
+		this.aptcEligibility = aptcEligibility;
+	}
+	public Double getAptcAmount() {
+		return aptcAmount;
+	}
+	public void setAptcAmount(Double aptcAmount) {
+		this.aptcAmount = aptcAmount;
+	}
+	public boolean getEligible() {
+		return eligible;
+	}
+	public void setEligible(boolean eligible) {
+		this.eligible = eligible;
+	}
+	public String getAge() {
+		return age;
+	}
+	public void setAge(String age) {
+		this.age = age;
+	}
+	public boolean getQhpEligibility() {
+		return qhpEligibility;
+	}
+	public void setQhpEligibility(boolean qhpEligibility) {
+		this.qhpEligibility = qhpEligibility;
+	}
+	
+
+}

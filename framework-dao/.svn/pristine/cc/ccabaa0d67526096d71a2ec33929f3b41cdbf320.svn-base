@@ -1,0 +1,55 @@
+package com.hixapi.pmp.dao.plan;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class TDsplPlanStgUpdate {
+
+	private Map<Object, Object> fieldUpdates = new HashMap<Object, Object>();
+
+	private String planHiosId;
+	private String planVariantHiosId;
+	private String year;
+	private String language;
+
+	public Map<Object, Object> getFieldUpdates() {
+		return fieldUpdates;
+	}
+
+	public void setFieldUpdates(Map<Object, Object> values) {
+		this.fieldUpdates = values;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
+	public String getPlanHiosId() {
+		return planHiosId;
+	}
+
+	public void setPlanHiosId(String planHiosId) {
+		this.planHiosId = planHiosId;
+	}
+
+	public String getPlanVariantHiosId() {
+		return planVariantHiosId;
+	}
+
+	public void setPlanVariantHiosId(String planVariantHiosId) {
+		this.planVariantHiosId = planVariantHiosId;
+	}
+
+	public String getYear() {
+		return year;
+	}
+
+	public void setYear(String year) {
+		this.year = year;
+	}
+
+}

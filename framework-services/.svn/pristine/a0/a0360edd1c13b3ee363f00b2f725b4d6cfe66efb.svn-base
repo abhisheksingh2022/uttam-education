@@ -1,0 +1,14 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.report;
+
+import com.hixapi.framework.service.IService;
+
+/**
+ * @author admin
+ *
+ */
+public interface ReportService extends IService {
+
+}

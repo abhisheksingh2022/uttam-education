@@ -1,0 +1,28 @@
+package com.hixapi.pmp.api.model.plandetails;
+
+import java.io.Serializable;
+
+public class EmergencyCareAndHospitalService implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5911478038801501616L;
+	private CopayAndCoinsurance emergencyRoomService;
+	private CopayAndCoinsurance inpatientHospitalServices;
+	public CopayAndCoinsurance getEmergencyRoomService() {
+		return emergencyRoomService;
+	}
+	public void setEmergencyRoomService(CopayAndCoinsurance emergencyRoomService) {
+		this.emergencyRoomService = emergencyRoomService;
+	}
+	public CopayAndCoinsurance getInpatientHospitalServices() {
+		return inpatientHospitalServices;
+	}
+	public void setInpatientHospitalServices(CopayAndCoinsurance inpatientHospitalServices) {
+		this.inpatientHospitalServices = inpatientHospitalServices;
+	}
+	
+	
+	
+}

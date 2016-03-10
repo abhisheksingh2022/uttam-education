@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+
+	<!-- Main Package (home page, dashboard etc) -->
+	<package name="pmp-main" extends="hixapi-basic" namespace="/main">
+		<default-action-ref name="home_input"></default-action-ref>
+		<action name="verify" class="com.hixapi.pmp.struts.main.DeploymentVerificationAction" method="input">
+			<result name="page">/jsp/main/verify-deployment.jsp</result>
+		</action>
+		<action name="home_*" class="com.hixapi.pmp.struts.main.HomeAction" method="{1}">
+			<result name="page">/jsp/main/home.jsp</result>
+			<result name="flash" type="flashResult">home_flash</result>
+			<result name="notifications">/jsp/main/ajax_notifications.jsp</result>
+			<result name="work-items">/jsp/main/ajax_workItems.jsp</result>
+		</action>
+		<action name="login_*" class="com.hixapi.pmp.struts.main.LoginAction" method="{1}">
+			<result name="page">/jsp/main/login.jsp</result>
+			<result name="flash" type="flashResult">login_flash</result>
+			<result name="next" type="actionRedirect">home_input</result>
+		</action>
+
+		<action name="logout_*" class="com.hixapi.pmp.struts.main.LogoutAction" method="{1}">
+			<result name="page">/jsp/main/logout.jsp</result>
+			<result name="home" type="actionRedirect">home_input</result>
+		</action>
+		<action name="ping_input" class="com.hixapi.pmp.struts.main.PingAction" method="input">
+			<result name="page">/jsp/main/ping.jsp</result>
+		</action>
+		<action name="set-system-date_*" class="com.hixapi.pmp.struts.main.SetSystemDateAction" method="{1}">
+			<result name="page">/jsp/main/ajax_set-system-date.jsp</result>
+		</action>
+	</package>
+
+	<!-- User and Carrier Management screens go here -->
+	<package name="pmp-usermgmt" extends="hixapi-basic" namespace="/usermgmt">
+
+		<action name="carrier-search_*" class="com.hixapi.pmp.struts.usermgmt.CarrierSearchAction" method="{1}">
+			<result name="page">/jsp/usermgmt/carrier-search.jsp</result>
+			<result name="flash" type="flashResult">carrier-search_flash</result>
+			<result name="carrier-profile" type="actionRedirect">carrier-profile_input</result>
+		</action>
+
+		<action name="carrier-profile_*" class="com.hixapi.pmp.struts.usermgmt.CarrierProfileAction" method="{1}">
+			<result name="page">/jsp/usermgmt/carrier-profile.jsp</result>
+			<result name="flash" type="flashResult">carrier-profile_flash</result>
+			<result name="carrier-search" type="actionRedirect">carrier-search_input</result>
+			<result name="Image" type="stream">
+				<param name="contentType">image/*</param>
+				<param name="inputName">imageInputStream</param>
+				<param name="bufferSize">1024</param>
+			</result>
+		</action>
+
+		<action name="carrieruser-search_*" class="com.hixapi.pmp.struts.usermgmt.CarrierUserSearchAction" method="{1}">
+			<result name="page">/jsp/usermgmt/carrieruser-search.jsp</result>
+			<result name="flash" type="flashResult">carrieruser-search_flash</result>
+			<result name="carrieruser-profile" type="actionRedirect">carrieruser-profile_input</result>
+		</action>
+		<action name="carrieruser-profile_*" class="com.hixapi.pmp.struts.usermgmt.CarrierUserProfileAction" method="{1}">
+			<result name="page">/jsp/usermgmt/carrieruser-profile.jsp</result>
+			<result name="address">/jsp/usermgmt/carrieruser-address.jsp</result>
+			<result name="flash" type="flashResult">carrieruser-profile_flash</result>
+			<result name="carrieruser-search" type="actionRedirect">carrieruser-search_input</result>
+		</action>
+	</package>
+
+	<!-- Plan Management screens go here (All Plan Related Screens) -->
+	<package name="pmp-planmgmt" extends="hixapi-basic" namespace="/planmgmt">
+		<action name="plan-excel_*" class="com.hixapi.pmp.struts.planmgmt.ExcelUploadAction" method="{1}">
+			<result name="page">/jsp/planmgmt/excel-upload.jsp</result>
+			<result name="flash" type="flashResult">plan-excel_flash</result>
+			<result name="download" type="stream">
+				<param name="contentDisposition">attachment;filename="${excelFileName}"</param>
+				<param name="contentType">application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</param>
+				<param name="inputName">excelInputStream</param>
+				<param name="contentLength">${excelFileLength}</param>
+				<param name="bufferSize">2048</param>
+			</result>
+		</action>
+		<action name="plan-search_*" class="com.hixapi.pmp.struts.planmgmt.PlanSearchAction" method="{1}">
+			<result name="page">/jsp/planmgmt/plan-search.jsp</result>
+			<result name="flash" type="flashResult">plan-search_flash</result>
+			<result name="plan-manage" type="actionRedirect">plan-manage_input</result>
+		</action>
+		<action name="plan-upload_*" class="com.hixapi.pmp.struts.planmgmt.PlanUploadAction" method="{1}">
+			<result name="page">/jsp/planmgmt/plan-upload.jsp</result>
+			<result name="successPlans">/jsp/planmgmt/ajax-plan-upload-history.jsp</result>
+			<result name="flash" type="flashResult">plan-upload_flash</result>
+		</action>
+		<action name="plan-manage_*" class="com.hixapi.pmp.struts.planmgmt.PlanManageAction" method="{1}">
+			<result name="page">/jsp/planmgmt/plan-manage.jsp</result>
+			<result name="flash" type="flashResult">plan-manage_flash</result>
+			<result name="plan-search" type="actionRedirect">plan-search_input</result>
+			<result name="plan-rates" type="actionRedirect">plan-rates_input</result>
+			<result name="plan-benefits" type="actionRedirect">plan-benefits_input</result>
+			<result name="plan-preview" type="actionRedirect">plan-preview_input</result>
+			<result name="plan-download" type="stream">
+				<param name="contentType">application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</param>
+				<param name="inputName">fileStream</param>
+				<param name="contentDisposition">attachment;filename="${pdfFileName}"</param>
+				<param name="bufferSize">1024</param>
+			</result>
+			<result name="plan-send-notif" type="actionRedirect"></result>
+			<result name="plan-assign-task" type="actionRedirect"></result>
+			<result name="pdf-download" type="stream">
+				<param name="contentType">application/pdf</param>
+				<param name="inputName">pdfStream</param>
+				<param name="contentDisposition">attachment;filename="${pdfFileName}"</param>
+				<param name="contentLength">${pdfFileLength}</param>
+				<param name="bufferSize">1024</param>
+			</result>
+		</action>
+		<action name="plan-preview_*" class="com.hixapi.pmp.struts.planmgmt.PlanPreviewAction" method="{1}">
+			<result name="page">/jsp/planmgmt/plan-preview.jsp</result>
+			<result name="flash" type="flashResult">plan-preview_flash</result>
+			<result name="pdf-download" type="stream">
+				<param name="contentType">application/pdf</param>
+				<param name="inputName">pdfStream</param>
+				<param name="contentDisposition">attachment;filename="${pdfFileName}"</param>
+				<param name="contentLength">${pdfFileLength}</param>
+				<param name="bufferSize">1024</param>
+			</result>
+		</action>
+		<action name="plan-rates_*" class="com.hixapi.pmp.struts.planmgmt.PlanRatesAction" method="{1}">
+			<result name="page">/jsp/planmgmt/plan-rates.jsp</result>
+			<result name="flash" type="flashResult">plan-rates_flash</result>
+			<result name="plan-manage" type="actionRedirect">plan-manage_input</result>
+			<result name="plan-benefits" type="actionRedirect">plan-benefits_input</result>
+			<result name="plan-search" type="actionRedirect">plan-search_input</result>
+		</action>
+		<action name="plan-benefits_*" class="com.hixapi.pmp.struts.planmgmt.PlanBenefitsAction" method="{1}">
+			<result name="page">/jsp/planmgmt/plan-benefits.jsp</result>
+			<result name="flash" type="flashResult">plan-benefits_flash</result>
+			<result name="plan-manage" type="actionRedirect">plan-manage_input</result>
+			<result name="plan-rates" type="actionRedirect">plan-rates_input</result>
+			<result name="plan-preview">/jsp/planmgmt/plan-preview.jsp</result>
+			<result name="plan-search" type="actionRedirect">plan-search_input</result>
+			<result name="pdf-download" type="stream">
+				<param name="contentType">application/pdf</param>
+				<param name="inputName">pdfStream</param>
+				<param name="contentDisposition">attachment;filename="${pdfFileName}"</param>
+				<param name="contentLength">${pdfFileLength}</param>
+				<param name="bufferSize">1024</param>
+			</result>
+		</action>
+	</package>
+
+	<!-- Reports screens go here -->
+	<package name="pmp-report" extends="hixapi-basic" namespace="/report">
+		<action name="loginhistory-report_*" class="com.hixapi.pmp.struts.reports.LoginHistoryAction" method="{1}">
+			<result name="page">/jsp/report/loginhistory-report.jsp</result>
+			<result name="flash" type="flashResult">loginhistory-report_flash</result>
+			<result name="loginhistory-report" type="actionRedirect">loginhistory-report_input</result>
+		</action>
+		<action name="planhistory-report_*" class="com.hixapi.pmp.struts.reports.PlanHistoryAction" method="{1}">
+			<result name="page">/jsp/report/planhistory-report.jsp</result>
+			<result name="flash" type="flashResult">planhistory-report_flash</result>
+			<result name="loginhistory-report" type="actionRedirect">planhistory-report_input</result>
+		</action>
+
+	</package>
+	<!-- Administration screens go here -->
+	<package name="pmp-admin" extends="hixapi-basic" namespace="/admin">
+	</package>
+
+	<!-- Public accessible screens go here (Carrier Logo, Plan PDF download) -->
+	<package name="pmp-public" extends="hixapi-basic" namespace="/public">
+		<action name="plan-pdf" class="com.hixapi.pmp.struts.publicdata.PlanPdfAction" method="input">
+			<result name="pdf-download" type="stream">
+				<param name="contentType">application/pdf</param>
+				<param name="inputName">pdfStream</param>
+				<param name="contentDisposition">attachment;filename="${pdfFileName}"</param>
+				<param name="contentLength">${pdfFileLength}</param>
+				<param name="bufferSize">1024</param>
+			</result>
+		</action>
+		<action name="carrier-image" class="com.hixapi.pmp.struts.publicdata.CarrierImageAction" method="execute">
+			<result name="image" type="stream">
+				<param name="contentType">image/*</param>
+				<param name="inputName">imageInputStream</param>
+				<param name="bufferSize">1024</param>
+			</result>
+		</action>
+
+	</package>
+
+
+	<!-- Prescreening Pages (Browse anonymously) -->
+	<package name="pmp-prescreen" extends="hixapi-basic" namespace="/prescreen">
+		<action name="prescreening_*" class="com.hixapi.pmp.struts.prescreen.HouseholdAction" method="{1}">
+			<result name="page">/jsp/prescreen/household.jsp</result>
+			<result name="flash" type="flashResult">prescreening_flash</result>
+			<result name="legalStatus">/jsp/prescreen/household_legalstatuscheck.jsp</result>
+			<result name="next" type="actionRedirect">plan-listing_input</result>
+		</action>
+		<action name="plan-listing_*" class="com.hixapi.pmp.struts.prescreen.PlanListingAction" method="{1}">
+			<result name="page">/jsp/prescreen/plan-listing-cp.jsp</result>
+			<result name="flash" type="flashResult">prescreening_flash</result>
+			<result name="back" type="actionRedirect">prescreening_input</result>
+			<result name="add-to-compare">/jsp/prescreen/plan-listing-compare.jsp</result>
+		</action>
+		<action name="plan-comparison_*" class="com.hixapi.pmp.struts.prescreen.PlanComparisonAction" method="{1}">
+			<result name="page">/jsp/prescreen/plan-comparison.jsp</result>
+			<result name="flash" type="flashResult">plan-comparison_flash</result>
+			<result name="back" type="actionRedirect">plan-listing_input</result>
+		</action>
+
+	</package>
+
+	<!-- My Account screens go here (Preferences, Notifications, Tasks) -->
+	<package name="pmp-myaccount" extends="hixapi-basic" namespace="/myaccount">
+	</package>
+</struts>

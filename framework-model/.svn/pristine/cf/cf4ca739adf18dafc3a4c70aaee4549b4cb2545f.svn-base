@@ -1,0 +1,13 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+public class SystemPreferenceVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+
+}

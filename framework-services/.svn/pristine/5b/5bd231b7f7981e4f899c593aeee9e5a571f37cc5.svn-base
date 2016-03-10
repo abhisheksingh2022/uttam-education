@@ -1,0 +1,220 @@
+/**
+ * @author ujjalb
+ * Jul 21, 2015 2015
+ */
+package com.hixapi.pmp.service.plan.mapping;
+
+import gov.hhs.cms.ffe.rates.vo.ExcelCellVO;
+import gov.hhs.cms.ffe.rates.vo.QhpApplicationRateGroupVO;
+import gov.hhs.cms.ffe.rates.vo.QhpApplicationRateItemVO;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.context.ContextKeyEnum;
+import com.hixapi.framework.common.context.ContextProvider;
+import com.hixapi.framework.common.model.LookupBean;
+import com.hixapi.framework.common.model.UserIdentity;
+import com.hixapi.framework.dao.LookupManager;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanStatus;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.api.model.APICodeConstants.YesNo;
+import com.hixapi.pmp.entity.model.CarrierAdminInfo;
+import com.hixapi.pmp.entity.model.PlanLifecycle;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanRateDetail;
+
+/**
+ * @author ujjalb
+ *
+ */
+public class PlanRatesTemplateMapping extends BaseMapper {
+
+	private static final Logger LOG = LogManager.getLogger(PlanRatesTemplateMapping.class);
+	private List<LookupBean> ratingAreaLookups;
+
+	/**
+	 * 
+	 * @param rateGroupVO
+	 * @param planRateMstr
+	 * @return
+	 */
+	public List<PlanRateDetail> buildPlanRatesList(QhpApplicationRateGroupVO rateGroupVO, List<PlanMstr> entityList,
+			CarrierAdminInfo carrierAdminInfo) {
+		LOG.entry();
+
+		/*		planRateMstr.setCrtdDt(crtdDt);
+				planRateMstr.setCreateUsrId(createUsrId);
+				planRateMstr.setUpdtDt(updtDt);
+				planRateMstr.setUpdtUserId(updtUserId);
+		*/
+
+		List<QhpApplicationRateItemVO> items = rateGroupVO.getItems();
+		List<PlanRateDetail> list = new ArrayList<PlanRateDetail>();
+		Set<Long> lifecycleUpdatedPlanIds = new HashSet<Long>();
+		if (items != null) {
+			for (QhpApplicationRateItemVO item : items) {
+				PlanRateDetail planRateDetail = mapItemToPlanRateDetails(item);
+
+				if (!isValidCoverageYear(item, carrierAdminInfo.getCoverageYear())) {
+					List<Object> subs = new ArrayList<Object>();
+					subs.add(carrierAdminInfo.getCoverageYear());
+					subs.add(getString(item.getPlanId()));
+					addError("msg.planupload.plan_year_mismatch", Severity.ERROR, subs);
+					break;
+				}
+
+				PlanMstr plan = findPlanMstr(entityList, item);
+				if (plan == null) {
+					List<Object> subs = new ArrayList<Object>();
+					subs.add(getString(item.getPlanId()));
+					addError("msg.planupload.planrate_plan_notfound", Severity.ERROR, subs);
+					break;
+				} else {
+					PlanStatus status = plan.getCurrentPlanStatus();
+					if (status != null && status == PlanStatus.ACTIVATED) {
+						List<Object> subs = new ArrayList<Object>();
+						subs.add(plan.getPlanHiosId());
+						addError("msg.planupload.plan_activated_status", Severity.ERROR, subs);
+						break;
+					}
+					planRateDetail.setPlanMstr(plan);
+
+					if (!lifecycleUpdatedPlanIds.contains(plan.getPlanMstrId())) {
+						lifecycleUpdatedPlanIds.add(plan.getPlanMstrId());
+						if (CollectionUtils.isNotEmpty(plan.getPlanLifecycles())) {
+							for (PlanLifecycle l : plan.getPlanLifecycles()) {
+								l.setActiveInd(YesNo.NO.getCode());
+							}
+						}
+						PlanLifecycle entry = new PlanLifecycle();
+						entry.setPlanMstr(plan);
+						entry.setActiveInd(APIConstants.INDICATOR_YES);
+						entry.setLkPlanStatusCd(PlanStatus.INCOMPLETE.getCode());
+						entry.setStatusChangeDt(APIUtil.getCurrentDate());
+						entry.setStatusChangeUsrId(ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER,
+								UserIdentity.class).getLoginId());
+						plan.getPlanLifecycles().add(entry);
+					}
+
+				}
+				list.add(planRateDetail);
+			}
+
+		}
+
+		LOG.exit();
+		return list;
+	}
+
+	private boolean isValidCoverageYear(QhpApplicationRateItemVO vo, int coverageYear) {
+		boolean result = false;
+		Date dt = stringToDate(getString(vo.getEffectiveDate()));
+		if (dt != null) {
+			Calendar cal = Calendar.getInstance();
+			cal.setLenient(false);
+			cal.setTime(dt);
+			if (cal.get(Calendar.YEAR) == coverageYear) {
+				result = true;
+			}
+		}
+		return result;
+	}
+
+	private PlanMstr findPlanMstr(List<PlanMstr> entityList, QhpApplicationRateItemVO item) {
+		PlanMstr match = null;
+		for (PlanMstr entity : entityList) {
+			if (entity.getPlanHiosId().equals(getString(item.getPlanId()))) {
+				match = entity;
+				break;
+			}
+		}
+		return match;
+	}
+
+	/**
+	 * 
+	 * @param item
+	 * @return
+	 */
+	public PlanRateDetail mapItemToPlanRateDetails(QhpApplicationRateItemVO item) {
+		LOG.entry();
+		PlanRateDetail planRateDetail = new PlanRateDetail();
+
+		//item.getPlanId();
+
+		String rateAreaId = item.getRateAreaId().getCellValue();
+		if (!StringUtils.isEmpty(rateAreaId))
+			planRateDetail.setLkRatingAreaId(getRatingAreaCode(rateAreaId));
+
+		String age = item.getAgeNumber().getCellValue();
+		if (!StringUtils.isEmpty(age))
+			planRateDetail.setLkAgeCd(getLookupCode("Age", age));
+
+		String tobacco = getString(item.getTobacco());
+		if (!StringUtils.isEmpty(tobacco)) {
+			String tobaccoCode = getLookupCode("Tobacco", tobacco);
+			if (StringUtils.isEmpty(tobaccoCode)) {
+				tobaccoCode = "NPR"; //No Prefeerence is the only option in CT
+			}
+			planRateDetail.setLkTobaccoCd(tobaccoCode);
+		}
+
+		planRateDetail.setIndvRateAmt(ConversionUtil.toDouble(item.getPrimaryEnrollee().getCellValue()));
+		planRateDetail.setEffectiveStartDate(stringToDate(getString(item.getEffectiveDate())));
+		planRateDetail.setEffectiveEndDate(stringToDate(getString(item.getExpirationDate())));
+		/*		planRateDetail.setCreateUsrId(createUsrId);
+				planRateDetail.setCrtdDt(crtdDt);
+				planRateDetail.setUpdtDt(updtDt);
+				planRateDetail.setUpdtUserId(updtUserId);
+		*/
+		LOG.exit();
+		return planRateDetail;
+	}
+
+	private String getRatingAreaCode(String rateAreaId) {
+		if (CollectionUtils.isEmpty(ratingAreaLookups)) {
+			ratingAreaLookups = LookupManager.getLocaleSpecificLookups(APIConstants.LOCALE_EN, "RatingArea");
+		}
+		if (ratingAreaLookups != null) {
+			String lang = APIConstants.LOCALE_EN.toString();
+			for (LookupBean bean : ratingAreaLookups) {
+				String label = bean.getLabel();
+				//Some Lookups have xx:yyy - we intereseted in only xx, so splitting by ":" and taking first split
+				label = StringUtils.split(label, ':')[0];
+				if (bean.getId().getLangCode().equals(lang)
+						&& StringUtils.trimToEmpty(label).equalsIgnoreCase(StringUtils.trimToEmpty(rateAreaId))) { //Ignoring case in this case
+					return bean.getId().getValue();
+				}
+			}
+		}
+		return null;
+	}
+
+	private String getString(ExcelCellVO vo) {
+		return getString(vo, 0);
+	}
+
+	private String getString(ExcelCellVO vo, int limit) {
+		if (vo == null || StringUtils.isBlank(vo.getCellValue())) {
+			return "";
+		}
+		if (limit == 0) {
+			return vo.getCellValue();
+		}
+		return APIUtil.truncateString(StringUtils.trimToEmpty(vo.getCellValue()), limit);
+	}
+
+}

@@ -1,0 +1,362 @@
+package com.hixapi.pmp.service.plan.mapping.hix;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.dao.LookupManager;
+import com.hixapi.pmp.api.model.CarrierFormularyVO;
+import com.hixapi.pmp.api.model.NetworkURLVO;
+import com.hixapi.pmp.api.model.PlanBenefitVO;
+import com.hixapi.pmp.api.model.PlanBenefitsDetailVO;
+import com.hixapi.pmp.api.model.PlanRateVO;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsCopayVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsDeductibleVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsMoopVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsVO;
+import com.hixapi.pmp.api.model.PlanVariantVO;
+import com.hixapi.pmp.api.modeltranslator.PlanModelTranslator;
+import com.hixapi.pmp.entity.model.TDsplPlanStg;
+
+public class HIXDisplayPlanToVOMapper {
+
+	private static final Logger log = LogManager.getLogger(HIXDisplayPlanToVOMapper.class);
+
+	public PlanVO mapToPlanVO(TDsplPlanStg stg) {
+		log.entry();
+		PlanVO vo = new PlanVO();
+		NetworkURLVO nvo = new NetworkURLVO();
+		CarrierFormularyVO fvo = new CarrierFormularyVO();
+		if (stg != null) {
+			//Populate PlanVO, take hixdisplayPlanMapper and PlanModelTranslator for reference to find the matching fields
+
+			vo.setCoverageYear(ConversionUtil.toString(stg.getYear()));
+			vo.setCarrierId(StringUtils.trimToEmpty(stg.getCarrierId()));
+			vo.setCarrierName(StringUtils.trimToEmpty(stg.getCarrNa()));
+
+			// vo.setCarrierTaxId();
+			//vo.setCarrierState(carr(ierState);
+
+			vo.setPlanId(StringUtils.trimToEmpty(stg.getPlanId()));
+			vo.setPlanName(StringUtils.trimToEmpty(stg.getPlanNa()));
+			if("ES".equalsIgnoreCase(stg.getId().getLangCdTx())){
+				vo.setPlanType(LookupManager.getLookupKey(APIConstants.LOCALE_ES, "PlanManageType", StringUtils.trimToEmpty(stg.getPlanTypeNa())));
+			}else{
+				vo.setPlanType(LookupManager.getLookupKey(APIConstants.LOCALE_EN, "PlanManageType", StringUtils.trimToEmpty(stg.getPlanTypeNa())));
+			}
+			vo.setMetalLevel(StringUtils.trimToEmpty(stg.getPlanLevelNa()));
+
+			//Setting NetworkURLVO
+			nvo.setNetworkURL(StringUtils.trimToEmpty(stg.getHlthPrvdrUrlTx()));
+			nvo.setNetworkIdNbr(ConversionUtil.toLong(""));
+			nvo.setNetworkURLId(StringUtils.trimToEmpty(""));
+			vo.setNetworkUrl(nvo);
+
+			//Setting CarrierFormularyVO
+			fvo.setFormularyUrlLink(StringUtils.trimToEmpty(stg.getPrescDrgFrmlryUrlTx()));
+			//fvo.setCarrierFormularyInfoId(ConversionUtil.toLong(""));
+			fvo.setFormularyId(StringUtils.trimToEmpty(""));
+			vo.setCarrierFormularyVO(fvo);
+			if (stg.getQltyRatingNb() != null) {
+				vo.setQualityRating(stg.getQltyRatingNb().toString());
+			} else {
+				vo.setQualityRating("0");
+			}
+			vo.setEhbPercentage(ConversionUtil.toString(stg.getEhbNb()));
+
+			//vo.setExchangeStatus(exchangeStatus);
+			//vo.setPublishDate(publishDate);
+			//vo.setLanguage(language);
+
+			vo.setPlanRates(new ArrayList<PlanRateVO>(0));
+			vo.setPlanBenefits(maptoPlanBenifitVO(stg));
+
+			vo.setLastUpdateDate(ConversionUtil.toString(stg.getUpdtDt()));
+
+			//vo.setCarrierUpdateAllowed(carrierUpdateAllowed);
+
+			vo.setEffectiveDate(ConversionUtil.toString(stg.getRateEffDt()));
+			vo.setExpirationDate(ConversionUtil.toString(stg.getRateExpDt()));
+			vo.setPlanHiosId(StringUtils.trimToEmpty(stg.getPlanId()));
+
+			/* All the below fields are not being set in HIXDisplayPlantoVOMapper */
+
+			//vo.setDentalOnlyPlanFlag(dentalOnlyPlanFlag);
+			//vo.setProductId(productId);
+			//vo.setHpId(hpId);
+			//vo.setServiceAreaId(serviceAreaId);
+			//vo.setUniquePlanFlag(uniquePlanFlag);
+			//vo.setQhpCd(qhpCd);
+			//vo.setNoticePregnancyFlag(noticePregnancyFlag);
+			//vo.setReferralRequiredForSpecialistFlg(referralRequiredForSpecialistFlg);
+			//vo.setSpecialistRequiringReferralText(specialistRequiringReferralText);
+			//vo.setPlanLevelExclusionText(planLevelExclusionText);
+			//vo.setLimitedCsvEstimateAdvancePayment(limitedCsvEstimateAdvancePayment);
+			//vo.setCompositeRatingFlag(compositeRatingFlag);
+			//vo.setCompositeRatingFlag(compositeRatingFlag);
+			//vo.setChildOnlyOffering(childOnlyOffering);
+			//vo.setChildOnlyPlanId(childOnlyPlanId);
+			//vo.setTobaccoWellnessFlag(tobaccoWellnessFlag);
+			//vo.setDiseaseManagementProgramsOfferedText(diseaseManagementProgramsOfferedText);
+			//vo.setEhbAppointment(ehbAppointment);
+			//vo.setGuaranteedRateFlag(guaranteedRateFlag);
+			/*vo.setMaxCoinsNumber(maxCoinsNumber);
+			vo.setMaxDaysChargingCopayNumber(maxDaysChargingCopayNumber);
+			vo.setBeginCoinsAfterCopaysNumber(beginCoinsAfterCopaysNumber);
+			vo.setBeginCostSharingAfterVisitNumber(beginCostSharingAfterVisitNumber);
+			vo.setOutOfCountryCoverageDescText(outOfCountryCoverageDescText);
+			vo.setOutOfCountryCoverageFlag(outOfCountryCoverageFlag);
+			vo.setOutOfServiceAreaCoverageDescText(outOfServiceAreaCoverageDescText);
+			vo.setOutOfServiceAreaCoverageFlag(outOfServiceAreaCoverageFlag);
+			vo.setNationalNetworkFlag(nationalNetworkFlag);
+			vo.setEnrollPaymentUrlText(enrollPaymentUrlText);*/
+
+		}
+		log.exit();
+
+		return vo;
+	}
+
+	private List<PlanBenefitVO> maptoPlanBenifitVO(TDsplPlanStg stg) {
+		// TODO Auto-generated method stub
+		final List<PlanBenefitVO> pbvolist = new ArrayList<PlanBenefitVO>();
+		if (stg != null) {
+			PlanBenefitVO pbvo = new PlanBenefitVO();
+
+			pbvo.setPlanBenefitsDetailsMap(maptoPlanBenefitDetailVO(stg));
+			pbvo.setPlanVariants(maptoPlanVariantDetailsVO(stg));
+
+			pbvolist.add(pbvo);
+			return pbvolist;
+		} else
+			return Collections.emptyList();
+	}
+
+	private Map<PlanVariantVO, PlanVariantDetailsVO> maptoPlanVariantDetailsVO(TDsplPlanStg stg) {
+		// TODO Auto-generated method stub
+		final Map<PlanVariantVO, PlanVariantDetailsVO> pvdvolist = new HashMap<PlanVariantVO, PlanVariantDetailsVO>();
+		if (stg != null) {
+			PlanVariantVO pvo = new PlanVariantVO();
+			pvo.setVariantHiosId(stg.getId().getDsplPlanId().substring(5));
+			pvo.setVarTypTxt(stg.getPlanVarncNa());
+			pvo.setPlanSecondaryName(stg.getPlanVarncNa());
+			pvo.setVarId(StringUtils.trimToEmpty(stg.getCsrVarId()));
+
+			PlanVariantDetailsVO pvdvo = new PlanVariantDetailsVO();
+			pvdvo.setSbcDiabetesCoins(StringUtils.trimToEmpty(stg.getType2DiabitiesCoInsTx()));
+			pvdvo.setSbcDiabetesCopay(StringUtils.trimToEmpty(stg.getType2DiabitiesCopayTx()));
+			pvdvo.setSbcDiabetesDeductible(StringUtils.trimToEmpty(stg.getType2DiabitiesDdbleTx()));
+			pvdvo.setSbcDiabetesLimit(StringUtils.trimToEmpty(stg.getType2DiabitiesLmtTx()));
+			pvdvo.setSbcHavingBabyCoins(StringUtils.trimToEmpty(stg.getHavingBabyCoInsTx()));
+			pvdvo.setSbcHavingBabyCopay(StringUtils.trimToEmpty(stg.getHavingBabyCopayTx()));
+			pvdvo.setSbcHavingBabyDeductible(StringUtils.trimToEmpty(stg.getHavingBabyDdbleTx()));
+			pvdvo.setSbcHavingBabyLimit(StringUtils.trimToEmpty(stg.getHavingBabyLmtTx()));
+
+			pvdvo.setHsaBenefitCoverageUrlTxt(StringUtils.trimToEmpty(stg.getPlanSumOfBnftsTx()));
+
+			pvdvo.setCopayDetails(maptoPlanVariantDetailsCopayVO(stg));
+			pvdvo.setDeductibleDetails(maptoPlanvariantDetalisDeductibleVO(stg));
+			pvdvo.setMoopDetails(maptoPlanVariantDetailsMoopVO(stg));
+
+			pvdvo.setVariantHiosId(stg.getId().getDsplPlanId().substring(5));
+
+			pvdvolist.put(pvo, pvdvo);
+
+			return pvdvolist;
+
+		} else
+			return Collections.emptyMap();
+
+	}
+
+	private Map<String, PlanVariantDetailsMoopVO> maptoPlanVariantDetailsMoopVO(TDsplPlanStg stg) {
+		// TODO Auto-generated method stub
+		final Map<String, PlanVariantDetailsMoopVO> pvdmvomap = new LinkedHashMap<String, PlanVariantDetailsMoopVO>();
+
+		PlanVariantDetailsMoopVO maxOop1 = new PlanVariantDetailsMoopVO();
+
+		maxOop1.setInNetworkTier1Individual(StringUtils.trimToEmpty(stg.getCsrPresDrgOutOfPcktInTx()));
+		maxOop1.setOutOfNetworkIndividual(StringUtils.trimToEmpty(stg.getCsrPresDrgOutOfPcktOutTx()));
+		maxOop1.setInNetworkTier1Family(StringUtils.trimToEmpty(stg.getCsrPrescDrgOutOfPcktFmlyInTx()));
+		maxOop1.setOutOfNetworkFamily(StringUtils.trimToEmpty(stg.getCsrPrescDrgOutOfPcktFmlyOutTx()));
+		pvdmvomap.put(PlanModelTranslator.MOOP_DRG, maxOop1);
+
+		maxOop1 = new PlanVariantDetailsMoopVO();
+		maxOop1.setInNetworkTier1Individual(StringUtils.trimToEmpty(stg.getCsrOutOfPcktMaxInTx()));
+		maxOop1.setOutOfNetworkIndividual(StringUtils.trimToEmpty(stg.getCsrOutOfPcktMaxOutTx()));
+		maxOop1.setInNetworkTier1Family(StringUtils.trimToEmpty(stg.getCsrOutOfPcktMaxFmlyInTx()));
+		maxOop1.setOutOfNetworkFamily(StringUtils.trimToEmpty(stg.getCsrOutOfPcktMaxFmlyOutTx()));
+		pvdmvomap.put("MOOP_MED", maxOop1);
+
+		return pvdmvomap;
+	}
+
+	private Map<String, PlanVariantDetailsDeductibleVO> maptoPlanvariantDetalisDeductibleVO(TDsplPlanStg stg) {
+
+		final Map<String, PlanVariantDetailsDeductibleVO> pvddvomap = new LinkedHashMap<String, PlanVariantDetailsDeductibleVO>();
+
+		PlanVariantDetailsDeductibleVO deductible = new PlanVariantDetailsDeductibleVO();
+
+		
+		deductible.setInNetworkTier1Individual(StringUtils.trimToEmpty(stg.getCsrPrescDrgDdbleInTx()));
+		deductible.setOutOfNetworkIndividual(StringUtils.trimToEmpty(stg.getCsrPrescDrgDdbleOutTx()));
+		deductible.setInNetworkTier1Family(StringUtils.trimToEmpty(stg.getCsrPrescDrgDdblFmlyInTx()));
+		deductible.setOutOfNetworkFamily(StringUtils.trimToEmpty(stg.getCsrPrescDrgDdblFmlyOutTx()));
+
+		pvddvomap.put("DED_DRG", deductible);
+
+		deductible = new PlanVariantDetailsDeductibleVO();
+		deductible.setInNetworkTier1Individual(StringUtils.trimToEmpty(stg.getCsrDdbleInTx()));
+		deductible.setOutOfNetworkIndividual(StringUtils.trimToEmpty(stg.getCsrDdbleOutTx()));
+		deductible.setInNetworkTier1Family(StringUtils.trimToEmpty(stg.getCsrDdblFmlyInTx()));
+		deductible.setOutOfNetworkFamily(StringUtils.trimToEmpty(stg.getCsrDdblFmlyOutTx()));
+
+		pvddvomap.put("DED_MED", deductible);
+
+		return pvddvomap;
+	}
+
+	private Map<String, PlanVariantDetailsCopayVO> maptoPlanVariantDetailsCopayVO(TDsplPlanStg stg) {
+
+		final Map<String, PlanVariantDetailsCopayVO> pvdcvo = new LinkedHashMap<String, PlanVariantDetailsCopayVO>();
+
+		PlanVariantDetailsCopayVO copayCoins = new PlanVariantDetailsCopayVO();
+
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getCsrPcpCopayInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getCsrPcpCopayOutTx()));
+		pvdcvo.put("PCV", copayCoins);
+		
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getCsrSplstCopayInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getCsrSplstCopayOutTx()));
+		pvdcvo.put("SPV", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getChildDntlChkupInNetCopCoinsTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getChildDntlChkupOutNetCopCoinsTx()));
+		pvdcvo.put("DCC", copayCoins);
+		
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getChildDntlBasicInNetCopCoinsTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getChildDntlBasicOutNetCopCoinsTx()));
+		pvdcvo.put("BDC", copayCoins);
+		
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getChildDntlMajorInNetCopCoinsTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getChildDntlMajorOutNetCopCoinsTx()));
+		pvdcvo.put("MDC", copayCoins);
+		
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getOrthodonticServsInNetTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getOrthodonticServsOutNetTx()));
+		pvdcvo.put("OCD", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getPsPrvntvCareImmnInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getPsPrvntvCareImmnOutTx()));
+		pvdcvo.put("PSI", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getPrntlPostntlInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getPrntlPostntlOutTx()));
+		pvdcvo.put("PPC", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getEmrgncyRmSrvceInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getEmrgncyRmSrvceOutTx()));
+		pvdcvo.put("ERS", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getEmrgncyTrnsprtInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getEmrgncyTrnsprtOutTx()));
+		pvdcvo.put("ETA", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getInPntHospSrvcsInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getInPntHospSrvcsOutTx()));
+		pvdcvo.put("IHS", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getSkilledNrsngSrvcInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getSkilledNrsngSrvcOutTx()));
+		pvdcvo.put("SNF", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getHomeHlthCareSrvcInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getHomeHlthCareSrvcOutTx()));
+		pvdcvo.put("HHC", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getXrayAndImgngSrvcInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getXrayAndImgngSrvcOutTx()));
+		pvdcvo.put("XDI", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getLabOutPntProfSrvcInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getLabOutPntProfSrvcOutTx()));
+		pvdcvo.put("LOP", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getMntlHlthInPntInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getMntlHlthInPntOutTx()));
+		pvdcvo.put("BHI", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getMntlHlthOutPntInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getMntlHlthOutPntOutTx()));
+		pvdcvo.put("BHO", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getSpcltyDrgInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getSpcltyDrgOutTx()));
+		pvdcvo.put("SDG", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getPrfrrdGnrcDrgInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getPrfrrdGnrcDrgOutTx()));
+		pvdcvo.put("GDG", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getPrfrrdBrandDrgInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getPrfrrdBrandDrgOutTx()));
+		pvdcvo.put("PBD", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getNonPrfrrdBrandDrgInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getNonPrfrrdBrandDrgOutTx()));
+		pvdcvo.put("NBD", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getUrgntCareFacInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getUrgntCareFacOutTx()));
+		pvdcvo.put("UCC", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getChrpcSrvcInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getChrpcSrvcOutTx()));
+		pvdcvo.put("CCG", copayCoins);
+
+		copayCoins = new PlanVariantDetailsCopayVO();
+		copayCoins.setInNetworkDisplayValue(StringUtils.trimToEmpty(stg.getEyeGlassForChildInTx()));
+		copayCoins.setOutNetworkDisplayValue(StringUtils.trimToEmpty(stg.getEyeGlassForChildOutTx()));
+		pvdcvo.put("EGC", copayCoins);
+
+		return pvdcvo;
+	}
+
+	private Map<String, PlanBenefitsDetailVO> maptoPlanBenefitDetailVO(TDsplPlanStg stg) {
+		// TODO Auto-generated method stub
+		return Collections.emptyMap();
+	}
+
+}

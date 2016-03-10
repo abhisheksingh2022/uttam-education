@@ -1,0 +1,179 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+import com.hixapi.pmp.api.model.plandetails.AdditionalInformation;
+import com.hixapi.pmp.api.model.plandetails.CostSharingOverview;
+import com.hixapi.pmp.api.model.plandetails.EmergencyCareAndHospitalService;
+import com.hixapi.pmp.api.model.plandetails.PediatricDentalCare;
+import com.hixapi.pmp.api.model.plandetails.PhysicianServices;
+import com.hixapi.pmp.api.model.plandetails.PlanOverview;
+import com.hixapi.pmp.api.model.plandetails.PrescriptionDrugs;
+
+public class PlanDetailsVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private PlanOverview planOverview ;
+	private CostSharingOverview costSharingOverview;
+	private PhysicianServices physicianServices;
+	private PrescriptionDrugs prescriptionDrugs;
+	private EmergencyCareAndHospitalService emergencyCareAndHospitalService;
+	private PediatricDentalCare pediatricDentalCare;
+	private AdditionalInformation additionalInformation;
+	// For tier's
+	private String tempPrfrrdBrandDrgInTx;
+	private String tempPrfrrdBrandDrgOutTx;
+	private String tempNonPrfrrdBrandDrgInTx;
+	private String tempNonPrfrrdBrandDrgOutTx;
+	private String tempSpcltyDrgInTx;
+	private String tempSpcltyDrgOutTx;
+	private String tempNonPrfrrdGnrcDrgInTx;
+	private String tempNonPrfrrdGnrcDrgOutTx;
+	private String tempPrfrrdGnrcDrgInTx;
+	private String tempPrfrrdGnrcDrgOutTx;
+
+	public PlanOverview getPlanOverview() {
+		return planOverview;
+	}
+
+	public void setPlanOverview(PlanOverview planOverview) {
+		this.planOverview = planOverview;
+	}
+
+	public CostSharingOverview getCostSharingOverview() {
+		return costSharingOverview;
+	}
+
+	public void setCostSharingOverview(CostSharingOverview costSharingOverview) {
+		this.costSharingOverview = costSharingOverview;
+	}
+
+	public PhysicianServices getPhysicianServices() {
+		return physicianServices;
+	}
+
+	public void setPhysicianServices(PhysicianServices physicianServices) {
+		this.physicianServices = physicianServices;
+	}
+
+	public PrescriptionDrugs getPrescriptionDrugs() {
+		return prescriptionDrugs;
+	}
+
+	public void setPrescriptionDrugs(PrescriptionDrugs prescriptionDrugs) {
+		this.prescriptionDrugs = prescriptionDrugs;
+	}
+
+	public EmergencyCareAndHospitalService getEmergencyCareAndHospitalService() {
+		return emergencyCareAndHospitalService;
+	}
+
+	public void setEmergencyCareAndHospitalService(
+			EmergencyCareAndHospitalService emergencyCareAndHospitalService) {
+		this.emergencyCareAndHospitalService = emergencyCareAndHospitalService;
+	}
+
+	public PediatricDentalCare getPediatricDentalCare() {
+		return pediatricDentalCare;
+	}
+
+	public void setPediatricDentalCare(PediatricDentalCare pediatricDentalCare) {
+		this.pediatricDentalCare = pediatricDentalCare;
+	}
+
+	public AdditionalInformation getAdditionalInformation() {
+		return additionalInformation;
+	}
+
+	public void setAdditionalInformation(
+			AdditionalInformation additionalInformation) {
+		this.additionalInformation = additionalInformation;
+	}
+
+	public String getTempPrfrrdBrandDrgInTx() {
+		return tempPrfrrdBrandDrgInTx;
+	}
+
+	public void setTempPrfrrdBrandDrgInTx(String tempPrfrrdBrandDrgInTx) {
+		this.tempPrfrrdBrandDrgInTx = tempPrfrrdBrandDrgInTx;
+	}
+
+	public String getTempPrfrrdBrandDrgOutTx() {
+		return tempPrfrrdBrandDrgOutTx;
+	}
+
+	public void setTempPrfrrdBrandDrgOutTx(String tempPrfrrdBrandDrgOutTx) {
+		this.tempPrfrrdBrandDrgOutTx = tempPrfrrdBrandDrgOutTx;
+	}
+
+	public String getTempNonPrfrrdBrandDrgInTx() {
+		return tempNonPrfrrdBrandDrgInTx;
+	}
+
+	public void setTempNonPrfrrdBrandDrgInTx(String tempNonPrfrrdBrandDrgInTx) {
+		this.tempNonPrfrrdBrandDrgInTx = tempNonPrfrrdBrandDrgInTx;
+	}
+
+	public String getTempNonPrfrrdBrandDrgOutTx() {
+		return tempNonPrfrrdBrandDrgOutTx;
+	}
+
+	public void setTempNonPrfrrdBrandDrgOutTx(String tempNonPrfrrdBrandDrgOutTx) {
+		this.tempNonPrfrrdBrandDrgOutTx = tempNonPrfrrdBrandDrgOutTx;
+	}
+
+	public String getTempSpcltyDrgInTx() {
+		return tempSpcltyDrgInTx;
+	}
+
+	public void setTempSpcltyDrgInTx(String tempSpcltyDrgInTx) {
+		this.tempSpcltyDrgInTx = tempSpcltyDrgInTx;
+	}
+
+	public String getTempSpcltyDrgOutTx() {
+		return tempSpcltyDrgOutTx;
+	}
+
+	public void setTempSpcltyDrgOutTx(String tempSpcltyDrgOutTx) {
+		this.tempSpcltyDrgOutTx = tempSpcltyDrgOutTx;
+	}
+
+	public String getTempNonPrfrrdGnrcDrgInTx() {
+		return tempNonPrfrrdGnrcDrgInTx;
+	}
+
+	public void setTempNonPrfrrdGnrcDrgInTx(String tempNonPrfrrdGnrcDrgInTx) {
+		this.tempNonPrfrrdGnrcDrgInTx = tempNonPrfrrdGnrcDrgInTx;
+	}
+
+	public String getTempNonPrfrrdGnrcDrgOutTx() {
+		return tempNonPrfrrdGnrcDrgOutTx;
+	}
+
+	public void setTempNonPrfrrdGnrcDrgOutTx(String tempNonPrfrrdGnrcDrgOutTx) {
+		this.tempNonPrfrrdGnrcDrgOutTx = tempNonPrfrrdGnrcDrgOutTx;
+	}
+
+	public String getTempPrfrrdGnrcDrgInTx() {
+		return tempPrfrrdGnrcDrgInTx;
+	}
+
+	public void setTempPrfrrdGnrcDrgInTx(String tempPrfrrdGnrcDrgInTx) {
+		this.tempPrfrrdGnrcDrgInTx = tempPrfrrdGnrcDrgInTx;
+	}
+
+	public String getTempPrfrrdGnrcDrgOutTx() {
+		return tempPrfrrdGnrcDrgOutTx;
+	}
+
+	public void setTempPrfrrdGnrcDrgOutTx(String tempPrfrrdGnrcDrgOutTx) {
+		this.tempPrfrrdGnrcDrgOutTx = tempPrfrrdGnrcDrgOutTx;
+	}
+
+
+
+}

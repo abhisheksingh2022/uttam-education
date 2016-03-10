@@ -1,0 +1,36 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+public class WorkItemVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private String message;
+	private String workItemId;
+	private Date createdDt;
+	
+	
+	public String getMessage() {
+		return message;
+	}
+	public void setMessage(String message) {
+		this.message = message;
+	}
+	public String getWorkItemId() {
+		return workItemId;
+	}
+	public void setWorkItemId(String workItemId) {
+		this.workItemId = workItemId;
+	}
+	public Date getCreatedDt() {
+		return createdDt;
+	}
+	public void setCreatedDt(Date createdDt) {
+		this.createdDt = createdDt;
+	}
+}

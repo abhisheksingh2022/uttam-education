@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bindings xmlns="http://java.sun.com/xml/ns/jaxb" version="2.1">
+	
+	<!-- <bindings schemaLocation="xsd/gov/hhs/cms/base/vo/NoteVO.xsd">
+		<schemaBindings>
+			<package name="gov.hhs.cms.base.vo" />
+		</schemaBindings>
+	</bindings>
+	<bindings schemaLocation="xsd/gov/hhs/cms/base/vo/BinaryFileVO.xsd">
+		<schemaBindings>
+			<package name="gov.hhs.cms.base.vo" />
+		</schemaBindings>
+	</bindings> -->
+	<bindings schemaLocation="xsd/gov/hhs/cms/ffe/vo/QhpApplicationRateGroupVO.xsd">
+		<schemaBindings>
+			<package name="gov.hhs.cms.ffe.rates.vo" />
+		</schemaBindings>
+	</bindings>
+	
+</bindings>

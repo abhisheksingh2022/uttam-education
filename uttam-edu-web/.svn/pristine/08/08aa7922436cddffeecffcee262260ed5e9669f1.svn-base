@@ -1,0 +1,821 @@
+package com.hixapi.pmp.struts.planmgmt;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.model.LookupBean;
+import com.hixapi.framework.common.model.UserMessage;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants.Language;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanStatus;
+import com.hixapi.pmp.api.model.APICodeConstants.UserFunction;
+import com.hixapi.pmp.api.model.APICodeConstants.UserRole;
+import com.hixapi.pmp.api.model.PlanBenefitVO;
+import com.hixapi.pmp.api.model.PlanPdfVO;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsVO;
+import com.hixapi.pmp.api.model.PlanVariantVO;
+import com.hixapi.pmp.common.util.PMPAccessController;
+import com.hixapi.pmp.common.util.PMPUtil;
+import com.hixapi.pmp.service.plan.PlanManagerService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+import com.hixapi.web.framework.struts.SessionController;
+
+public class PlanManageAction extends BaseSecureAction {
+
+	private static final Logger LOG = LogManager.getLogger(PlanManageAction.class);
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7296331027656555878L;
+	private static final String RESULT_PLAN_SEARCH = "plan-search";
+	private static final String RESULT_PLAN_RATES = "plan-rates";
+	private static final String RESULT_PLAN_BENEFITS = "plan-benefits";
+	private static final String RESULT_PLAN_DOWNLOAD = "plan-download";
+	private static final String RESULT_SEND_NOTIFICATION = "plan-send-notif";
+	private static final String RESULT_ASSIGN_WORK_ITEM = "plan-assign-task";
+	private static final String RESULT_PLAN_PREVIEW = "plan-preview";
+
+	private static final String PDF_DOWNLOAD = "pdf-download";
+	private static final String PLAN_ID_KEY = "planId";
+
+	private PlanVO plan;
+
+	private Long planId;
+	private String mode;
+	private List<String> coverageYears = new ArrayList<String>();
+	private String exchangeStatus;
+	private Map<String, String> planDetailsKeyLookup;
+	private boolean variantSelected;
+
+	private List<PlanVariantDetailsVO> planVariantDetails;
+	private List<PlanVariantVO> planVariants;
+	private String variantIndex;
+	private Integer variantIndexInteger = 0;
+	private boolean outOfNetworkToBeDeleted;
+	private String planPreviewPlanType;
+	private String planPreviewPlanLevel;
+	private int qualityRatingInteger;
+	private boolean allowCarrierUpdatesToBeShown;
+	private String role;
+	private boolean planFound;
+	private PlanPdfVO planPdfVO;
+	private int pdfFileLength;
+	private InputStream pdfStream;
+	private String pdfFileName;
+	private PlanVO planPreview;
+
+	private ArrayList<PlanVariantVO> previewPlanVariants;
+
+	private ArrayList<PlanVariantDetailsVO> previewPlanVariantDetails;
+
+	private void setCoverageYearList() {
+		List<Integer> integerYearList = PMPUtil.getCoverageYearList();
+		coverageYears.clear();
+		for (Integer i : integerYearList) {
+			coverageYears.add(String.valueOf(i));
+		}
+	}
+	//Show button Allow Carrier Updates
+	private void isAllowCarrierUpdates(UserRole userRole) {
+		if ("UCR".equalsIgnoreCase(plan.getExchangeStatus())) {
+			if (userRole.getCode().equalsIgnoreCase(UserRole.PLAN_MANAGER.getCode())) {
+				setAllowCarrierUpdatesToBeShown(true);
+			} else {
+				setAllowCarrierUpdatesToBeShown(false);
+			}
+		} else {
+			setAllowCarrierUpdatesToBeShown(false);
+		}
+	}
+	//Sets which fields will be editable by which roles
+	private void isReadOnlyApplied(UserRole userRole) {
+		if ("AC".equalsIgnoreCase(plan.getExchangeStatus())) {
+			setReadOnly(true);
+		} else {
+			if (userRole.getCode().equalsIgnoreCase(UserRole.PLAN_MANAGER.getCode())) {
+				setReadOnly(false);
+			} else if (userRole.getCode().equalsIgnoreCase(UserRole.PLAN_SPECIALIST.getCode())) {
+				if ("DAC".equalsIgnoreCase(plan.getExchangeStatus())) {
+					setReadOnly(true);
+				} else if ("PE".equalsIgnoreCase(plan.getExchangeStatus())) {
+					setReadOnly(true);
+				} else {
+					setReadOnly(false);
+				}
+			} else if (userRole.getCode().equalsIgnoreCase(UserRole.CARRIER.getCode())) {
+				if ("UCR".equalsIgnoreCase(plan.getExchangeStatus()) && plan.getCarrierUpdateAllowed()) {
+					setReadOnly(false);
+				} else {
+					setReadOnly(true);
+				}
+			} else {
+				setReadOnly(true);
+			}
+		}
+	}
+	//Applies all business rules like allow carrier updates and sets visibility for different roles
+	private void applyBuisnessRules(UserRole userRole) {
+		isAllowCarrierUpdates(userRole);
+		isReadOnlyApplied(userRole);
+	}
+
+	//Used to download PDF from Plan Preview
+	private void setPlanPreviewDownload() {
+		planPdfVO = new PlanPdfVO();
+		planPdfVO.setCarrierId(plan.getCarrierId());
+		planPdfVO.setCoverageYear(plan.getCoverageYear());
+		planPdfVO.setPlanHiosId(plan.getPlanHiosId());
+		planPdfVO.setLanguage(plan.getLanguage());
+
+	}
+
+	//Always called before page is created in order to set all flags and temp values
+	private void processingBeforePageRendering() {
+		/*		//TODO remove hardcoding
+				if (StringUtils.isEmpty(plan.getExchangeStatus())) {
+					plan.setExchangeStatus("VP");
+				}
+				//TODO remove hardcoding
+				if (StringUtils.isEmpty(plan.getQualityRating())) {
+					plan.setQualityRating("3");
+				}
+				//TODO remove hardcoding
+				if(StringUtils.isEmpty(plan.getPublishDate())){
+					plan.setPublishDate("07/23/2015");
+				}*/
+		List<LookupBean> lookupIds = getLookups().get("ExchangeStatus");
+		for (LookupBean lookupBean : lookupIds) {
+			if (plan.getExchangeStatus().equalsIgnoreCase(lookupBean.getValue()))
+				exchangeStatus = lookupBean.getLabel();
+		}
+		lookupIds = getLookups().get("BenefitDetailType");
+		planDetailsKeyLookup = new HashMap<String, String>();
+		for (LookupBean lookupBean : lookupIds) {
+			planDetailsKeyLookup.put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+		lookupIds = getLookups().get("PlanManageType");
+		for (LookupBean lookupBean : lookupIds) {
+			if (lookupBean.getValue().equalsIgnoreCase(plan.getPlanType())) {
+				planPreviewPlanType = lookupBean.getLabel();
+				break;
+			}
+		}
+
+		lookupIds = getLookups(APIUtil.getLocale(plan.getLanguage())).get("MetalLevel");
+		for (LookupBean lookupBean : lookupIds) {
+			if (lookupBean.getValue().equalsIgnoreCase(plan.getMetalLevel())) {
+				planPreviewPlanLevel = lookupBean.getLabel();
+				break;
+			}
+		}
+		setCoverageYearList();
+		/*		String value = ServiceLocator.getInstance().getService(IEnvironmentProvider.class)
+					    .getProperty("global.rule.outofnetworkgone", String.class, "");
+				String[] valueArray = value.split(",");
+		*/boolean isOneOfTheCarriers = true;
+		/*		for(String s : valueArray){
+					if(s.equalsIgnoreCase(plan.getCarrierId())){
+						isOneOfTheCarriers=true;
+						break;
+					}
+				}*/
+		if ("HMO".equalsIgnoreCase(planPreviewPlanType) && isOneOfTheCarriers) {
+			setOutOfNetworkToBeDeleted(true);
+		} else {
+			setOutOfNetworkToBeDeleted(false);
+		}
+		if (plan.getPlanBenefits() != null) {
+			if (plan.getPlanBenefits().get(0).getPlanVariants() != null) {
+				Iterator<PlanVariantVO> it = plan.getPlanBenefits().get(0).getPlanVariants().keySet().iterator();
+				while (it.hasNext()) {
+					PlanVariantVO p = it.next();
+					if ("00".equalsIgnoreCase(p.getVarId())) {
+						it.remove();
+					} else {
+						if ("00".equalsIgnoreCase(p.getVarId())) {
+							it.remove();
+						} else {
+							if ("01".equals(p.getVarId())) {
+								p.setVarTypTxt("Standard Plan");
+							}
+						}
+					}
+				}
+
+			}
+
+		}
+		updatePlanInSession(plan);
+		PlanBenefitVO benefitVO = plan.getPlanBenefits().get(0);
+		planVariants = new ArrayList<PlanVariantVO>();
+		planVariantDetails = new ArrayList<PlanVariantDetailsVO>();
+		Map<PlanVariantVO, PlanVariantDetailsVO> planBenefitDetails = benefitVO.getPlanVariants();
+		for (Entry<PlanVariantVO, PlanVariantDetailsVO> entry : planBenefitDetails.entrySet()) {
+			planVariants.add(entry.getKey());
+			planVariantDetails.add(entry.getValue());
+		}
+		if (planPreview != null) {
+			PlanBenefitVO previewBenefitVO = planPreview.getPlanBenefits().get(0);
+			previewPlanVariants = new ArrayList<PlanVariantVO>();
+			previewPlanVariantDetails = new ArrayList<PlanVariantDetailsVO>();
+			Map<PlanVariantVO, PlanVariantDetailsVO> previewBenefitDetails = previewBenefitVO.getPlanVariants();
+			for (Entry<PlanVariantVO, PlanVariantDetailsVO> entry : previewBenefitDetails.entrySet()) {
+				previewPlanVariants.add(entry.getKey());
+				previewPlanVariantDetails.add(entry.getValue());
+			}
+		}
+
+		if (plan.getQualityRating() != null && !"".equalsIgnoreCase(plan.getQualityRating())) {
+			if (!"NA".equalsIgnoreCase(plan.getQualityRating()))
+				qualityRatingInteger = ConversionUtil.toInteger(plan.getQualityRating());
+			else
+				qualityRatingInteger = 0;
+		} else {
+			plan.setQualityRating("");
+			qualityRatingInteger = -1;
+		}
+
+		setPlanPreviewDownload();
+		UserRole userRole = PMPAccessController.getInstance().getHighestRole();
+		setRole(userRole.getCode());
+		applyBuisnessRules(userRole);
+	}
+	//Called after loaddisplaycontents
+	private void updateAfterLogin() {
+		processingBeforePageRendering();
+	}
+	//called after each flash.
+	private void updatePage() {
+		plan = SessionController.getPlanManagePlan();
+		setPlanFound(true);
+		processingBeforePageRendering();
+	}
+	//Checks if plan is in sessio and if the service call is required to fetch a new plan.
+	private boolean isServiceCallRequired() {
+		PlanVO p = SessionController.getPlanManagePlan();
+		if (p != null) {
+			if (p.getPlanId().equalsIgnoreCase(ConversionUtil.toString(planId))) {
+				return false;
+			} else {
+				return true;
+			}
+		} else {
+			return true;
+		}
+	}
+
+	@Override
+	protected void loadDisplayContents() {
+		LOG.entry();
+		LOG.debug("************************************************");
+		if (isServiceCallRequired()) {
+			retrievePlanFromService(Language.ENGLISH);
+		} else {
+			plan = SessionController.getPlanManagePlan();
+			setPlanFound(true);
+		}
+		LOG.debug("PLAN ID: " + plan.getPlanId());
+		LOG.debug("PLAN NAME: " + plan.getPlanName());
+		LOG.debug("************************************************");
+		updateAfterLogin();
+		LOG.exit();
+	}
+
+	//All Form related validations
+	public void validate_save() {
+		/*if (StringUtils.isEmpty(plan.getCarrierId())) {
+			super.addValidationError("msg.planmanage.carrieridempty", "carrierIdEmpty");
+		}
+
+		if (StringUtils.isEmpty(plan.getCoverageYear())) {
+			super.addValidationError("msg.planmanage.coverageyearempty", "coverageYearEmpty");
+		}
+		if (plan.getCoverageYear().length() > 11) {
+			super.addValidationError("msg.planmanage.coverageyearlength", "coverageYearSize");
+		}
+
+		if (StringUtils.isEmpty(plan.getCarrierName())) {
+			super.addValidationError("msg.planmanage.carriernameempty", "carrierNameEmpty");
+		}
+		if (plan.getCarrierName().length() > 45) {
+			super.addValidationError("msg.planmanage.carriernamelength", "carrierNameSize");
+		}*/
+
+		/*if (StringUtils.isEmpty(plan.getPlanHiosId())) {
+			super.addValidationError("msg.planmanage.planidempty", "planIdEmpty");
+		}
+		if (plan.getPlanHiosId().length() > 14) {
+			super.addValidationError("msg.planmanage.planidlength", "planIdSize");
+		}*/
+		/*		if (!PMPUtil.isIntegerNumber(plan.getPlanHiosId())) {
+					super.addValidationError("msg.planmanage.planidtype", "planIdType");
+				}
+		*/
+		if (StringUtils.isEmpty(plan.getPlanName())) {
+			super.addValidationError("msg.planmanage.plannameempty", "planNameEmpty");
+		}
+		if (plan.getPlanName().length() > 200) {
+			super.addValidationError("msg.planmanage.plannamelength", "planNameSize");
+		}
+
+		if (StringUtils.isEmpty(plan.getPlanType())) {
+			super.addValidationError("msg.planmanage.plantypeempty", "planTypeEmpty");
+		}
+		if (plan.getPlanType().length() > 30) {
+			super.addValidationError("msg.planmanage.plantypelength", "planTypeSize");
+		}
+
+		if (StringUtils.isEmpty(plan.getMetalLevel())) {
+			super.addValidationError("msg.planmanage.metallevelempty", "metalLevelEmpty");
+		}
+		if (plan.getMetalLevel().length() > 30) {
+			super.addValidationError("msg.planmanage.metallevellength", "metalLevelSize");
+		}
+
+		if (plan.getNetworkUrl().getNetworkURL().length() > 255) {
+			super.addValidationError("msg.planmanage.networkurllength", "networkURLSize");
+		}
+
+		if (plan.getQualityRating().length() > 11) {
+			super.addValidationError("msg.planmanage.qualityratinglength", "QualityRatinglSize");
+		}
+
+		if (StringUtils.isEmpty(plan.getEhbPercentage())) {
+			super.addValidationError("msg.planmanage.ehbempty", "ehbEmpty");
+		}
+		if (plan.getEhbPercentage().length() > 11) {
+			super.addValidationError("msg.planmanage.ehblength", "ehbSize");
+		}
+		if (!PMPUtil.isFloatNumber(plan.getEhbPercentage())) {
+			super.addValidationError("msg.planmanage.ehbtype", "ehbType");
+		}
+
+	}
+
+	//Service call to retrieve Plan
+	private void retrievePlanFromService(Language lang) {
+		plan = ServiceLocator.getInstance().getService(PlanManagerService.class).retrievePlan(planId, lang);
+		if (plan != null) {
+			setPlanFound(true);
+			updatePlanInSession(plan);
+		} else {
+			setPlanFound(false);
+		}
+	}
+
+	//Service Call to retrieve Plan Preview
+	private void retrievePlanPreviewFromService(Language lang, String variantHIOSID, Short coverageYear) {
+		planPreview = ServiceLocator.getInstance().getService(PlanManagerService.class)
+				.retrievePlanPreview(variantHIOSID, lang, coverageYear);
+	}
+
+	//Sets all non-editable fields from session and updates the editable fields
+	private void updatePlanOnSave() {
+		PlanVO planLocal = SessionController.getPlanManagePlan();
+		planLocal.setPlanName(plan.getPlanName());
+		planLocal.setPlanType(plan.getPlanType());
+		planLocal.setMetalLevel(plan.getMetalLevel());
+		planLocal.getNetworkUrl().setNetworkURL(plan.getNetworkUrl().getNetworkURL());
+		planLocal.setQualityRating(plan.getQualityRating());
+		planLocal.setEhbPercentage(plan.getEhbPercentage());
+		plan = planLocal;
+	}
+
+	//Sets the editable field to the session plan.
+	private void updatePlanOnExchangeSave() {
+		PlanVO planLocal = SessionController.getPlanManagePlan();
+		planLocal.setExchangeStatus(plan.getExchangeStatus());
+		plan = planLocal;
+	}
+
+	//Saves Plan in session
+	private void updatePlanInSession(PlanVO planL) {
+		SessionController.setPlanManagePlan(planL);
+	}
+
+	@Override
+	public void onValidationError() {
+		addDefaultRedirectParameters();
+		updatePage();
+	}
+
+	//Checks if plan can be edited
+	public boolean isEditAccess() {
+		if (isUserAllowedToAccessFunction(UserFunction.PLAN_EDIT.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public String save() throws Exception {
+		LOG.entry();
+		if (isEditAccess()) {
+			try {
+				updatePlanOnSave();
+				ServiceLocator.getInstance().getService(PlanManagerService.class)
+						.updatePlan(plan, PMPUtil.getLanguage(plan.getLanguage()), getLookups());
+				retrievePlanFromService(PMPUtil.getLanguage(plan.getLanguage()));
+				super.addBusinessMessage(new UserMessage(UserMessage.SEVERITY_INFO, "msg.planmanage.successmessage", null,
+						null), "");
+
+			} catch (BusinessServiceException bex) {
+				super.addBusinessServiceErrorMessage(bex);
+			}
+			addDefaultRedirectParameters();
+			updatePage();
+			return LOG.exit(FLASH);
+		} else {
+			return LOG.exit(UNAUTHORIZED);
+		}
+	}
+
+	public String saveExchangeStatus() throws Exception {
+		LOG.entry();
+		try {
+			PlanVO planLocal = SessionController.getPlanManagePlan();
+			PlanStatus current = PlanStatus.getEnum(planLocal.getExchangeStatus());
+			updatePlanOnExchangeSave();
+			List<PlanVO> plans = new ArrayList<PlanVO>();
+			plans.add(plan);
+
+			PlanStatus planStatus = null;
+
+			for (PlanStatus p : PlanStatus.values()) {
+				if (p.getCode().equalsIgnoreCase(plan.getExchangeStatus())) {
+					planStatus = p;
+					break;
+				}
+			}
+			ServiceLocator.getInstance().getService(PlanManagerService.class).updatePlanStatus(plans, planStatus, current);
+			retrievePlanFromService(PMPUtil.getLanguage(plan.getLanguage()));
+			super.addBusinessMessage(new UserMessage(UserMessage.SEVERITY_INFO, "msg.manageplans.update_success", null,
+					null), "");
+
+		} catch (BusinessServiceException bex) {
+			super.addBusinessServiceErrorMessage(bex);
+		}
+		addDefaultRedirectParameters();
+		updatePage();
+		return LOG.exit(FLASH);
+	}
+
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public String changePlanLanguage() throws Exception {
+		LOG.entry();
+		retrievePlanFromService(PMPUtil.getLanguage(plan.getLanguage()));
+		if (!isPlanFound()) {
+			super.addBusinessMessage(new UserMessage(UserMessage.SEVERITY_ERROR,
+					"msg.planmanage.nodatafoundforselectedlanguage", null, null), "");
+			
+		} else {
+			updatePage();
+		}
+		addDefaultRedirectParameters();
+		return LOG.exit(FLASH);
+	}
+
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public String changeLockStatus() throws Exception {
+		LOG.entry();
+		plan = SessionController.getPlanManagePlan();
+		if (plan.getCarrierUpdateAllowed()) {
+			ServiceLocator.getInstance().getService(PlanManagerService.class).lockPlan(plan);
+		} else {
+			ServiceLocator.getInstance().getService(PlanManagerService.class).unlockPlanForUpdates(plan);
+		}
+		super.addBusinessMessage(new UserMessage(UserMessage.SEVERITY_INFO, "msg.manageplans.update_success", null,
+				null), "");
+		retrievePlanFromService(PMPUtil.getLanguage(plan.getLanguage()));
+		addDefaultRedirectParameters();
+		updatePage();
+		return LOG.exit(FLASH);
+	}
+
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public String showRates() throws Exception {
+		LOG.entry();
+		addDefaultRedirectParameters();
+		return LOG.exit(RESULT_PLAN_RATES);
+	}
+
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public String showBenefits() throws Exception {
+		LOG.entry();
+		addDefaultRedirectParameters();
+		return LOG.exit(RESULT_PLAN_BENEFITS);
+	}
+
+	public String downloadPlan() throws Exception {
+		LOG.entry();
+		return LOG.exit(RESULT_PLAN_DOWNLOAD);
+	}
+
+	public String downloadPDF() throws Exception {
+		LOG.debug("*********************************** " + planPdfVO);
+		try {
+			byte[] bArray = ServiceLocator.getInstance().getService(PlanManagerService.class)
+					.downloadDraftPlanPDF(planPdfVO);
+			if (bArray.length != 0) {
+				pdfFileLength = bArray.length;
+				pdfStream = new ByteArrayInputStream(bArray);
+				pdfFileName = planPdfVO.getVariantHiosId() + "_" + planPdfVO.getLanguage() + ".pdf";
+				return PDF_DOWNLOAD;
+			} else {
+				LOG.error("PDF Stream not found for : {}", planPdfVO);
+			}
+
+		} catch (BusinessServiceException bex) {
+			LOG.error("Caught error in plan benefits while downloading PDF", bex);
+			super.addBusinessServiceErrorMessage(bex);
+		} catch (Exception e) {
+			LOG.error("Caught error in plan benefits while downloading PDF", e);
+		}
+		return NOT_FOUND;
+	}
+
+	public String back() throws Exception {
+		LOG.entry();
+		return LOG.exit(RESULT_PLAN_SEARCH);
+	}
+
+	public String ajaxSendNotification() {
+		LOG.entry();
+		return LOG.exit(RESULT_SEND_NOTIFICATION);
+	}
+
+	public String ajaxAssignWorkItem() {
+		LOG.entry();
+		return LOG.exit(RESULT_ASSIGN_WORK_ITEM);
+	}
+
+	public String planPreview() {
+		LOG.entry();
+		addRedirectURLParameter("language", plan.getLanguage());
+		addRedirectURLParameter("variantIndex", variantIndex);
+		addRedirectURLParameter("coverageYear", plan.getCoverageYear());
+/*		setVariantSelected(true);
+		addDefaultRedirectParameters();
+		retrievePlanPreviewFromService(PMPUtil.getLanguage(plan.getLanguage()), variantIndex,
+				ConversionUtil.toShort(plan.getCoverageYear()));
+		variantIndexInteger = 0;
+		updatePage();
+*/		return LOG.exit(RESULT_PLAN_PREVIEW);
+	}
+	
+	public List<LookupBean> getPlanLookup(String name) {
+		Locale l = APIConstants.LOCALE_EN;
+		if (plan != null && StringUtils.isNotBlank(plan.getLanguage())) {
+			l = APIUtil.getLocale(plan.getLanguage());
+		}
+		return getLookups(l).get(name);
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		return LOG.exit(null);
+	}
+
+	public PlanVO getPlan() {
+		return plan;
+	}
+
+	public void setPlan(PlanVO plan) {
+		this.plan = plan;
+	}
+
+	public Long getPlanId() {
+		return planId;
+	}
+
+	public void setPlanId(Long planId) {
+		this.planId = planId;
+	}
+
+	public String getMode() {
+		return mode;
+	}
+
+	public void setMode(String mode) {
+		this.mode = mode;
+	}
+
+	public List<String> getCoverageYears() {
+		return coverageYears;
+	}
+
+	public void setCoverageYears(List<String> coverageYears) {
+		this.coverageYears = coverageYears;
+	}
+
+	public String getExchangeStatus() {
+		return exchangeStatus;
+	}
+
+	public void setExchangeStatus(String exchangeStatus) {
+		this.exchangeStatus = exchangeStatus;
+	}
+
+	public Map<String, String> getPlanDetailsKeyLookup() {
+		return planDetailsKeyLookup;
+	}
+
+	public void setPlanDetailsKeyLookup(Map<String, String> planDetailsKeyLookup) {
+		this.planDetailsKeyLookup = planDetailsKeyLookup;
+	}
+
+	@Override
+	public void addDefaultRedirectParameters() {
+		addRedirectURLParameter(PLAN_ID_KEY, planId);
+	}
+
+	public boolean isVariantSelected() {
+		return variantSelected;
+	}
+
+	public void setVariantSelected(boolean varientSelected) {
+		this.variantSelected = varientSelected;
+	}
+
+	public String getVariantIndex() {
+		return variantIndex;
+	}
+
+	public void setVariantIndex(String variantIndex) {
+		this.variantIndex = variantIndex;
+	}
+
+	public Integer getVariantIndexInteger() {
+		return variantIndexInteger;
+	}
+
+	public void setVariantIndexInteger(Integer variantIndexInteger) {
+		this.variantIndexInteger = variantIndexInteger;
+	}
+
+	public boolean isOutOfNetworkToBeDeleted() {
+		return outOfNetworkToBeDeleted;
+	}
+
+	public void setOutOfNetworkToBeDeleted(boolean outOfNetworkToBeDeleted) {
+		this.outOfNetworkToBeDeleted = outOfNetworkToBeDeleted;
+	}
+
+	public String getPlanPreviewPlanType() {
+		return planPreviewPlanType;
+	}
+
+	public void setPlanPreviewPlanType(String planPreviewPlanType) {
+		this.planPreviewPlanType = planPreviewPlanType;
+	}
+
+	public String getPlanPreviewPlanLevel() {
+		return planPreviewPlanLevel;
+	}
+
+	public void setPlanPreviewPlanLevel(String planPreviewPlanLevel) {
+		this.planPreviewPlanLevel = planPreviewPlanLevel;
+	}
+
+	public List<PlanVariantDetailsVO> getPlanVariantDetails() {
+		return planVariantDetails;
+	}
+
+	public void setPlanVariantDetails(List<PlanVariantDetailsVO> planVariantDetails) {
+		this.planVariantDetails = planVariantDetails;
+	}
+
+	public List<PlanVariantVO> getPlanVariants() {
+		return planVariants;
+	}
+
+	public void setPlanVariants(List<PlanVariantVO> planVariants) {
+		this.planVariants = planVariants;
+	}
+
+	public int getQualityRatingInteger() {
+		return qualityRatingInteger;
+	}
+
+	public void setQualityRatingInteger(int qualityRatingInteger) {
+		this.qualityRatingInteger = qualityRatingInteger;
+	}
+
+	public boolean isAllowCarrierUpdatesToBeShown() {
+		return allowCarrierUpdatesToBeShown;
+	}
+
+	public void setAllowCarrierUpdatesToBeShown(boolean allowCarrierUpdatesToBeShown) {
+		this.allowCarrierUpdatesToBeShown = allowCarrierUpdatesToBeShown;
+	}
+
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
+	}
+
+	public boolean isPlanFound() {
+		return planFound;
+	}
+
+	public void setPlanFound(boolean planFound) {
+		this.planFound = planFound;
+	}
+
+	public PlanPdfVO getPlanPdfVO() {
+		return planPdfVO;
+	}
+
+	public void setPlanPdfVO(PlanPdfVO planPdfVO) {
+		this.planPdfVO = planPdfVO;
+	}
+
+	public int getPdfFileLength() {
+		return pdfFileLength;
+	}
+
+	public void setPdfFileLength(int pdfFileLength) {
+		this.pdfFileLength = pdfFileLength;
+	}
+
+	public InputStream getPdfStream() {
+		return pdfStream;
+	}
+
+	public void setPdfStream(InputStream pdfStream) {
+		this.pdfStream = pdfStream;
+	}
+
+	public String getPdfFileName() {
+		return pdfFileName;
+	}
+
+	public void setPdfFileName(String pdfFileName) {
+		this.pdfFileName = pdfFileName;
+	}
+
+	public PlanVO getPlanPreview() {
+		return planPreview;
+	}
+
+	public void setPlanPreview(PlanVO planPreview) {
+		this.planPreview = planPreview;
+	}
+
+	public ArrayList<PlanVariantVO> getPreviewPlanVariants() {
+		return previewPlanVariants;
+	}
+
+	public void setPreviewPlanVariants(ArrayList<PlanVariantVO> previewPlanVariants) {
+		this.previewPlanVariants = previewPlanVariants;
+	}
+
+	public ArrayList<PlanVariantDetailsVO> getPreviewPlanVariantDetails() {
+		return previewPlanVariantDetails;
+	}
+
+	public void setPreviewPlanVariantDetails(ArrayList<PlanVariantDetailsVO> previewPlanVariantDetails) {
+		this.previewPlanVariantDetails = previewPlanVariantDetails;
+	}
+
+
+
+}

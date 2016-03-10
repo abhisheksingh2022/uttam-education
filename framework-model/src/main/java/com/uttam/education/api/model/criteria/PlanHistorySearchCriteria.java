@@ -1,0 +1,38 @@
+package com.uttam.education.api.model.criteria;
+
+import java.io.Serializable;
+
+public class PlanHistorySearchCriteria implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+	private String searchYear;
+	private String searchCarrierNbr;
+	private String searchPlanId;
+	private String searchPlanName;
+	
+	public String getSearchYear() {
+		return searchYear;
+	}
+	public void setSearchYear(String searchYear) {
+		this.searchYear = searchYear;
+	}
+	public String getSearchCarrierNbr() {
+		return searchCarrierNbr;
+	}
+	public void setSearchCarrierNbr(String searchCarrierNbr) {
+		this.searchCarrierNbr = searchCarrierNbr;
+	}
+	public String getSearchPlanId() {
+		return searchPlanId;
+	}
+	public void setSearchPlanId(String searchPlanId) {
+		this.searchPlanId = searchPlanId;
+	}
+	public String getSearchPlanName() {
+		return searchPlanName;
+	}
+	public void setSearchPlanName(String searchPlanName) {
+		this.searchPlanName = searchPlanName;
+	}
+
+}

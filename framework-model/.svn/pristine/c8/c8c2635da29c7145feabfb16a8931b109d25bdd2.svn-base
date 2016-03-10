@@ -1,0 +1,28 @@
+package com.hixapi.prescreening.api.model.plan;
+
+import java.io.Serializable;
+
+public class EmergencyCareAndHospitalService implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5911478038801501616L;
+	private InAndOutNetwork emergencyRoomService;
+	private InAndOutNetwork inpatientHospitalServices;
+	public InAndOutNetwork getEmergencyRoomService() {
+		return emergencyRoomService;
+	}
+	public void setEmergencyRoomService(InAndOutNetwork emergencyRoomService) {
+		this.emergencyRoomService = emergencyRoomService;
+	}
+	public InAndOutNetwork getInpatientHospitalServices() {
+		return inpatientHospitalServices;
+	}
+	public void setInpatientHospitalServices(InAndOutNetwork inpatientHospitalServices) {
+		this.inpatientHospitalServices = inpatientHospitalServices;
+	}
+	
+	
+	
+}

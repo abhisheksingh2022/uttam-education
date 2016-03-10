@@ -1,0 +1,78 @@
+package com.hixapi.pmp.service.account;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.pmp.api.model.AttachmentVO;
+import com.hixapi.pmp.api.model.NotificationVO;
+import com.hixapi.pmp.api.model.criteria.NotificationSearchCriteria;
+import com.hixapi.pmp.service.account.NotificationService;
+
+public class NotificationServiceImpl implements NotificationService {
+
+	private static final Logger LOG = LogManager.getLogger(NotificationServiceImpl.class);
+
+	@Override
+	public List<NotificationVO> retrieveNotificationsForUser(NotificationSearchCriteria criteria)
+			throws BusinessServiceException {
+		//call DAO method to get NotifDtl 
+		//set to Vo
+		
+		List<NotificationVO> dummyNotifications = new ArrayList<NotificationVO>();
+		NotificationVO vo1 = new NotificationVO();
+		vo1.setNotificationId("123");
+		vo1.setMessage("Please validate notification 1");
+		dummyNotifications.add(vo1);
+		NotificationVO vo2 = new NotificationVO();
+		vo2.setNotificationId("234");
+		vo2.setMessage("Please validate notification 2");
+		dummyNotifications.add(vo2);
+		NotificationVO vo3 = new NotificationVO();
+		vo3.setNotificationId("345");
+		vo3.setMessage("Please validate notification 3");
+		dummyNotifications.add(vo3);
+		
+		return dummyNotifications;
+	}
+
+	@Override
+	public void sendNotification(NotificationVO vo) throws BusinessServiceException {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void updateNotification(NotificationVO vo) throws BusinessServiceException {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public NotificationVO retrieveNotificationDetail(Long id) throws BusinessServiceException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void deleteNotification(NotificationVO vo) throws BusinessServiceException {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void saveAttachment(AttachmentVO vo) throws BusinessServiceException {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void deleteAttachment(AttachmentVO vo) throws BusinessServiceException {
+		// TODO Auto-generated method stub
+
+	}
+
+}

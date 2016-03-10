@@ -1,0 +1,96 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+public class PlanVariantDetailsCopayVO implements Serializable {
+
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String copayId;
+	private String copayInNetworkTier1;
+	private String copayInNetworkTier2;
+	private String copayOutOfNetwork;
+	private String coinsInNetworkTier1;
+	private String coinsInNetworkTier2;
+	private String coinsOutOfNetwork;
+	
+	private String inNetworkUpdateFieldName;
+	
+	private String inNetworkDisplayValue;
+	
+	private String outNetworkUpdateFieldName;
+	private String outNetworkDisplayValue;
+	
+	
+	public String getCopayId() {
+		return copayId;
+	}
+	public void setCopayId(String copayId) {
+		this.copayId = copayId;
+	}
+	public String getCopayInNetworkTier1() {
+		return copayInNetworkTier1;
+	}
+	public void setCopayInNetworkTier1(String copayInNetworkTier1) {
+		this.copayInNetworkTier1 = copayInNetworkTier1;
+	}
+	public String getCopayInNetworkTier2() {
+		return copayInNetworkTier2;
+	}
+	public void setCopayInNetworkTier2(String copayInNetworkTier2) {
+		this.copayInNetworkTier2 = copayInNetworkTier2;
+	}
+	public String getCopayOutOfNetwork() {
+		return copayOutOfNetwork;
+	}
+	public void setCopayOutOfNetwork(String copayOutOfNetwork) {
+		this.copayOutOfNetwork = copayOutOfNetwork;
+	}
+	public String getCoinsInNetworkTier1() {
+		return coinsInNetworkTier1;
+	}
+	public void setCoinsInNetworkTier1(String coinsInNetworkTier1) {
+		this.coinsInNetworkTier1 = coinsInNetworkTier1;
+	}
+	public String getCoinsInNetworkTier2() {
+		return coinsInNetworkTier2;
+	}
+	public void setCoinsInNetworkTier2(String coinsInNetworkTier2) {
+		this.coinsInNetworkTier2 = coinsInNetworkTier2;
+	}
+	public String getCoinsOutOfNetwork() {
+		return coinsOutOfNetwork;
+	}
+	public void setCoinsOutOfNetwork(String coinsOutOfNetwork) {
+		this.coinsOutOfNetwork = coinsOutOfNetwork;
+	}
+	public String getInNetworkUpdateFieldName() {
+		return inNetworkUpdateFieldName;
+	}
+	public void setInNetworkUpdateFieldName(String updateFieldName) {
+		this.inNetworkUpdateFieldName = updateFieldName;
+	}
+	public String getInNetworkDisplayValue() {
+		return inNetworkDisplayValue;
+	}
+	public void setInNetworkDisplayValue(String displayValue) {
+		this.inNetworkDisplayValue = displayValue;
+	}
+	public String getOutNetworkUpdateFieldName() {
+		return outNetworkUpdateFieldName;
+	}
+	public void setOutNetworkUpdateFieldName(String outNetworkUpdateFieldName) {
+		this.outNetworkUpdateFieldName = outNetworkUpdateFieldName;
+	}
+	public String getOutNetworkDisplayValue() {
+		return outNetworkDisplayValue;
+	}
+	public void setOutNetworkDisplayValue(String outNetworkDisplayValue) {
+		this.outNetworkDisplayValue = outNetworkDisplayValue;
+	}
+	
+	
+}

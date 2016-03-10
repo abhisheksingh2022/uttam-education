@@ -1,0 +1,132 @@
+package com.uttam.framework.common.model;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.uttam.education.api.model.APICodeConstants.PreferenceType;
+import com.uttam.education.api.model.APICodeConstants.PreferenceValue;
+
+public class UserIdentity implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3622330124522131268L;
+	private String loginId;
+	private List<String> roles;
+	private String firstName;
+	private String lastName;
+	private String middleInitial;
+	
+	private Long orgId;
+	private String orgName;
+	private String orgIdStr;
+	
+	private Map<PreferenceType, PreferenceValue> preferences = new HashMap<PreferenceType, PreferenceValue>();
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public String getLastName() {
+		return lastName;
+	}
+
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
+	public String getMiddleInitial() {
+		return middleInitial;
+	}
+	
+	public String getFullName(){
+		StringBuilder str = new StringBuilder();
+		str.append(StringUtils.trimToEmpty(firstName)).append(" ");
+		if(StringUtils.isNotBlank(middleInitial)){
+			str.append(StringUtils.trimToEmpty(middleInitial)).append(" ");
+		}
+		str.append(StringUtils.trimToEmpty(lastName));
+		return str.toString();
+	}
+
+	public void setMiddleInitial(String middleInitial) {
+		this.middleInitial = middleInitial;
+	}
+
+	/**
+	 * @return the loginId
+	 */
+	public String getLoginId() {
+		return loginId;
+	}
+
+	/**
+	 * @param loginId
+	 *            the loginId to set
+	 */
+	public void setLoginId(String loginId) {
+		this.loginId = loginId;
+	}
+
+	/**
+	 * @return the roles
+	 */
+	public List<String> getRoles() {
+		return roles;
+	}
+
+	/**
+	 * @param roles
+	 *            the roles to set
+	 */
+	public void setRoles(List<String> roles) {
+		this.roles = roles;
+	}
+
+	public Map<PreferenceType, PreferenceValue> getPreferences() {
+		return preferences;
+	}
+
+	public void setPreferences(Map<PreferenceType, PreferenceValue> preferences) {
+		this.preferences = preferences;
+	}
+
+	public Long getOrgId() {
+		return orgId;
+	}
+
+	public void setOrgId(Long orgId) {
+		this.orgId = orgId;
+	}
+
+	public String getOrgName() {
+		return orgName;
+	}
+
+	public void setOrgName(String orgName) {
+		this.orgName = orgName;
+	}
+
+	public String toString(){
+		return ReflectionToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+	}
+
+	public String getOrgIdStr() {
+		return orgIdStr;
+	}
+
+	public void setOrgIdStr(String orgIdStr) {
+		this.orgIdStr = orgIdStr;
+	}
+}

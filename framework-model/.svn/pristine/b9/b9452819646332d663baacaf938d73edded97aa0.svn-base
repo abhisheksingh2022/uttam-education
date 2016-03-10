@@ -1,0 +1,28 @@
+package com.hixapi.prescreening.api.model.plan;
+
+import java.io.Serializable;
+
+public class InAndOutNetwork implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6706105389499828924L;
+	private String inNetwork;
+	private String outOfNetwork;
+	public String getInNetwork() {
+		return inNetwork;
+	}
+	public void setInNetwork(String inNetwork) {
+		this.inNetwork = inNetwork;
+	}
+	public String getOutOfNetwork() {
+		return outOfNetwork;
+	}
+	public void setOutOfNetwork(String outOfNetwork) {
+		this.outOfNetwork = outOfNetwork;
+	}
+	
+	
+
+}

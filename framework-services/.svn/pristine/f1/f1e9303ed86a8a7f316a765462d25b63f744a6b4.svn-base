@@ -1,0 +1,21 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.account;
+
+import java.util.List;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.service.IService;
+import com.hixapi.pmp.api.model.WorkItemVO;
+import com.hixapi.pmp.api.model.criteria.WorkItemSearchCriteria;
+
+/**
+ * @author admin
+ *
+ */
+public interface WorkItemsService extends IService {
+	
+	List<WorkItemVO> retrieveWorkItemsForUser(WorkItemSearchCriteria criteria) throws BusinessServiceException;
+
+}

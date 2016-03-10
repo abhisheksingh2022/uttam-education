@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.PlanVariantDtlMaxOop" table="PLAN_VARIANT_DTL_MAX_OOP" optimistic-lock="version">
+        <id name="planVariantDtlMaxOopId" type="java.lang.Long">
+            <column name="PLAN_VARIANT_DTL_MAX_OOP_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_PLAN_VARIANT_DTL_MAX_OOP_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="planVariantDtl" class="com.hixapi.pmp.entity.model.PlanVariantDtl" fetch="select">
+            <column name="PLAN_VARIANT_DTL_ID" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="lkPlanVariantDtlMaxOopCd" type="string">
+            <column name="LK_PLAN_VARIANT_DTL_MAX_OOP_CD" length="3" not-null="true" />
+        </property>
+        <property name="inNetworkTier1Indv" type="string">
+            <column name="IN_NETWORK_TIER1_INDV" length="200" />
+        </property>
+        <property name="inNetworkTier1Family" type="string">
+            <column name="IN_NETWORK_TIER1_FAMILY" length="200" />
+        </property>
+        <property name="inNetworkTier2Indv" type="string">
+            <column name="IN_NETWORK_TIER2_INDV" length="200" />
+        </property>
+        <property name="inNetworkTier2Family" type="string">
+            <column name="IN_NETWORK_TIER2_FAMILY" length="200" />
+        </property>
+        <property name="outOfNetworkIndv" type="string">
+            <column name="OUT_OF_NETWORK_INDV" length="200" />
+        </property>
+        <property name="outOfNetworkFamily" type="string">
+            <column name="OUT_OF_NETWORK_FAMILY" length="200" />
+        </property>
+        <property name="combinedInoutIndv" type="string">
+            <column name="COMBINED_INOUT_INDV" length="200" />
+        </property>
+        <property name="combinedInoutFamily" type="string">
+            <column name="COMBINED_INOUT_FAMILY" length="200" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

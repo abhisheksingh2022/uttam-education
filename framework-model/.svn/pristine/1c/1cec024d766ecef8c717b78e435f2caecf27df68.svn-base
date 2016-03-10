@@ -1,0 +1,354 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+import java.util.Map;
+
+public class TPlanBenefit implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String planName;
+	private String carrierId;
+	private String metalLevel;
+	private String age;
+	private String deductibleIndividual;
+	private String coPay;
+	private String csrVarId;
+	private String pcp;
+	private String sp;
+	private String prevVisit;
+	private String natalCare;
+	private String urgentCare;
+	private String hospital;;
+	private String snf;
+	//hlth_plan_yr
+	private Integer year;
+	
+	private String homeHealthCare;
+	private String advImging;
+	private String xrayImging;
+	private String labOPService;
+	private String chrpcService;
+	private String eyeExamService;
+	private String langCdTx;
+	private String healthPlanId;
+	private String rxTier1;
+	private String rxTier2;
+	private String rxTier3;
+	private String rxTier4;
+	private String sabhIp;
+	private String sabhOp;
+	private String opFacility;
+	private String phyThrpy;
+	private String emtAmb;
+	private String er;
+	private String outOfPocMaxInd;
+	private String outOfPocMaxFamily;
+	public String getOutOfPocMaxInd() {
+		return outOfPocMaxInd;
+	}
+	public void setOutOfPocMaxInd(String outOfPocMaxInd) {
+		this.outOfPocMaxInd = outOfPocMaxInd;
+	}
+	public String getOutOfPocMaxFamily() {
+		return outOfPocMaxFamily;
+	}
+	public void setOutOfPocMaxFamily(String outOfPocMaxFamily) {
+		this.outOfPocMaxFamily = outOfPocMaxFamily;
+	}
+	//for holding the dedutible cost for each service
+	private Map<String,Double> deductCost;
+	//holds the totalDeductible for a plan/for a person
+	Double totalDeductible;
+	//for holding the coIns cost for each service
+	private Map<String,Double> insuranceCost;
+	
+	
+	private Map<String,Double> coinsuranceCostPerService;
+	//holds coins for a plan/single person
+	private Double totalCoinsurance;
+
+	//Indicator which says should calcuate CoIns or not
+	private Boolean coInsIndicator;
+	
+	//holds coins for a plan/for household
+	private Double familyCoIns;
+
+	
+	public Boolean getCoInsIndicator() {
+		return coInsIndicator;
+	}
+	public void setCoInsIndicator(Boolean coInsIndicator) {
+		this.coInsIndicator = coInsIndicator;
+	}
+	public String getEmtAmb() {
+		return emtAmb;
+	}
+	public void setEmtAmb(String emtAmb) {
+		this.emtAmb = emtAmb;
+	}
+	public String getEr() {
+		return er;
+	}
+	public void setEr(String er) {
+		this.er = er;
+	}	
+
+	public Map<String, Double> getInsuranceCost() {
+		return insuranceCost;
+	}
+	public void setInsuranceCost(Map<String, Double> insuranceCost) {
+		this.insuranceCost = insuranceCost;
+	}
+	
+	public Map<String, Double> getCoinsuranceCostPerService() {
+		return coinsuranceCostPerService;
+	}
+	public void setCoinsuranceCostPerService(Map<String, Double> coinsuranceCostPerService) {
+		this.coinsuranceCostPerService = coinsuranceCostPerService;
+	}
+	public Double getTotalCoinsurance() {
+		return totalCoinsurance;
+	}
+	public void setTotalCoinsurance(Double totalCoinsurance) {
+		this.totalCoinsurance = totalCoinsurance;
+	}
+	public String getPhyThrpy() {
+		return phyThrpy;
+	}
+	public void setPhyThrpy(String phyThrpy) {
+		this.phyThrpy = phyThrpy;
+	}
+	public String getOpFacility() {
+		return opFacility;
+	}
+	public void setOpFacility(String opFacility) {
+		this.opFacility = opFacility;
+	}
+	public String getRxTier1() {
+		return rxTier1;
+	}
+	public void setRxTier1(String rxTier1) {
+		this.rxTier1 = rxTier1;
+	}
+	public String getRxTier2() {
+		return rxTier2;
+	}
+	public void setRxTier2(String rxTier2) {
+		this.rxTier2 = rxTier2;
+	}
+	public String getRxTier3() {
+		return rxTier3;
+	}
+	public void setRxTier3(String rxTier3) {
+		this.rxTier3 = rxTier3;
+	}
+	public String getRxTier4() {
+		return rxTier4;
+	}
+	public void setRxTier4(String rxTier4) {
+		this.rxTier4 = rxTier4;
+	}
+	public String getSabhIp() {
+		return sabhIp;
+	}
+	public void setSabhIp(String sabhIp) {
+		this.sabhIp = sabhIp;
+	}
+	public String getSabhOp() {
+		return sabhOp;
+	}
+	public void setSabhOp(String sabhOp) {
+		this.sabhOp = sabhOp;
+	}
+	public String getHealthPlanId() {
+		return healthPlanId;
+	}
+	public void setHealthPlanId(String healthPlanId) {
+		this.healthPlanId = healthPlanId;
+	}
+	public String getLangCdTx() {
+		return langCdTx;
+	}
+	public void setLangCdTx(String langCdTx) {
+		this.langCdTx = langCdTx;
+	}
+	
+	public String getHospital() {
+		return hospital;
+	}
+	public void setHospital(String hospital) {
+		this.hospital = hospital;
+	}
+//	public String getDeductibleFamily() {
+//		return deductibleFamily;
+//	}
+//	public void setDeductibleFamily(String deductibleFamily) {
+//		this.deductibleFamily = deductibleFamily;
+//	}
+	public String getPcp() {
+		return pcp;
+	}
+	public void setPcp(String pcp) {
+		this.pcp = pcp;
+	}
+	public String getSp() {
+		return sp;
+	}
+	public void setSp(String sp) {
+		this.sp = sp;
+	}
+	public String getPrevVisit() {
+		return prevVisit;
+	}
+	public void setPrevVisit(String prevVisit) {
+		this.prevVisit = prevVisit;
+	}
+	public String getNatalCare() {
+		return natalCare;
+	}
+	public void setNatalCare(String natalCare) {
+		this.natalCare = natalCare;
+	}
+	public String getUrgentCare() {
+		return urgentCare;
+	}
+	public void setUrgentCare(String urgentCare) {
+		this.urgentCare = urgentCare;
+	}
+
+	public String getSnf() {
+		return snf;
+	}
+	public void setSnf(String snf) {
+		this.snf = snf;
+	}
+	public String getHomeHealthCare() {
+		return homeHealthCare;
+	}
+	public void setHomeHealthCare(String homeHealthCare) {
+		this.homeHealthCare = homeHealthCare;
+	}
+	public String getAdvImging() {
+		return advImging;
+	}
+	public void setAdvImging(String advImging) {
+		this.advImging = advImging;
+	}
+	public String getXrayImging() {
+		return xrayImging;
+	}
+	public void setXrayImging(String xrayImging) {
+		this.xrayImging = xrayImging;
+	}
+	public String getLabOPService() {
+		return labOPService;
+	}
+	public void setLabOPService(String labOPService) {
+		this.labOPService = labOPService;
+	}
+	public String getChrpcService() {
+		return chrpcService;
+	}
+	public void setChrpcService(String chrpcService) {
+		this.chrpcService = chrpcService;
+	}
+	public String getEyeExamService() {
+		return eyeExamService;
+	}
+	public void setEyeExamService(String eyeExamService) {
+		this.eyeExamService = eyeExamService;
+	}
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+	public String getPlanName() {
+		return planName;
+	}
+	public void setPlanName(String planName) {
+		this.planName = planName;
+	}
+	public String getCarrierId() {
+		return carrierId;
+	}
+	public void setCarrierId(String carrierId) {
+		this.carrierId = carrierId;
+	}
+//	public String getPlanDetailsDisplayId() {
+//		return planDetailsDisplayId;
+//	}
+//	public void setPlanDetailsDisplayId(String planDetailsDisplayId) {
+//		this.planDetailsDisplayId = planDetailsDisplayId;
+//	}
+	public String getMetalLevel() {
+		return metalLevel;
+	}
+	public void setMetalLevel(String metalLevel) {
+		this.metalLevel = metalLevel;
+	}
+	
+	public String getAge() {
+		return age;
+	}
+	public void setAge(String age) {
+		this.age = age;
+	}
+	
+//	public String getAnnualDeductible() {
+//		return deductibleFamily;
+//	}
+//	public void setAnnualDeductible(String deductibleFamily) {
+//		this.deductibleFamily = deductibleFamily;
+//	}
+	public String getCoPay() {
+		return coPay;
+	}
+	public void setCoPay(String coPay) {
+		this.coPay = coPay;
+	}
+//	public String getOutOfPocMax() {
+//		return outOfPocMax;
+//	}
+//	public void setOutOfPocMax(String outOfPocMax) {
+//		this.outOfPocMax = outOfPocMax;
+//	}
+	
+	public String getCsrVarId() {
+		return csrVarId;
+	}
+	public void setCsrVarId(String csrVarId) {
+		this.csrVarId = csrVarId;
+	}
+	public Map<String,Double> getDeductCost() {
+		return deductCost;
+	}
+	public void setDeductCost(Map<String,Double> deductCost) {
+		this.deductCost = deductCost;
+	}
+	public Double getTotalDeductible() {
+		return totalDeductible;
+	}
+	public void setTotalDeductible(Double totalDeductible) {
+		this.totalDeductible = totalDeductible;
+	}
+	public String getDeductibleIndividual() {
+		return deductibleIndividual;
+	}
+	public void setDeductibleIndividual(String deductibleIndividual) {
+		this.deductibleIndividual = deductibleIndividual;
+	}
+	public Integer getYear() {
+		return year;
+	}
+	public void setYear(Integer year) {
+		this.year = year;
+	}
+	public Double getFamilyCoIns() {
+		return familyCoIns;
+	}
+	public void setFamilyCoIns(Double familyCoIns) {
+		this.familyCoIns = familyCoIns;
+	}
+}

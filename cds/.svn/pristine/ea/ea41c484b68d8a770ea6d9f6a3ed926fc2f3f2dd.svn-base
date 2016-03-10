@@ -1,0 +1,133 @@
+package com.hixapi.web.framework.struts;
+
+import java.text.SimpleDateFormat;
+import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
+import org.apache.struts2.ServletActionContext;
+
+import com.hixapi.model.common.APIExceptionMessage;
+import com.hixapi.model.common.BaseException;
+import com.hixapi.web.framework.common.APIUtil;
+import com.hixapi.web.framework.context.ContextKeyEnum;
+import com.hixapi.web.framework.context.ContextProvider;
+import com.hixapi.web.framework.env.IEnvironmentProvider;
+import com.hixapi.web.framework.i18n.DBResourceBundle;
+import com.hixapi.web.framework.service.ServiceLocator;
+import com.opensymphony.xwork2.ActionContext;
+import com.opensymphony.xwork2.ActionInvocation;
+import com.opensymphony.xwork2.interceptor.Interceptor;
+import com.opensymphony.xwork2.util.LocalizedTextUtil;
+
+public class RootInterceptor implements Interceptor {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 505984847239667466L;
+
+	private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(RootInterceptor.class);
+
+	public void destroy() {
+
+	}
+
+	public void init() {
+		log.entry();
+		log.debug("Initializing resource bundle");
+		ContextProvider.setRequestId("STRUTS_INIT");
+		LocalizedTextUtil.findText(DBResourceBundle.class, "invoking.to.initialize", APIUtil.getLocale("en_US"));
+		log.exit();
+	}
+
+	public String intercept(ActionInvocation invocation) throws Exception {
+		String result;
+		try {
+			ContextProvider.setRequestId(UUID.randomUUID().toString());
+
+			String ipAddress = getIPAddress();
+			ContextProvider.setContextField(ContextKeyEnum.CLIENT_IP, ipAddress);
+
+			SimpleDateFormat mmddyyyy = new SimpleDateFormat("MM/dd/yyyy");
+			mmddyyyy.setLenient(false);
+			ContextProvider.setContextField(ContextKeyEnum.DATE_FORMAT_MM_DD_YYYY, mmddyyyy);
+			SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			dateTimeFormat.setLenient(false);
+			ContextProvider.setContextField(ContextKeyEnum.DATE_FORMAT_YYYY_MM_DD_HH_MM_SS, dateTimeFormat);
+
+			dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd");
+			dateTimeFormat.setLenient(false);
+			ContextProvider.setContextField(ContextKeyEnum.DATE_FORMAT_YYYY_MM_DD, dateTimeFormat);
+
+			if (!ServiceLocator.getInstance().getService(IEnvironmentProvider.class).isProduction()) {
+				String date = ServletActionContext.getRequest().getParameter("systemDate");
+				if (StringUtils.isNotEmpty(date)) {
+					log.info("Date set in Context Provider: {}", date);
+					ContextProvider.setContextField(ContextKeyEnum.CURRENT_DATETIME, dateTimeFormat.parse(date));
+				}
+			}
+
+			/*String language = ServletActionContext.getRequest().getParameter("locale");
+			if (StringUtils.isNotEmpty(language)) {
+				log.info("Locale set in Context Provider: {}", language);
+				ContextProvider.setContextField(ContextKeyEnum.CURRENT_LOCALE, APIUtil.getLocale(language));
+			}*/
+
+			result = invocation.invoke();
+		} catch (Throwable e) {
+			log.error("Error processing Request", e);
+			log.error("Request/Session Trace: \n{}", APIUtil.traceRequest(invocation.getAction()));
+			result = BaseAction.ERROR;
+			if(ActionContext.getContext().getActionInvocation().getProxy().getAction() instanceof ErrorAction){
+				result = BaseAction.FRAMEWORK_ERROR;
+			}
+			if (isAsynchRequest(invocation)) {
+				result = BaseAction.ASYNCH_ERROR;
+			}
+			APIExceptionMessage msg = new APIExceptionMessage();
+			if (e instanceof BaseException) {
+				BaseException ex = (BaseException) e;
+				msg.setException(ex);
+
+			} else {
+				BaseException ex = new BaseException("Error processing request", e);
+				// msg.setErrorCode(GEN_ERROR);
+				// msg.setErrorMessage("An error occurred processing the request");
+				msg.setException(ex);
+			}
+			invocation.getStack().push(msg);
+
+		} finally {
+			ContextProvider.unset();
+			ThreadContext.clearAll();
+		}
+		return result;
+	}
+
+	private boolean isAsynchRequest(ActionInvocation invocation) {
+		if (invocation.getAction() instanceof BaseAction) {
+			return ((BaseAction) invocation.getAction()).isAjaxRequest();
+		}
+		return "XMLHttpRequest".equals(ServletActionContext.getRequest().getHeader("X-Requested-With"));
+	}
+
+	private String getIPAddress() {
+		HttpServletRequest request = ServletActionContext.getRequest();
+		String ip = request.getHeader("True-Client-IP");
+		log.debug("True-Client-IP identified as {} ", ip);
+		if (StringUtils.isBlank(ip)) {
+			ip = request.getHeader("X-Forwarded-For");
+		}
+		log.debug("X-Forwarded-For identified as {} ", ip);
+		if (StringUtils.isBlank(ip)) {
+			ip = request.getRemoteAddr();
+			log.debug("X-Forwarded-For is blank, using {}", ip);
+		}
+		return ip;
+	}
+
+}

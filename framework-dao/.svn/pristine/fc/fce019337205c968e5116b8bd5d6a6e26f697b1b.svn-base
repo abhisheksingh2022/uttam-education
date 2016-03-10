@@ -1,0 +1,400 @@
+package com.hixapi.pmp.dao.plan.impl;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hibernate.Criteria;
+import org.hibernate.Hibernate;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.sql.JoinType;
+
+import com.hixapi.framework.common.exception.UnauthorizedAccessException;
+import com.hixapi.framework.dao.BaseDAO;
+import com.hixapi.pmp.common.util.PMPAccessController;
+import com.hixapi.pmp.dao.plan.PlanUploadSupportDAO;
+import com.hixapi.pmp.entity.model.CarrierAdminInfo;
+import com.hixapi.pmp.entity.model.CarrierDrugCoverage;
+import com.hixapi.pmp.entity.model.CarrierFormularyInfo;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+import com.hixapi.pmp.entity.model.CarrierNetwork;
+import com.hixapi.pmp.entity.model.PlanBenefitDetail;
+import com.hixapi.pmp.entity.model.PlanBenefitMstr;
+import com.hixapi.pmp.entity.model.PlanLifecycle;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanRateDetail;
+import com.hixapi.pmp.entity.model.PlanUploadHist;
+import com.hixapi.pmp.entity.model.PlanVariantDtl;
+import com.hixapi.pmp.entity.model.PlanVariantDtlCopayCoins;
+import com.hixapi.pmp.entity.model.PlanVariantDtlDeductible;
+import com.hixapi.pmp.entity.model.PlanVariantDtlMaxOop;
+
+/**
+ * 
+ * @author admin
+ *
+ */
+public class PlanUploadSupportDAOImpl extends BaseDAO implements PlanUploadSupportDAO {
+	private static final Logger log = LogManager.getLogger(PlanUploadSupportDAOImpl.class);
+
+	@Override
+	public CarrierAdminInfo retrieveCarrierAdminInfo(Long carrierIdNbr, String coverageYear) {
+		log.entry();
+		Session session = getCurrentSession();
+
+		Criteria crit = session.createCriteria(CarrierAdminInfo.class).add(
+				Restrictions.eq("coverageYear", Short.parseShort(coverageYear)));
+		crit.createAlias("carrierMstr", "carrierMstr").add(Restrictions.eq("carrierMstr.carrierIdNbr", carrierIdNbr));
+		return log.exit((CarrierAdminInfo) crit.uniqueResult());
+	}
+
+	@Override
+	public CarrierMstr retrieveCarrierById(String carrierIdNbr) {
+		Session session = getCurrentSession();
+
+		Criteria crit = session.createCriteria(CarrierMstr.class).add(
+				Restrictions.eq("carrierIdNbr", Long.parseLong(carrierIdNbr)));
+		return log.exit((CarrierMstr) crit.uniqueResult());
+	}
+
+	@Override
+	public void synchCarrierAdminInfo(CarrierAdminInfo entity) {
+		log.entry();
+		Session session = getCurrentSession();
+		session.saveOrUpdate(entity);
+		session.flush();
+		log.exit();
+
+	}
+
+	@Override
+	public void saveUploadHistory(PlanUploadHist history) {
+		log.entry();
+		Session session = getCurrentSession();
+		session.save(history);
+		session.flush();
+		log.exit();
+
+	}
+
+	@Override
+	public void deleteNetworkRecords(Long carrierAdminInfoIdNbr) {
+		log.entry();
+		Session session = getCurrentSession();
+
+		Query query = session
+				.createQuery("delete CarrierNetwork where carrierAdminInfo.carrierAdminInfoIdNbr = :carrierAdminInfoIdNbr");
+		query.setParameter("carrierAdminInfoIdNbr", carrierAdminInfoIdNbr);
+		int result = query.executeUpdate();
+		session.flush();
+		log.debug("Deleted {} records", result);
+		log.exit();
+
+	}
+
+	@Override
+	public void saveNetworkRecords(List<CarrierNetwork> networkList) {
+		log.entry();
+		Session session = getCurrentSession();
+		Set<String> networkIdsDone = new HashSet<String>();
+		if (CollectionUtils.isNotEmpty(networkList)) {
+			for (CarrierNetwork network : networkList) {
+				if (!networkIdsDone.contains(network.getNetworkId())) {
+					Query query = session
+							.createQuery("delete CarrierNetwork cn where cn.networkId = :networkId and cn.carrierAdminInfo.carrierAdminInfoIdNbr = :carrierAdminInfoIdNbr");
+					query.setParameter("carrierAdminInfoIdNbr", network.getCarrierAdminInfo().getCarrierAdminInfoIdNbr());
+					query.setParameter("networkId", network.getNetworkId());
+					int result = query.executeUpdate();
+					log.debug("Deleted {} CarrierNetwork records for {} of carrier {}", result, network
+							.getCarrierAdminInfo().getCarrierAdminInfoIdNbr());
+					networkIdsDone.add(network.getNetworkId());
+				}
+
+				session.save(network);
+			}
+		}
+		session.flush();
+		log.exit();
+
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<PlanMstr> retrievePlanMstrListForBenefits(long carrierIdNbr, short year) {
+		if (!PMPAccessController.getInstance().isCarrierAccessibleForCurrentUser(carrierIdNbr)) {
+			throw new UnauthorizedAccessException();
+		}
+		Session session = getCurrentSession();
+
+		Criteria crit = session.createCriteria(PlanMstr.class);
+		crit.add(Restrictions.eq("deletedIndicator", "N"));
+		crit.createAlias("carrierAdminInfo", "carrierAdminInfo", JoinType.INNER_JOIN);
+		crit.createAlias("carrierAdminInfo.carrierMstr", "carrierMstr", JoinType.INNER_JOIN);
+		crit.add(Restrictions.eq("carrierMstr.carrierIdNbr", carrierIdNbr));
+		crit.createAlias("planBenefitMstrs", "planBenefitMstrs", JoinType.INNER_JOIN);
+		//crit.createAlias("planBenefitMstrs.planVariantDtls", "planVariantDtls");
+		//crit.createAlias("planBenefitMstrs.planBenefitDetails", "planBenefitDetails");
+		//crit.createAlias("planVariantDtls.planVariantDtlMaxOops", "planVariantDtlMaxOops");
+		//crit.createAlias("planVariantDtls.planVariantDtlDeductibles", "planVariantDtlDeductibles");
+		//crit.createAlias("planVariantDtls.planVariantDtlCopayCoinses", "planVariantDtlCopayCoinses");
+		List<PlanMstr> results = crit.list();
+		log.debug("Found {} results", results.size());
+
+		if (CollectionUtils.isNotEmpty(results)) {
+			for (PlanMstr plan : results) {
+				if (CollectionUtils.isNotEmpty(plan.getPlanBenefitMstrs())) {
+					for (PlanBenefitMstr pbMstr : plan.getPlanBenefitMstrs()) {
+						log.debug("Initializing planBenefitDetails");
+						Hibernate.initialize(pbMstr.getPlanBenefitDetails());
+						log.debug("Initializing planVariantDtls");
+						Hibernate.initialize(pbMstr.getPlanVariantDtls());
+						if (CollectionUtils.isNotEmpty(pbMstr.getPlanVariantDtls())) {
+							for (PlanVariantDtl variant : pbMstr.getPlanVariantDtls()) {
+								log.debug("Initializing planVariantDtlMaxOops");
+								Hibernate.initialize(variant.getPlanVariantDtlMaxOops());
+								log.debug("Initializing planVariantDtlDeductibles");
+								Hibernate.initialize(variant.getPlanVariantDtlDeductibles());
+								log.debug("Initializing planVariantDtlCopayCoinses");
+								Hibernate.initialize(variant.getPlanVariantDtlCopayCoinses());
+							}
+						}
+					}
+				}
+			}
+		}
+		return new HashSet<PlanMstr>(results);
+
+	}
+
+	@Override
+	public void synchPlanBenefitsInfo(Collection<PlanMstr> masterList) {
+		log.entry();
+		Session session = getCurrentSession();
+		if (CollectionUtils.isNotEmpty(masterList)) {
+
+			/*Query q = session.createQuery("update PlanMstr planMstr set deletedIndicator=:deleted where"
+					+ " deletedIndicator !='Y' and carrierAdminInfo.carrierAdminInfoIdNbr=:carrierAdminInfoIdNbr"
+					+ " and planMstrId not in (:planMstrIdList)");
+			q.setLong("carrierAdminInfoIdNbr", masterList.iterator().next().getCarrierAdminInfo().getCarrierAdminInfoIdNbr());
+			List<Long> idList = new ArrayList<Long>();
+			for (PlanMstr a : masterList) {
+				idList.add(a.getPlanMstrId());
+			}
+			q.setParameterList("planMstrIdList", idList);
+			q.setString("deleted", "Y");
+			int count = q.executeUpdate();
+			log.debug("Marked as deleted {} plansmstr records", count);*/
+
+			//session.flush();
+
+			for (PlanMstr entity : masterList) {
+				session.saveOrUpdate(entity);
+				for (PlanBenefitMstr pbMstr : entity.getPlanBenefitMstrs()) {
+					pbMstr.setPlanMstr(entity);
+					session.saveOrUpdate(pbMstr);
+					for (PlanBenefitDetail pbDetail : pbMstr.getPlanBenefitDetails()) {
+						pbDetail.setPlanBenefitMstr(pbMstr);
+						session.saveOrUpdate(pbDetail);
+					}
+					for (PlanVariantDtl variant : pbMstr.getPlanVariantDtls()) {
+						variant.setPlanBenefitMstr(pbMstr);
+						session.saveOrUpdate(variant);
+						for (PlanVariantDtlCopayCoins detail : variant.getPlanVariantDtlCopayCoinses()) {
+							detail.setPlanVariantDtl(variant);
+							session.saveOrUpdate(detail);
+						}
+						for (PlanVariantDtlDeductible detail : variant.getPlanVariantDtlDeductibles()) {
+							detail.setPlanVariantDtl(variant);
+							session.saveOrUpdate(detail);
+						}
+						for (PlanVariantDtlMaxOop detail : variant.getPlanVariantDtlMaxOops()) {
+							detail.setPlanVariantDtl(variant);
+							session.saveOrUpdate(detail);
+						}
+					}
+				}
+				if (CollectionUtils.isNotEmpty(entity.getPlanLifecycles())) {
+					for (PlanLifecycle lc : entity.getPlanLifecycles()) {
+						lc.setPlanMstr(entity);
+						session.saveOrUpdate(lc);
+					}
+				}
+
+			}
+
+		}
+
+		session.flush();
+		log.exit();
+	}
+
+	@Override
+	public void saveFormularyInfo(List<CarrierFormularyInfo> formularyInfo, Long carrierAdminIdNbr) {
+		log.entry();
+		Session session = getCurrentSession();
+
+		Set<String> formularyIdsDone = new HashSet<String>();
+		for (CarrierFormularyInfo formulary : formularyInfo) {
+			if (!formularyIdsDone.contains(formulary.getFormularyId())) {
+				Query query = session.createQuery("delete from CarrierFormularyCoverage where "
+						+ "carrierFormularyInfo.carrierFormularyInfoId in "
+						+ "(select carrierFormularyInfoId from CarrierFormularyInfo where "
+						+ "carrierAdminInfo.carrierAdminInfoIdNbr = :carrierAdminIdNbr and formularyId = :formularyId)");
+				query.setParameter("carrierAdminIdNbr", carrierAdminIdNbr);
+				query.setParameter("formularyId", formulary.getFormularyId());
+				int result = query.executeUpdate();
+				log.debug("Deleted {} CarrierFormularyCoverage records", result);
+
+				query = session
+						.createQuery("delete from CarrierFormularyInfo where carrierAdminInfo.carrierAdminInfoIdNbr = "
+								+ ":carrierAdminIdNbr and formularyId = :formularyId");
+				query.setParameter("carrierAdminIdNbr", carrierAdminIdNbr);
+				query.setParameter("formularyId", formulary.getFormularyId());
+				result = query.executeUpdate();
+				log.debug("Deleted {} CarrierFormularyInfo records", result);
+				formularyIdsDone.add(formulary.getFormularyId());
+			}
+			session.save(formulary);
+		}
+		session.flush();
+		log.exit();
+
+	}
+
+	@Override
+	public void saveDrugListInfo(List<CarrierDrugCoverage> drugCoverage, Long carrierAdminIdNbr) {
+		log.entry();
+		Session session = getCurrentSession();
+		Query query = session
+				.createQuery("delete CarrierDrugCoverage where carrierAdminInfo.carrierAdminInfoIdNbr = :carrierAdminIdNbr");
+		query.setParameter("carrierAdminIdNbr", carrierAdminIdNbr);
+		int result = query.executeUpdate();
+		session.flush();
+		log.debug("Deleted {} CarrierDrugCoverage records", result);
+
+		for (CarrierDrugCoverage drug : drugCoverage) {
+			session.save(drug);
+		}
+		session.flush();
+		log.exit();
+
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<PlanMstr> retrievePlanMstrRecords(Long carrierAdminInfoIdNbr) {
+		log.entry();
+		Session session = getCurrentSession();
+		Criteria crit = session.createCriteria(PlanMstr.class);
+		crit.createAlias("carrierAdminInfo", "carrierAdminInfo", JoinType.INNER_JOIN);
+		crit.add(Restrictions.eq("carrierAdminInfo.carrierAdminInfoIdNbr", carrierAdminInfoIdNbr));
+		List<PlanMstr> resultList = crit.list();
+		log.debug("Found {} planmstr records", resultList.size());
+		log.exit();
+		return resultList;
+	}
+
+	@Override
+	public void synchPlanRatesInfo(List<PlanRateDetail> rates, Long carrierAdminIdNbr) {
+		log.entry();
+		Session session = getCurrentSession();
+		//		Query query = session
+		//				.createQuery("delete PlanRateDetail where rateDetailId in (select r.rateDetailId from PlanRateDetail r where r.planMstr.carrierAdminInfo.carrierAdminInfoIdNbr = :carrierAdminIdNbr)");
+		//		query.setParameter("carrierAdminIdNbr", carrierAdminIdNbr);
+		//		int result = query.executeUpdate();
+		//		session.flush();
+		//		log.debug("Deleted {} PlanRateDetail records", result);
+
+		Set<Long> planIdsDone = new HashSet<Long>();
+
+		for (PlanRateDetail rate : rates) {
+			if (!planIdsDone.contains(rate.getPlanMstr().getPlanMstrId())) {
+				Query query = session
+						.createQuery("delete PlanRateDetail where rateDetailId in (select r.rateDetailId from PlanRateDetail r where r.planMstr.planMstrId = :planMstrId)");
+				query.setParameter("planMstrId", rate.getPlanMstr().getPlanMstrId());
+				int result = query.executeUpdate();
+				log.debug("Deleted {} PlanRateDetail records for {}", result, rate.getPlanMstr().getPlanHiosId());
+				planIdsDone.add(rate.getPlanMstr().getPlanMstrId());
+			}
+			session.save(rate);
+		}
+		session.flush();
+		log.exit();
+
+	}
+
+	public boolean hasCarrierNetworkRecords(Long carrierAdminIdNbr) {
+		Session session = getCurrentSession();
+		Criteria criteria = session.createCriteria(CarrierNetwork.class);
+		criteria.createAlias("carrierAdminInfo", "carrierAdminInfo");
+		criteria.add(Restrictions.eq("carrierAdminInfo.carrierAdminInfoIdNbr", carrierAdminIdNbr));
+		criteria.setProjection(Projections.rowCount());
+		Long count = (Long) criteria.uniqueResult();
+		log.debug("Count of network records for carrier idnbr {}: {}", carrierAdminIdNbr, count);
+		if (count != null && count.longValue() > 0) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean hasCarrierFormularyRecords(Long carrierAdminIdNbr) {
+
+		Session session = getCurrentSession();
+		Criteria criteria = session.createCriteria(CarrierFormularyInfo.class);
+		criteria.createAlias("carrierAdminInfo", "carrierAdminInfo");
+		criteria.add(Restrictions.eq("carrierAdminInfo.carrierAdminInfoIdNbr", carrierAdminIdNbr));
+		criteria.setProjection(Projections.rowCount());
+		Long count = (Long) criteria.uniqueResult();
+		log.debug("Count of formulary info for carrier idnbr {}: {}", carrierAdminIdNbr, count);
+		if (count != null && count.longValue() > 0) {
+			return true;
+		}
+		return false;
+
+	}
+	
+	public List<CarrierNetwork> retrieveCarrierNetworkRecords(Long carrierAdminIdNbr) {
+		Session session = getCurrentSession();
+		Criteria criteria = session.createCriteria(CarrierNetwork.class);
+		criteria.createAlias("carrierAdminInfo", "carrierAdminInfo");
+		criteria.add(Restrictions.eq("carrierAdminInfo.carrierAdminInfoIdNbr", carrierAdminIdNbr));
+		//criteria.setProjection(Projections.rowCount());
+		@SuppressWarnings("unchecked")
+		List<CarrierNetwork> results = criteria.list();
+		log.debug("Count of network records for carrier idnbr {}: {}", carrierAdminIdNbr, results.size());
+		return results;
+	}
+
+	public List<CarrierFormularyInfo> retrieveCarrierFormularyRecords(Long carrierAdminIdNbr) {
+
+		Session session = getCurrentSession();
+		Criteria criteria = session.createCriteria(CarrierFormularyInfo.class);
+		criteria.createAlias("carrierAdminInfo", "carrierAdminInfo");
+		criteria.add(Restrictions.eq("carrierAdminInfo.carrierAdminInfoIdNbr", carrierAdminIdNbr));
+		@SuppressWarnings("unchecked")
+		List<CarrierFormularyInfo> results = criteria.list();
+		log.debug("Count of formulary records for carrier idnbr {}: {}", carrierAdminIdNbr, results.size());
+		return results;
+
+	}
+	
+
+	@Override
+	public void synchPlanLifecycles(PlanMstr mstr) {
+		Session session = getCurrentSession();
+		if (CollectionUtils.isNotEmpty(mstr.getPlanLifecycles())) {
+			for (PlanLifecycle rate : mstr.getPlanLifecycles()) {
+				session.saveOrUpdate(rate);
+			}
+		}
+		session.flush();
+	}
+
+}

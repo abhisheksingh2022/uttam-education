@@ -1,0 +1,152 @@
+/**
+ * @author ujjalb
+ * Jul 23, 2015 2015
+ */
+package com.hixapi.pmp.service.plan.mapping;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.pm.issuer_network.extension.v1_0.PayloadType;
+import com.hixapi.pm.issuer_network.gov.cms.hix.core.OrganizationType;
+import com.hixapi.pm.issuer_network.gov.cms.hix.pm.HealthcareProviderNetworkType;
+import com.hixapi.pm.issuer_network.gov.cms.hix.pm.IssuerType;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanStatus;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.entity.model.CarrierAdminInfo;
+import com.hixapi.pmp.entity.model.CarrierNetwork;
+import com.hixapi.pmp.entity.model.PlanMstr;
+
+/**
+ * @author ujjalb
+ *
+ */
+public class NetworkMapping extends BaseMapper {
+
+	private static final Logger log = LogManager.getLogger(NetworkMapping.class);
+	
+	private Set<PlanMstr> updatedPlans = new LinkedHashSet<PlanMstr>();
+
+	public List<CarrierNetwork> buildNetworkMappingRecords(PayloadType payload, CarrierAdminInfo baseEntity,
+			Set<PlanMstr> planList) {
+		log.entry();
+		if (payload == null) {
+			return null;
+		}
+		List<CarrierNetwork> networkList = new ArrayList<CarrierNetwork>();
+		IssuerType issuer = payload.getIssuer();
+		List<HealthcareProviderNetworkType> providerNetworkList = null;
+		if (issuer != null) {
+			providerNetworkList = issuer.getHealthcareProviderNetwork();
+
+			if (CollectionUtils.isNotEmpty(providerNetworkList)) {
+				CarrierNetwork network = null;
+				for (HealthcareProviderNetworkType networkType : providerNetworkList) {
+					final OrganizationType orgRef = (OrganizationType) networkType.getRoleOfOrganizationReference().getRef();
+					String ref = orgRef.getId();
+					log.debug("Reference value found as {}", ref);
+					if (networkType.getProviderNetworkIdentification() != null
+							&& networkType.getProviderNetworkIdentification().getIdentificationID() != null) {
+						String id = networkType.getProviderNetworkIdentification().getIdentificationID().getValue();
+
+						PlanMstr mstr = findActivatedPlanOfNetworkId(id, planList); // Check if an activated plan is using the same network id
+						if (mstr != null) {
+							List<Object> subs = new ArrayList<Object>();
+							subs.add(mstr.getPlanHiosId());
+							subs.add(id);
+							addError("msg.planupload.network_upload_plan_activated", Severity.ERROR, subs);
+							break;
+						}
+						network = new CarrierNetwork();
+						network.setCarrierAdminInfo(baseEntity);
+						network.setNetworkId(APIUtil.truncateString(id, 30));
+						networkList.add(network);
+						markUpdatedPlans(id, planList); //Mark the impacted plans so that they can be moved to INCOMPLETE status.
+						if (ref != null) {
+							OrganizationType org = findOrganization(ref, payload.getOrganization());
+							if (org != null && org.getOrganizationPrimaryContactInformation() != null
+									&& org.getOrganizationPrimaryContactInformation().getContactWebsiteURI() != null) {
+								network.setUrl(org.getOrganizationPrimaryContactInformation().getContactWebsiteURI()
+										.getValue());
+
+							}
+							if (org != null && org.getOrganizationAugmentation() != null
+									&& org.getOrganizationAugmentation().getOrganizationMarketingName() != null) {
+								network.setNetworkName(org.getOrganizationAugmentation().getOrganizationMarketingName()
+										.getValue());
+
+							}
+						}
+
+						log.debug("Saving network {}, {}, {}", id, network.getNetworkName(), network.getUrl());
+					}
+				}
+			}
+		} else {
+			log.warn("Issuer is null in payload");
+		}
+		return networkList;
+	}
+
+	private PlanMstr findActivatedPlanOfNetworkId(String id, Set<PlanMstr> planList) {
+		PlanMstr mstr = null;
+
+		if (CollectionUtils.isNotEmpty(planList)) {
+			for (PlanMstr entry : planList) {
+				PlanStatus status = entry.getCurrentPlanStatus();
+				if (status != null && status == PlanStatus.ACTIVATED
+						&& StringUtils.trimToEmpty(id).equalsIgnoreCase(entry.getNtwrkId())) {
+					mstr = entry;
+					break;
+				}
+			}
+		}
+
+		return mstr;
+	}
+
+	private void markUpdatedPlans(String id, Set<PlanMstr> planList) {
+		if (CollectionUtils.isNotEmpty(planList)) {
+			for (PlanMstr entry : planList) {
+				if (StringUtils.trimToEmpty(id).equalsIgnoreCase(entry.getNtwrkId())) {
+					updatedPlans.add(entry);
+				}
+			}
+		}
+
+	}
+	private OrganizationType findOrganization(String ref, List<OrganizationType> organizationList) {
+		log.entry();
+		OrganizationType retVal = null;
+		if (CollectionUtils.isNotEmpty(organizationList)) {
+			for (OrganizationType org : organizationList) {
+				if (StringUtils.equals(org.getId(), ref)) {
+					log.debug("Found organization with id {}", ref);
+					retVal = org;
+				}
+			}
+		}
+		if (retVal == null) {
+			log.warn("Failed to find a matching organization for {}", ref);
+		}
+		return log.exit(retVal);
+
+	}
+
+	public Set<PlanMstr> getUpdatedPlans() {
+		return updatedPlans;
+	}
+
+	public void setUpdatedPlans(Set<PlanMstr> updatedPlans) {
+		this.updatedPlans = updatedPlans;
+	}
+
+}

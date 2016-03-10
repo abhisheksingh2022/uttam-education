@@ -1,0 +1,111 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp" %>
+<%@include file="/jsp/includes/datatable.jsp" %>
+
+		<div class="row">
+             <div class="body-bg">              
+                <h2 class="inner-heading"><s:text name="txt.planhistory.planhistoryreport"></s:text> </h2>
+   			 	<div class="carrier-data">                        
+                   <s:form action="planhistory-report" id="id_form_planhistory-report" autocomplete="off">  
+	                   	<s:token />
+						<s:hidden name="ajaxRequest" value="false" />
+						<s:hidden name="formId" />
+						<div class="carrier-field">
+							<label><s:text name="txt.global.year"></s:text><span class="astrcs">*</span></label> 
+							<span> <s:select list="years" class="form-control" headerKey="" headerValue="%{selectBoxHeader}" name="criteria.searchYear"></s:select>
+							</span>
+						</div>
+						<div class="carrier-field">
+							<label><s:text name="txt.plansearch.carriername"></s:text><span class="astrcs"></span></label>
+							 <span> <s:select
+									list="carrierList" name="criteria.searchCarrierNbr" class="form-control" listValue="carrierName"
+									listKey="carrierIdNbr" headerKey="" headerValue="%{selectBoxHeader}"></s:select>
+							</span>
+						</div>
+						<div class="carrier-field">
+							<label><s:text name="txt.plansearch.planid"></s:text><span class="astrcs"></span></label>
+							 <span> <s:textfield class="form-control" name="criteria.searchPlanId" id="id_tf_userId" maxlength="32" size="15"></s:textfield>
+							</span>
+						</div>
+						<div class="carrier-field">
+							<label><s:text name="txt.plansearch.planname"></s:text><span class="astrcs"></span></label> <span> <s:textfield
+								class="form-control" name="criteria.searchPlanName" id="id_tf_userId" maxlength="32" size="15"></s:textfield>
+							</span>
+						</div>
+		                <div class="form-btn">
+		                    <button class="save-btn" onclick="return setActionAndSubmit('id_form_planhistory-report','createReport' );">
+		               			 <s:text name="txt.planhistory.create"></s:text>
+		                    </button>
+		                </div>   
+       			 </s:form>
+                 <div class="clearfix" ></div>    
+         	  </div>          
+                    <div class="clearfix"></div>
+                    <s:hidden id="planHistoryStatus" name="planHistoryStatus" />
+				<s:if test="planHistoryStatus == true">
+						<h2 class="inner-heading" style="margin:40px 0 0 0;"><s:text name="txt.global.report"></</s:text></h2>
+					<div class="plan-table content" id="result">
+                        <div class="carrier-data">
+                            <table width="100%" border="0" cellpadding="5" cellspacing="5" class="pretty searchtabel" id="datatable">
+                            <thead>
+                                    <tr class="ac-trHd serchtr">
+                                        <th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.planhistory.changedby"></s:text></th>
+                                        <th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.plansearch.planname"></s:text></th>
+                                        <th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.plansearch.planid"></s:text></th>
+                                        <th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.report.plancomponent"></s:text></th>
+                                        <th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.planhistory.carrier"></s:text></th>
+                                        <th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.planhistory.changedate"></s:text></th>
+                                        <th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.planhistory.comments"></s:text></th>
+                                        <th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.planhistory.changes"></s:text></th>
+                                    </tr>
+                            </thead>
+                            <tbody>
+                                    <s:iterator value="planHistoryList" status="planHistoryStatus">
+                                    <tr>
+										<td class="padng10 fixed-width-datacolumn-8"><s:property value="chngByUsr"/></td>
+										<td class="padng10 fixed-width-datacolumn-8"><s:property value="planName"/></td>
+										<td class="padng10 fixed-width-datacolumn-8"><s:property value="planId"/></td>
+										<td class="padng10 fixed-width-datacolumn-8"><s:property value="planComponent"/></td>
+										<td class="padng10 fixed-width-datacolumn-8"><s:property value="carrier"/></td>
+										<td class="padng10 fixed-width-datacolumn-8"><s:property value="changeDate"/></td>
+										<td class="padng10 fixed-width-datacolumn-8"><s:property value="comments"/></td>
+										<td class="fixed-width-datacolumn-8"> 
+											<a href="#" data-toggle="modal" data-target="#DataModal_id_<s:property value='#planHistoryStatus.index'/>">
+                                   				 <s:text name="txt.planhistory.details"></s:text>
+											</a>
+		  									<div class="modal fade" role="dialog" id="DataModal_id_<s:property value='#planHistoryStatus.index'/>" >
+												<div class="modal-dialog">
+												    <div class="modal-content">
+													    <div class="modal-body" style="overflow:auto;">
+													        <p align="left">
+													          <s:property value="changes" escapeHtml="false" />
+													        </p>
+													    </div>
+													    <div class="modal-footer">
+													          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+													    </div>
+													</div>
+												</div>
+		                                     </div>
+										</td>
+									</tr>
+                                   </s:iterator> 
+                                   </tbody>
+                                </table>
+                          </div>
+                      </div>    
+                    </s:if>
+                  <div class="clearfix"></div>          
+                </div>
+        </div>         
+<%@include file="/jsp/includes/footer.jsp" %>
+<script>
+      $(document).ready(function() {
+		<s:if test="!hasMessages()">
+		if($("#result").length){
+		$('html,body').animate({scrollTop: $("#result").offset().top}, 'slow');
+		} 
+		  </s:if>
+	   });
+  </script>

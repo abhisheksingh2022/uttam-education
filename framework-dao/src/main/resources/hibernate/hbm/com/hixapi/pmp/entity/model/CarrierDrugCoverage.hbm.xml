@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.CarrierDrugCoverage" table="CARRIER_DRUG_COVERAGE" optimistic-lock="version">
+        <id name="carrierDrugCoverageId" type="java.lang.Long">
+            <column name="CARRIER_DRUG_COVERAGE_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_CARRIER_DRUG_COVERAGE_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="carrierAdminInfo" class="com.hixapi.pmp.entity.model.CarrierAdminInfo" fetch="select">
+            <column name="CARRIER_ADMIN_INFO_ID_NBR" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="drugListIdCd" type="string">
+            <column name="DRUG_LIST_ID_CD" length="10" />
+        </property>
+        <property name="rxcuiNbr" type="string">
+            <column name="RXCUI_NBR" length="10" />
+        </property>
+        <property name="tierLvl" type="string">
+            <column name="TIER_LVL" length="5" not-null="true" />
+        </property>
+        <property name="tierLevelDescriptionTxt" type="string">
+            <column name="TIER_LEVEL_DESCRIPTION_TXT" length="200" />
+        </property>
+        <property name="priorAuthReqFlg" type="string">
+            <column name="PRIOR_AUTH__REQ_FLG" length="5" />
+        </property>
+        <property name="stepThrapyReqFlg" type="string">
+            <column name="STEP_THRAPY_REQ_FLG" length="5" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

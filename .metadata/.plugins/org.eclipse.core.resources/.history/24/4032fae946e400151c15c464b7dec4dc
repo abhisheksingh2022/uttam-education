@@ -1,0 +1,189 @@
+package com.hixapi.web.framework.struts;
+
+import java.net.InetAddress;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.TreeMap;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.struts2.ServletActionContext;
+
+import com.hixapi.pmp.entity.model.ExceptionLog;
+import com.hixapi.pmp.service.admin.SystemAdministrationService;
+import com.uttam.framework.common.context.ContextKeyEnum;
+import com.uttam.framework.common.context.ContextProvider;
+import com.uttam.framework.common.exception.BusinessServiceException;
+import com.uttam.framework.service.ServiceLocator;
+
+public class WebUtil {
+
+	private static final Logger log = LogManager.getLogger(WebUtil.class);
+
+	public static String getActionPath(HttpServletRequest request) {
+		String path = request.getPathInfo();
+		if (path != null && path.endsWith(".action")) {
+			log.debug("Trimming .action from path");
+			path = path.substring(0, path.length() - 7);
+		}
+		return StringUtils.trimToEmpty(path);
+	}
+
+	public static Long logExceptionToDatabase(Throwable e, Object action) {
+		ExceptionLog entry = null;
+		try {
+
+			entry = new ExceptionLog();
+			entry.setClientIp(StringUtils.abbreviate(
+					ContextProvider.getContextField(ContextKeyEnum.CLIENT_IP, String.class), 50));
+			entry.setExceptionClass(StringUtils.abbreviate(e.getClass().getName(), 200));
+			entry.setExceptionMessage(StringUtils.abbreviate(StringUtils.join(
+					new String[] { "Req UID", ContextProvider.getContextField(ContextKeyEnum.REQUEST_UUID, String.class),
+							"Cause", ExceptionUtils.getMessage(e), "Root Cause", ExceptionUtils.getRootCauseMessage(e) },
+					":"), 200));
+			final String serverIP = InetAddress.getLocalHost().getHostAddress();
+			final String serverName = InetAddress.getLocalHost().getHostName();
+			entry.setServerIp(StringUtils.abbreviate(StringUtils.join(new String[] { serverIP, serverName }, "-"), 50));
+			entry.setUserAgent(StringUtils.abbreviate(ServletActionContext.getRequest().getHeader("User-Agent"), 200));
+			entry.setActionName(StringUtils.abbreviate(WebUtil.getActionPath(ServletActionContext.getRequest()), 200));
+			entry.setExceptionDetail(StringUtils.abbreviate(buildStackTrace(e, action), 18000));
+			ServiceLocator.getInstance().getService(SystemAdministrationService.class).saveExceptionLog(entry);
+
+			log.error("Request Trace below for reference ExceptionLog# {}", entry.getExceptionLogId());
+			log.error(traceRequest(action));
+			return entry.getExceptionLogId();
+		} catch (Throwable ex) {
+			log.error("Error saving exception log - suppressing", e);
+			log.error("Failed to log error to database, details of action error below : \n {}", entry);
+		}
+		return -1l;
+	}
+
+	private static String buildStackTrace(Throwable obj, Object strutsAction) {
+		// First fill this field with parameters
+		StringBuilder strBuilder = new StringBuilder();
+		if (obj != null) {
+			String trace = ExceptionUtils.getStackTrace(obj);
+
+			if (trace != null) {
+				strBuilder.append(" StackTrace for exception: ").append(ExceptionUtils.getMessage(obj)).append("\n")
+						.append(trace);
+
+			}
+			String[] rootTrace = ExceptionUtils.getRootCauseStackTrace(obj);
+			if (rootTrace != null) {
+				int index = 1;
+				for (String aTrace : rootTrace) {
+					strBuilder.append("Root Stack Trace-").append(index++).append(": ")
+							.append(ExceptionUtils.getRootCauseMessage(obj)).append("\r\n").append(aTrace).append("\r\n");
+					break;//taking only first root cause stack
+				}
+
+			}
+			if (obj instanceof BusinessServiceException) {
+				strBuilder.append("Business Service Exception Messages: ")
+						.append(((BusinessServiceException) obj).toString()).append("\r\n");
+			}
+		}
+		strBuilder.append(traceRequest(strutsAction));
+		return strBuilder.toString();
+	}
+
+	@SuppressWarnings("rawtypes")
+	private static String getString(Object object) {
+		StringBuilder str = new StringBuilder();
+		if (object != null) {
+			if (object instanceof String) {
+				str.append(object);
+			} else if (object instanceof Collection) {
+				for (Object aVal : (Collection) object) {
+					str.append(aVal).append("\r\n\t");
+				}
+			} else if (object instanceof Object[]) {
+				for (Object aVal : (Object[]) object) {
+					str.append(aVal).append("\r\n\t");
+				}
+			} else if (object instanceof Map) {
+				for (Object aKey : ((Map) object).keySet()) {
+					str.append(aKey).append(":").append(((Map) object).get(aKey)).append("\r\n\t");
+				}
+			} else {
+				str.append(object.toString());
+			}
+		}
+		return str.toString();
+	}
+
+	public static String traceRequest(Object strutsAction) {
+		StringBuilder strBuilder = new StringBuilder("Request Trace:\r\n");
+		if (strutsAction != null && strutsAction instanceof BaseAction) {
+
+			BaseAction action = (BaseAction) strutsAction;
+			Map<String, String[]> params = action.getParameters();
+			if (params != null) {
+
+				params = new TreeMap<String, String[]>(params);
+				strBuilder.append("****Request Parameters**** \r\n");
+				for (String key : params.keySet()) {
+					strBuilder.append("Param Name: ").append(key).append("\r\n");
+					strBuilder.append("Param Values :{");
+					for (String value : params.get(key)) {
+						strBuilder.append("[").append(value).append("]");
+					}
+					strBuilder.append("}\r\n\r\n");
+				}
+				strBuilder.append("---------------------------\r\n");
+			}
+		}
+
+		if (ServletActionContext.getRequest() != null && ServletActionContext.getRequest().getCookies() != null) {
+			Cookie[] cookies = ServletActionContext.getRequest().getCookies();
+			if (cookies != null) {
+				strBuilder.append("****Request Cookies**** \r\n");
+				for (Cookie cookie : cookies) {
+					strBuilder.append("Cookie Name: ").append(cookie.getName()).append("\r\n{\r\n");
+					strBuilder.append("Cookie Value :").append(cookie.getValue()).append("\r\n}");
+					strBuilder.append("\r\n\r\n");
+				}
+				strBuilder.append("---------------------------\r\n");
+			}
+		}
+
+		HttpServletRequest request = ServletActionContext.getRequest();
+		if (request != null) {
+			strBuilder.append("****Request Attributes**** \r\n");
+			final Enumeration<String> attributeNames = request.getAttributeNames();
+			while (attributeNames.hasMoreElements()) {
+				String key = attributeNames.nextElement();
+				strBuilder.append("Request Attribute Name: ").append(key).append("\r\n");
+				strBuilder.append("\tAttribute Values :{");
+				strBuilder.append("[").append(request.getAttribute(key)).append("]");
+				strBuilder.append("}\r\n\r\n");
+			}
+			strBuilder.append("---------------------------\r\n");
+		}
+
+		HttpSession httpSession = ServletActionContext.getRequest().getSession();
+		if (httpSession != null) {
+			Enumeration<String> attrMap = httpSession.getAttributeNames();
+			strBuilder.append("****Session Attributes**** \r\n");
+			for (String key : Collections.list(attrMap)) {
+				strBuilder.append("Session Attribute Name: ").append(key).append("\r\n");
+				strBuilder.append("\tAttribute Values :");
+				strBuilder.append("[").append(getString(httpSession.getAttribute(key))).append("]");
+				strBuilder.append("\r\n\r\n");
+			}
+			strBuilder.append("---------------------------\r\n");
+		}
+
+		return strBuilder.toString();
+	}
+}

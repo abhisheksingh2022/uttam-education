@@ -1,0 +1,45 @@
+package com.hixapi.pmp.api.model.plandetails;
+
+import java.io.Serializable;
+
+public class PrescriptionDrugs implements Serializable {
+		
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6109679123947791277L;
+	private IndividualFamilyNetwork drugDeductible;
+	private IndividualFamilyNetwork drugOutOfPocketMax;
+	private RetailPharmacyDrugs retailPharmacyDrugs;
+	private String drugFormularySearchLink;
+	
+	public PrescriptionDrugs(){
+		retailPharmacyDrugs = new RetailPharmacyDrugs();
+	}
+	public IndividualFamilyNetwork getDrugDeductible() {
+		return drugDeductible;
+	}
+	public void setDrugDeductible(IndividualFamilyNetwork drugDeductable) {
+		this.drugDeductible = drugDeductable;
+	}
+	public IndividualFamilyNetwork getDrugOutOfPocketMax() {
+		return drugOutOfPocketMax;
+	}
+	public void setDrugOutOfPocketMax(IndividualFamilyNetwork drugOutOfPocketMax) {
+		this.drugOutOfPocketMax = drugOutOfPocketMax;
+	}
+	public RetailPharmacyDrugs getRetailPharmacyDrugs() {
+		return retailPharmacyDrugs;
+	}
+	public void setRetailPharmacyDrugs(RetailPharmacyDrugs retailPharmacyDrugs) {
+		this.retailPharmacyDrugs = retailPharmacyDrugs;
+	}
+	public String getDrugFormularySearchLink() {
+		return drugFormularySearchLink;
+	}
+	public void setDrugFormularySearchLink(String drugFormularySearchLink) {
+		this.drugFormularySearchLink = drugFormularySearchLink;
+	}
+	
+	
+}

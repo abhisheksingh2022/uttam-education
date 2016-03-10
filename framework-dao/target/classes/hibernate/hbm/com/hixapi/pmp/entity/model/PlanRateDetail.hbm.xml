@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.PlanRateDetail" table="PLAN_RATE_DETAIL" optimistic-lock="version">
+        <id name="rateDetailId" type="java.lang.Long">
+            <column name="RATE_DETAIL_ID" precision="12" scale="0" />
+           <generator class="sequence">
+        		<param name="sequence">PMP_PLAN_RATE_DETAIL_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="planMstr" class="com.hixapi.pmp.entity.model.PlanMstr" fetch="select">
+            <column name="PLAN_MSTR_ID" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="lkRatingAreaId" type="string">
+            <column name="LK_RATING_AREA_ID" length="3" not-null="true" />
+        </property>
+        <property name="lkTobaccoCd" type="string">
+            <column name="LK_TOBACCO_CD" length="3" not-null="true" />
+        </property>
+        <property name="lkAgeCd" type="string">
+            <column name="LK_AGE_CD" length="3" not-null="true" />
+        </property>
+         <property name="effectiveStartDate" type="java.util.Date">
+            <column name="EFFECTIVE_START_DT" length="26"  not-null="true"/>
+        </property>
+         <property name="effectiveEndDate" type="java.util.Date">
+            <column name="EFFECTIVE_END_DT" length="26"  not-null="true"/>
+        </property>
+        <property name="indvRateAmt" type="java.lang.Double">
+            <column name="INDV_RATE_AMT" precision="12" not-null="true" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

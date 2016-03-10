@@ -1,0 +1,71 @@
+<%@page import="com.opensymphony.xwork2.ActionContext"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+
+<%@taglib prefix="s" uri="/struts-tags"%>
+
+<%-- Variables --%>
+
+<s:hidden id="idNumOfPlansToCompare" name="hdnNumOfPlansToCompare" value="%{comparePlans.size()}"></s:hidden>
+<div class="legend info">
+	<%-- <img data-title='<s:text name="txt.enrollment.exploreyouroption.filter1.title.compare.help"/>'
+		class="accordian-help-icon accordian-help-icon-big tooltipAnchor" src="img/help_icon_BLUE.png"
+		alt="Blue Image"/>&nbsp; --%>
+	<s:text name="txt.enrollment.exploreyouroption.compareplans"/>
+</div>
+<s:if test='comparePlans!=null'>
+	
+   	<s:iterator value="comparePlans.entrySet()" var="cmpPlans" status="cmpStatus">
+   		<fieldset class="blue" style="padding-top: 10px; padding-bottom: 10px;">
+   			<script>
+				toggleDisplayButton("<s:property value='#cmpPlans.getKey()'/>");
+			</script>
+        	<div class="span4">
+            	<div class="pull-left" style="width: 200px">
+                	<b id='comparePlan'><s:property value="#cmpPlans.getValue()" />
+                 	</b>
+             	</div>
+             	<div class="pull-right" style="margin-right: -10px">
+                 	<%-- <em class="icon-remove-sign icon-black" onclick='javascript:fnRemoveFromCompare("<s:property value='#cmpPlans.displayPlanId'/>")'></em> --%>
+                 	<em class="fa fa-times" onclick='javascript:fnRemoveFromCompare("<s:property value='#cmpPlans.getKey()'/>")'></em>
+             	</div>
+         	</div>
+     	</fieldset>
+ 	</s:iterator>
+    <s:if test='comparePlans.size() < 3'>
+     	<s:iterator var="counter" status="comparePlansEmptyIndex" begin="comparePlans.size()+1" end="3">
+         	<fieldset class="info solid-border" style="margin-bottom: 0px;">
+             	<div class="span4" style="text-align:center;">
+                     	<b>&#160;</b>
+             	</div>
+         	</fieldset>
+     	</s:iterator>
+   	</s:if>
+</s:if>
+<s:if test='comparePlans == null' >
+ 	<s:iterator var="counter" status="comparePlansEmptyIndex" begin="1" end="3">
+     	<fieldset class="info solid-border" style="margin-bottom: 0px;">
+         	<div class="span4" style="text-align:center;">
+                     	<b>&#160;</b>
+             </div>
+     	</fieldset>
+ 	</s:iterator>
+</s:if>
+<div class="span4"><br></div>
+<s:if test='comparePlans.size() >= 2'>
+    <div class="row button-bar" >
+        <div class="span4 center width100percent compareBtn plan-listing-a">
+            <a id="id_button_compare_plans" class="btn btn-active" href="plan-comparison_input" onclick="javascript:fnComparePlans();">
+            <s:text name="txt.enrollment.exploreyouroption.comparetheseplans"/></a>
+        </div>
+    </div>
+</s:if><s:else>
+    <div class="row button-bar">
+        <div class="span4 center width100percent compareBtn plan-listing-a" >
+            <button class="btn btn-inactive" type="button" disabled>
+            	<s:text name="txt.enrollment.exploreyouroption.comparetheseplans"/></button>
+        </div>
+    </div>
+</s:else>
+
+
+<%-- Content End --%>

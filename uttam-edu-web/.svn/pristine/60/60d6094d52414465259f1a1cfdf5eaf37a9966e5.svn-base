@@ -1,0 +1,412 @@
+/*
+=======================================================================================
+  _______       ____  _      ______ 
+ |__   __|/\   |  _ \| |    |  ____|
+    | |  /  \  | |_) | |    | |__   
+    | | / /\ \ |  _ <| |    |  __|  
+    | |/ ____ \| |_) | |____| |____ 
+    |_/_/    \_\____/|______|______|
+ Styles for tables
+=======================================================================================
+*/
+/*
+	styles for anything table-related:
+	table containers, <table>, <thead>, <caption>, <tbody>, <tfoot>, <tr>, <td>, etc.
+*/
+tr.even {
+    background-color: white;
+}
+
+.tbl-container {
+    width: 867px;
+    overflow: auto;
+    margin: auto;
+    scrollbar-base-color: #93C9ED;
+}
+
+.col2 {
+    width: 600px;
+}
+
+.standardtable tr.odd, tr.odd, tr.dark {
+    background-color: #EFEFEF;
+}
+
+.standardtable tr.even, tr.even, tr.light {
+    background-color: #FFFFFF;
+}
+
+table.standardtableCol2 span.notice {
+    background: #fffab2;
+    border-radius: 3px;
+    border-color: #ffd46b;
+    box-shadow: 0 0 2px 2px #ffd46c;
+    color: #333333;
+    font-size: 14px;
+    font-family: Arial;
+    vertical-align: middle;
+    text-align: left;
+    padding: 10px;
+}
+
+table.standardtableCol2 td.notice {
+    background-color: #F9F9F9;
+    padding-bottom: 5px;
+    border-radius: 3px;
+    border-bottom: none;
+    box-shadow: none;
+    color: #333333;
+    font-size: 14px;
+    font-family: Arial;
+    width: 100%;
+    padding-top: 5px;
+    margin-top: 43px;
+    margin-bottom: 43px;
+    vertical-align: middle;
+    text-align: left;
+    padding-left: 10px;
+}
+
+table.standardtable {
+    border-radius: 3px 3px 3px 3px;
+    box-shadow: 0 0 4px 2px #D6D6D6;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    /*margin-left: 10px;
+    margin-right: 10px;*/
+    width: 867px;
+    text-align: center;
+    -webkit-border-radius: 3px !important;
+    -moz-border-radius: 3px !important;
+    border-radius: 3px !important;
+}
+
+.lt-ie9 table.standardtable {
+    border: 3px solid #d6d6d6;
+}
+
+tbody td.standardtable {
+    height: 62px;
+    width: 100%;
+    margin-left: 12px;
+    margin-right: 22px;
+    padding: 10px 22px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: #666666;
+    border: 1px solid #e5e5e5;
+}
+
+table.standardtable td {
+    height: 62px;
+    width: 30%;
+    margin-left: 12px;
+    margin-right: 22px;
+    padding: 10px 10px;
+    text-align: left;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: #666666;
+    border: 1px solid #e5e5e5;
+}
+
+table.standardtable td.first {
+    padding-left: 22px;
+}
+
+table.standardtable td.section-header {
+    background-color:#93c9ed;
+    word-wrap:break-word;
+    height: 24px;
+    width: 30%;
+    margin-left: 100px;
+    margin-right: 22px;
+    padding: 10px 10px;
+    text-align: left;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: #666666;
+    border: 2px white solid;
+}
+
+table.standardtable td.font14 {
+    word-wrap:break-word;
+    height: 30px;
+    width:126px;
+    margin-left: 12px;
+    margin-right: 22px;
+    padding: 10px 10px;
+    text-align: left !important;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #666666;
+    border: 1px solid #e5e5e5;
+}
+
+table.standardtable td.font14third {
+    word-wrap:break-word;
+    height: 30px;
+    width: 28%;
+    margin-left: 12px;
+    margin-right: 22px;
+    padding: 10px 10px;
+    text-align: center !important;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #666666;
+    border: 1px solid #e5e5e5;
+}
+
+table.standardtable td.font14half {
+    word-wrap:break-word;
+    height: 30px;
+    width: 42%;
+    margin-left: 12px;
+    margin-right: 22px;
+    padding: 10px 10px;
+    text-align: center !important;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #666666;
+    border: 1px solid #e5e5e5;
+}
+
+table.standardtable td.font14highlight {
+    word-wrap:break-word;
+    height: 30px;
+    width: 30%;
+    margin-left: 12px;
+    margin-right: 22px;
+    padding: 10px 10px;
+    text-align: center !important;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #666666;
+    border: 1px solid #e5e5e5;
+    border-left:3px solid #F6AC40;
+    border-right:3px solid #F6AC40;
+}
+
+table.standardtable td.font14thirdhighlight {
+    word-wrap:break-word;
+    height: 30px;
+    width: 28%;
+    margin-left: 12px;
+    margin-right: 22px;
+    padding: 10px 10px;
+    text-align: center !important;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #666666;
+    border: 1px solid #e5e5e5;
+    border-left:3px solid #F6AC40;
+    border-right:3px solid #F6AC40;
+}
+
+table.standardtable td.font14halfhighlight {
+    word-wrap:break-word;
+    height: 30px;
+    width: 42%;
+    margin-left: 12px;
+    margin-right: 22px;
+    padding: 10px 10px;
+    text-align: center !important;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #666666;
+    border: 1px solid #e5e5e5;
+    border-left:3px solid #F6AC40;
+    border-right:3px solid #F6AC40;
+}
+
+
+table.standardtable tr:nth-child(even) {
+    background-color: #ffffff;
+}
+
+table.standardtable tr:nth-child(odd) {
+    background-color: #EFEFEF;
+}
+
+table.standardtable caption {
+    caption-side: top;
+    line-height: 40px;
+    border-bottom: 1px solid #E5E5E5;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    box-shadow: 0 0 4px 2px #D6D6D6;
+    background-color: #93C9ED;
+    vertical-align: middle;
+    text-align: left;
+    color: #FFFFFF;
+    font-size: 20px;
+    height: 40px;
+    font-family: 'futura Bk BT';
+    font-style: oblique;
+    padding: 10px 10px 10px 22px;
+    text-shadow: 0 -1px 1px #fff, 0px -1px 0 hsl(80, 70%, 35%), 0px -1px 1px hsl(80, 70%, 35%), 0px -1px 1px hsl(80, 10%, 15%);
+    -webkit-border-radius: 3px !important;
+    -moz-border-radius: 3px !important;
+    border-radius: 3px !important;
+    background-color: #93C9ED;
+    background-image: -moz-linear-gradient(top, #BEDFF4, #92C9ED);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#BEDFF4), to(#92C9ED) );
+    background-image: -webkit-linear-gradient(top, #BEDFF4, #92C9ED);
+    background-image: -o-linear-gradient(top, #BEDFF4, #92C9ED);
+    background-image: linear-gradient(to bottom, #BEDFF4, #92C9ED);
+    background-repeat: repeat-x;
+    border-color: #92C9ED;
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#bedff4', endColorstr='#92c9ed');
+}
+
+.lt-ie9 table.standardtableCol2 caption {
+    border: 3px solid #d6d6d6;
+}
+
+table.standardtable th {
+    border-bottom: 1px solid #E5E5E5;
+    color: #8F8F8F;
+    font-family: 'Arial';
+    font-size: 10px;
+    height: 30px;
+    text-align: left;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-right: 10px;
+    -webkit-border-radius: 0px !important;
+    -moz-border-radius: 0px !important;
+    border-radius: 0px !important;
+}
+
+table.standardtable th.first {
+    padding-left: 22px;
+}
+
+table.standardtableCol2 {
+    border-radius: 3px 3px 3px 3px;
+    box-shadow: 0 0 4px 2px #D6D6D6;
+    -moz-box-shadow: 0 0 4px 2px #D6D6D6;
+    -webkit-box-shadow: 0 0 4px 2px #D6D6D6;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+    width: 615px;
+    text-align: center;
+    -webkit-border-radius: 3px !important;
+    -moz-border-radius: 3px !important;
+    border-radius: 3px !important;
+}
+
+.lt-ie9 table.standardtableCol2 {
+    border: 3px solid #d6d6d6;
+}
+
+tbody td.standardtableCol2 {
+    height: 62px;
+    width: 100%;
+    margin-left: 12px;
+    margin-right: 22px;
+    padding: 10px 22px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: #666666;
+    border: 1px solid #e5e5e5;
+}
+
+table.standardtableCol2 td {
+    height: 62px;
+    width: 30%;
+    margin-left: 12px;
+    margin-right: 22px;
+    padding: 10px 10px;
+    text-align: left;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: #666666;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+table.standardtableCol2 td.first {
+    padding-left: 22px;
+}
+
+table.standardtableCol2 tr:nth-child(even) {
+    background-color: #ffffff;
+}
+
+table.standardtableCol2 tr:nth-child(odd) {
+    background-color: #EFEFEF;
+}
+
+table.standardtableCol2 caption {
+    caption-side: top;
+    line-height: 30px;
+    border-bottom: 1px solid #E5E5E5;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    box-shadow: 0 0 4px 2px #D6D6D6;
+    vertical-align: middle;
+    text-align: left;
+    color: #FFFFFF;
+    font-size: 22px;
+    height: 30px;
+    font-family: 'futura Bk BT';
+    font-style: oblique;
+    padding: 10px 10px 10px 22px;
+    text-shadow: 0 -1px 1px #fff, 0px -1px 0 hsl(80, 70%, 35%), 0px -1px 1px hsl(80, 70%, 35%), 0px -1px 2px hsl(80, 10%, 15%);
+    -webkit-border-radius: 3px !important;
+    -moz-border-radius: 3px !important;
+    border-radius: 3px !important;
+    background-color: #93C9ED;
+    background-image: -moz-linear-gradient(top, #BEDFF4, #92C9ED);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#BEDFF4), to(#92C9ED) );
+    background-image: -webkit-linear-gradient(top, #BEDFF4, #92C9ED);
+    background-image: -o-linear-gradient(top, #BEDFF4, #92C9ED);
+    background-image: linear-gradient(to bottom, #BEDFF4, #92C9ED);
+    background-repeat: repeat-x;
+    border-color: #92C9ED;
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#bedff4', endColorstr='#92c9ed');
+}
+
+table.standardtableCol2 th {
+    border-bottom: 1px solid #E5E5E5;
+    background-color: #F9F9F9;
+    color: #8F8F8F;
+    font-family: 'Arial';
+    font-size: 10px;
+    height: 20px;
+    text-align: left;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-right: 10px;
+    -webkit-border-radius: 0px !important;
+    -moz-border-radius: 0px !important;
+    border-radius: 0px !important;
+}
+
+.separator {
+    border-left: 1px solid #A4A4A4;
+    line-height: 5px;
+    padding-left: 10px;
+}
+
+table.standardtableCol2 th.first {
+    padding-left: 22px;
+}
+
+table.standardtableCol3 td, table.standardtableCol3 th {
+    height: 62px;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 5px 10px 5px 0;
+    text-align: left;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: #666666;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.standardtableCol3 div {
+    padding-left: 11px;
+}

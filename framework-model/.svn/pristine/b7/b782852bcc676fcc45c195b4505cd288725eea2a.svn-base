@@ -1,0 +1,31 @@
+package com.hixapi.pmp.api.model;
+
+public class CarrierFormularyVO {
+	private Long carrierFormularyInfoId;
+	private String formularyId;
+	private String formularyUrlLink;
+
+	public String getFormularyId() {
+		return formularyId;
+	}
+
+	public void setFormularyId(String formularyId) {
+		this.formularyId = formularyId;
+	}
+
+	public String getFormularyUrlLink() {
+		return formularyUrlLink;
+	}
+
+	public void setFormularyUrlLink(String formularyUrlLink) {
+		this.formularyUrlLink = formularyUrlLink;
+	}
+
+	public Long getCarrierFormularyInfoId() {
+		return carrierFormularyInfoId;
+	}
+
+	public void setCarrierFormularyInfoId(Long carrierFormularyInfoId) {
+		this.carrierFormularyInfoId = carrierFormularyInfoId;
+	}
+}

@@ -1,0 +1,73 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.carrier;
+
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.sql.rowset.serial.SerialException;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.service.IService;
+import com.hixapi.pmp.api.model.CarrierUserVO;
+import com.hixapi.pmp.api.model.CarrierVO;
+import com.hixapi.pmp.api.model.criteria.CarrierSearchCriteria;
+
+/**
+ * @author admin
+ *
+ */
+public interface CarrierService extends IService {
+
+	List<CarrierVO> searchCarriers(CarrierSearchCriteria criteria) throws BusinessServiceException;
+
+	/**
+	 * gets user with specified carrieruID number
+	 * 
+	 * @param id
+	 * @return CarrierVO
+	 * @throws BusinessServiceException
+	 */
+	CarrierVO retrieveCarrier(Long id) throws BusinessServiceException;
+
+	/**
+	 * Save carrier
+	 * 
+	 * @param carrier
+	 * @throws BusinessServiceException
+	 */
+	void saveCarrier(CarrierVO carrier) throws BusinessServiceException;
+
+	List<CarrierUserVO> retrieveCarrierUsers(Long carrierId) throws BusinessServiceException;
+
+	/**
+	 * save carrier Logo of passed user
+	 * 
+	 * @param carrierVO
+	 * @throws BusinessServiceException
+	 * @throws SerialException
+	 * @throws SQLException
+	 */
+	void saveCarrierLogo(CarrierVO carrierVO) throws BusinessServiceException, SerialException, SQLException;
+
+	/**
+	 * Update existing Carrier
+	 * 
+	 * @param carrier
+	 * @throws BusinessServiceException
+	 */
+	void updateCarrier(CarrierVO carrier) throws BusinessServiceException;
+
+	/**
+	 * Retrieve carrier logo
+	 * 
+	 * @param carrierVO
+	 * @throws BusinessServiceException
+	 * @throws SQLException
+	 */
+	void retrieveCarrierLogo(CarrierVO carrierVO) throws BusinessServiceException;
+
+	byte[] retrieveCarrierLogo(String carrierId);
+
+}

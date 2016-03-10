@@ -1,0 +1,258 @@
+package com.hixapi.prescreening.api.model.plan;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+
+import org.apache.commons.lang3.StringUtils;
+
+
+public class Plan implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private BigDecimal premiumAmt;
+    private String planName;
+    private String outOfPocketMaxAmt;
+    private String deductibleAmt;
+    private String metalLevelCode;
+    private String carrierId;
+    private String ratingCode;
+    private String planDocumentLink;
+    private String planId;
+    private String carrierName;
+    private String minPremium;
+    private String maxAptcOnPlan;
+    private String actualPremium;
+    private String ehbLevel;
+    private String inNetworkDoctorsLink;
+    private String csrVarId;
+    private Character dsplPlanIn;
+    private String year;
+    //used for plan PDF(download time).
+    private String docFileName;
+    private String planDetailsDisplayId;
+    private String viewUrl;
+    private String emergencyRoom;
+    private String langTx;
+	private Integer healthPlanId;
+	private String primCareCoPay;
+	private String carrierImageName;
+   
+	public Plan() {
+    }
+
+    public BigDecimal getPremiumAmt() {
+        return this.premiumAmt;
+    }
+
+    public void setPremiumAmt(BigDecimal premiumAmt) {
+        this.premiumAmt = premiumAmt;
+    }
+
+
+    public String getOutOfPocketMaxAmt() {
+        return this.outOfPocketMaxAmt;
+    }
+
+    public void setOutOfPocketMaxAmt(String outOfPocketMaxAmt) {
+        this.outOfPocketMaxAmt = outOfPocketMaxAmt;
+    }
+
+    public String getDeductibleAmt() {
+        return this.deductibleAmt;
+    }
+
+    public void setDeductibleAmt(String deductibleAmt) {
+        this.deductibleAmt = deductibleAmt;
+    }
+
+    public String getMetalLevelCode() {
+        return this.metalLevelCode;
+    }
+
+    public void setMetalLevelCode(String metalLevelCode) {
+        this.metalLevelCode = metalLevelCode;
+    }
+
+    public String getCarrierId() {
+        return this.carrierId;
+    }
+
+    public void setCarrierId(String carrierId) {
+        this.carrierId = carrierId;
+    }
+
+    public String getRatingCode() {
+        return this.ratingCode;
+    }
+
+    public void setRatingCode(String ratingCode) {
+        this.ratingCode = ratingCode;
+    }
+
+    public String getPlanDocumentLink() {
+        return this.planDocumentLink;
+    }
+
+    public void setPlanDocumentLink(String planDocumentLink) {
+        this.planDocumentLink = planDocumentLink;
+    }
+
+
+    public String getPlanName() {
+        return this.planName;
+    }
+
+    public void setPlanName(String planName) {
+        this.planName = planName;
+    }
+
+    public String getPlanId() {
+        return this.planId;
+    }
+
+    public void setPlanId(String planId) {
+        this.planId = planId;
+    }
+
+    public String getActualPremium() {
+        return this.actualPremium;
+    }
+
+    public void setActualPremium(String actualPremium) {
+        this.actualPremium = actualPremium;
+    }
+
+    public String getCarrierName() {
+        return this.carrierName;
+    }
+
+    public void setCarrierName(String carrierName) {
+        this.carrierName = carrierName;
+    }
+
+    public String getMinPremium() {
+        return this.minPremium;
+    }
+
+    public void setMinPremium(String minPremium) {
+        this.minPremium = minPremium;
+    }
+
+    public String getMaxAptcOnPlan() {
+        return this.maxAptcOnPlan;
+    }
+
+    public void setMaxAptcOnPlan(String maxAptcOnPlan) {
+        this.maxAptcOnPlan = maxAptcOnPlan;
+    }
+
+    public String getEhbLevel() {
+        return this.ehbLevel;
+    }
+
+    public void setEhbLevel(String ehbLevel) {
+        this.ehbLevel = ehbLevel;
+    }
+
+    public String getInNetworkDoctorsLink() {
+        return this.inNetworkDoctorsLink;
+    }
+
+    public void setInNetworkDoctorsLink(String inNetworkDoctorsLink) {
+        this.inNetworkDoctorsLink = inNetworkDoctorsLink;
+    }
+
+	public String getCsrVarId() {
+		return csrVarId;
+	}
+
+	public void setCsrVarId(String csrVarId) {
+		this.csrVarId = csrVarId;
+	}
+
+	public Character getDsplPlanIn() {
+		return dsplPlanIn;
+	}
+
+	
+
+	public String getYear() {
+		return year;
+	}
+
+	public void setYear(String year) {
+		this.year = year;
+	}
+
+	public void setDsplPlanIn(Character dsplPlanIn) {
+		this.dsplPlanIn = dsplPlanIn;
+	}
+
+	public String getDocFileName() {
+		return docFileName;
+	}
+
+	public void setDocFileName(String docFileName) {
+		this.docFileName = docFileName;
+	}
+
+	public String getPlanDetailsDisplayId() {
+		return planDetailsDisplayId;
+	}
+
+	public void setPlanDetailsDisplayId(String planDetailsDisplayId) {
+		this.planDetailsDisplayId = planDetailsDisplayId;
+	}
+
+	public String getViewUrl() {
+		return viewUrl;
+	}
+
+	public void setViewUrl(String viewUrl) {
+		this.viewUrl = viewUrl;
+	}
+
+	public String getEmergencyRoom() {
+		return emergencyRoom;
+	}
+
+	public void setEmergencyRoom(String emergencyRoom) {
+		this.emergencyRoom = emergencyRoom;
+	}
+
+	public String getLangTx() {
+		return langTx;
+	}
+
+	public void setLangTx(String langTx) {
+		this.langTx = langTx;
+	}
+
+	public Integer getHealthPlanId() {
+		return healthPlanId;
+	}
+
+	public void setHealthPlanId(Integer healthPlanId) {
+		this.healthPlanId = healthPlanId;
+	}
+
+	public String getPrimCareCoPay() {
+		return primCareCoPay;
+	}
+
+	public void setPrimCareCoPay(String primCareCoPay) {
+		this.primCareCoPay = primCareCoPay;
+	}
+
+	public String getCarrierImageName() {
+		return carrierImageName;
+	}
+
+	public void setCarrierImageName(String carrierImageName) {
+		this.carrierImageName = carrierImageName;
+	}
+	
+	public String getVariantHiosId(){
+		return StringUtils.join(new String[]{this.planId, this.csrVarId}, "-");
+	}
+
+}

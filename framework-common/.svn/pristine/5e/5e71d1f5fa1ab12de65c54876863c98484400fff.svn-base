@@ -1,0 +1,10 @@
+package com.hixapi.framework.common.exception;
+
+public class InconsistentFormularyException extends BusinessServiceException {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4388474789288624842L;
+
+}

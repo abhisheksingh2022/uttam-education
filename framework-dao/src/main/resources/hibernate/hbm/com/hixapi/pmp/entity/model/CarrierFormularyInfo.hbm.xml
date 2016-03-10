@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.CarrierFormularyInfo" table="CARRIER_FORMULARY_INFO" optimistic-lock="version">
+        <id name="carrierFormularyInfoId" type="java.lang.Long">
+            <column name="CARRIER_FORMULARY_INFO_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_CARRIER_FORMULARY_INFO_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="carrierAdminInfo" class="com.hixapi.pmp.entity.model.CarrierAdminInfo" fetch="select">
+            <column name="CARRIER_ADMIN_INFO_ID_NBR" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="formularyId" type="string">
+            <column name="FORMULARY_ID" length="30" not-null="true" />
+        </property>
+        <property name="formularyUrlLink" type="string">
+            <column name="FORMULARY_URL_LINK" length="2000" />
+        </property>
+        <property name="drugListIdNbr" type="string">
+            <column name="DRUG_LIST_ID_NBR" length="10" />
+        </property>
+        <property name="numberOfTiers" type="string">
+            <column name="NUMBER_OF_TIERS" length="3" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+        <set name="carrierFormularyCoverages" table="CARRIER_FORMULARY_COVERAGE" inverse="true" lazy="true" fetch="select" cascade="all">
+            <key>
+                <column name="CARRIER_FORMULARY_INFO_ID" precision="12" scale="0" not-null="true" />
+            </key>
+            <one-to-many class="com.hixapi.pmp.entity.model.CarrierFormularyCoverage" />
+        </set>
+    </class>
+</hibernate-mapping>

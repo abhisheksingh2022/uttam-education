@@ -1,0 +1,710 @@
+package com.hixapi.pmp.dao.plan.impl;
+
+import java.sql.Blob;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hibernate.Criteria;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
+
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.context.ContextKeyEnum;
+import com.hixapi.framework.common.context.ContextProvider;
+import com.hixapi.framework.common.model.UserIdentity;
+import com.hixapi.framework.dao.BaseDAO;
+import com.hixapi.framework.dao.helper.QueryUtilDAO;
+import com.hixapi.pmp.api.model.APICodeConstants.YesNo;
+import com.hixapi.pmp.api.model.criteria.PlanHistorySearchCriteria;
+import com.hixapi.pmp.api.model.criteria.PlanRateSearchCriteria;
+import com.hixapi.pmp.api.model.criteria.PlanSearchCriteria;
+import com.hixapi.pmp.common.util.PMPAccessController;
+import com.hixapi.pmp.dao.carrier.CarrierDAO;
+import com.hixapi.pmp.dao.plan.PlanDAO;
+import com.hixapi.pmp.dao.plan.TDsplPlanStgUpdate;
+import com.hixapi.pmp.entity.model.CarrierFormularyInfo;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+import com.hixapi.pmp.entity.model.CarrierNetwork;
+import com.hixapi.pmp.entity.model.PlanBenefitDetail;
+import com.hixapi.pmp.entity.model.PlanBenefitMstr;
+import com.hixapi.pmp.entity.model.PlanLifecycle;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanMstrHist;
+import com.hixapi.pmp.entity.model.PlanRateDetail;
+import com.hixapi.pmp.entity.model.PlanUploadHist;
+import com.hixapi.pmp.entity.model.PlanVariantDtl;
+import com.hixapi.pmp.entity.model.PlanVariantDtlCopayCoins;
+import com.hixapi.pmp.entity.model.PlanVariantDtlDeductible;
+import com.hixapi.pmp.entity.model.PlanVariantDtlMaxOop;
+import com.hixapi.pmp.entity.model.TCarrierStg;
+import com.hixapi.pmp.entity.model.TDsplPlanStg;
+import com.hixapi.pmp.entity.model.TDsplPlanStgId;
+
+/**
+ * 
+ * @author Abhishek
+ *
+ */
+public class PlanDAOImpl extends BaseDAO implements PlanDAO {
+	private QueryUtilDAO queryUtilDAO;
+	private static final Logger log = LogManager.getLogger(PlanDAOImpl.class);
+
+	private CarrierDAO carrierDAO;
+
+	@Override
+	public void savePlan(PlanMstr planEntity) {
+		log.entry();
+		Session session = getCurrentSession();
+		session.save(planEntity);
+		session.flush();
+		log.exit();
+	}
+
+	@Override
+	public void updatePlan(PlanMstr planEntity) {
+		log.entry();
+		Session session = getCurrentSession();
+		session.update(planEntity);
+		session.flush();
+		log.exit();
+	}
+
+	@Override
+	public void deletePlan(PlanMstr planEntity) {
+		log.entry();
+		Session session = getCurrentSession();
+
+		session.delete(planEntity);
+		session.flush();
+		log.exit();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<PlanBenefitMstr> retrievePlanBenefit(Long planId, String langCode) {
+
+		Session session = getReadOnlySession();
+		Criteria criteriaObj = session.createCriteria(PlanBenefitMstr.class);
+		criteriaObj.createAlias("planMstr", "planMstr");
+		criteriaObj.add(Restrictions.eq("planMstr.planMstrId", planId));
+
+		if (StringUtils.isNotEmpty(langCode)) {
+			criteriaObj.add(Restrictions.eq("languageCd", langCode));
+		}
+
+		return criteriaObj.list();
+	}
+
+	@Override
+	public void updatePlanBenefit(PlanBenefitMstr benefitMstr) {
+		Session session = getCurrentSession();
+		session.update(benefitMstr);
+		session.flush();
+	}
+
+	/**
+	 * This method will return planMster Object, here instead of getting whole PlanMstr object at once, we retrieved its
+	 * child object and properties only those which we required on GUI and service purpose, and set them back on one PlanMstr
+	 * object
+	 * 
+	 * Currently this method is being called from PlanSearch page, where we click on particular planId's hyper link
+	 * 
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public PlanMstr retrievePlanByPlanIdAndLangCode(Long planId, String langCode) {
+		log.entry();
+
+		List<PlanMstr> planMstrCol = null;
+
+		if (PMPAccessController.getInstance().hasAllCarrierAccessForCurrentUser()) {
+			planMstrCol = queryUtilDAO.findOptimizedListByCondition(PlanMstr.class, new String[] { "planMstrId", "ntwrkId",
+					"planHiosId", "frmltryId", "effDt", "expDt", "lvlCvgCd", "cvgYr", "planLvlExclTxt", "qltyRating",
+					"publicDt", "planTypCd", "ehbPercent", "planMktngName", "updtDt",
+					"carrierAdminInfo.carrierMstr.carrierName", "carrierAdminInfo.carrierMstr.carrierId",
+					"carrierAdminInfo.carrierMstr.carrierIdNbr", "carrierUpdatesAllowedInd",
+					"carrierAdminInfo.carrierMstr.tinIdNbr", "carrierAdminInfo.carrierMstr.stateCd",
+					"carrierAdminInfo.carrierAdminInfoIdNbr" }, new String[] { "planMstrId" }, new Object[] { planId },
+					null, false);
+		} else {
+			//Add carrier id filter
+			planMstrCol = queryUtilDAO.findOptimizedListByCondition(PlanMstr.class, new String[] { "planMstrId", "ntwrkId",
+					"planHiosId", "frmltryId", "effDt", "expDt", "lvlCvgCd", "cvgYr", "planLvlExclTxt", "qltyRating",
+					"publicDt", "planTypCd", "ehbPercent", "planMktngName", "updtDt",
+					"carrierAdminInfo.carrierMstr.carrierName", "carrierAdminInfo.carrierMstr.carrierId",
+					"carrierAdminInfo.carrierMstr.carrierIdNbr", "carrierUpdatesAllowedInd",
+					"carrierAdminInfo.carrierMstr.tinIdNbr", "carrierAdminInfo.carrierMstr.stateCd",
+					"carrierAdminInfo.carrierAdminInfoIdNbr" }, new String[] { "planMstrId",
+					"carrierAdminInfo.carrierMstr.carrierIdNbr" }, new Object[] { planId,
+					PMPAccessController.getInstance().getCurrentUserCarrierId() }, null, false);
+		}
+
+		PlanMstr planMstr = null;
+		if (planMstrCol.size() > 0) {
+			// there will be only one plan for a plan id
+			planMstr = planMstrCol.get(0);
+		}
+		if (planMstr != null) {
+
+			List<PlanLifecycle> planLifecycleCol = queryUtilDAO.findOptimizedListByCondition(PlanLifecycle.class,
+					new String[] { "planLifecycleId", "lkPlanStatusCd", "statusChangeDt" }, new String[] {
+							"planMstr.planMstrId", "activeInd" }, new Object[] { planId, YesNo.YES.getCode() }, null, false);
+
+			planMstr.setPlanLifecycles(new HashSet<PlanLifecycle>(planLifecycleCol));
+
+			List<PlanBenefitMstr> planBenefitMstrCol = queryUtilDAO.findOptimizedListByCondition(PlanBenefitMstr.class,
+					new String[] { "planBenefitMstrId", "languageCd", "planNameTxt", "metalLevelTxt" }, new String[] {
+							"planMstr.planMstrId", "languageCd" }, new Object[] { planId, langCode }, "planBenefitMstrId",
+					true);
+
+			for (PlanBenefitMstr planBenefitMstr : planBenefitMstrCol) {
+
+				List<PlanBenefitDetail> planBenefitDetailCol = queryUtilDAO.findOptimizedListByCondition(
+						PlanBenefitDetail.class, new String[] { "benefitDetailId", "ehbYn", "cvrdFlg",
+								"quantitativeLimitFlg", "limitQntyTxt", "limitUnitTxt", "minStayTxt", "exclTxt",
+								"bnftExplTxt", "lkEhbVarRsnCd", "exclInNtwrkMoopFlg", "exclOutNtwrkMoopFlg" },
+						new String[] { "planBenefitMstr.planBenefitMstrId" },
+						new Object[] { planBenefitMstr.getPlanBenefitMstrId() }, "benefitDetailId", true);
+
+				List<PlanVariantDtl> planVariantDtlCol = (List<PlanVariantDtl>) queryUtilDAO.findOptimizedListByCondition(
+						PlanVariantDtl.class, new String[] { "planVariantDtlId", "varId", "varTypTxt", "variantHiosId",
+								"planSecondaryName", "hsaBenifitCoverageUrlTxt", "hsaPlanBrochureUrlTxt",
+								"medAndDrgMaxOutOfPocketIntgFlg", "medAndDrgDeducIntgFlg" },
+						new String[] { "planBenefitMstr.planBenefitMstrId" },
+						new Object[] { planBenefitMstr.getPlanBenefitMstrId() }, "varId", true);
+
+				for (PlanVariantDtl planVariantDtl : planVariantDtlCol) {
+
+					List<PlanVariantDtlMaxOop> planVariantDtlMaxOopCol = queryUtilDAO.findOptimizedListByCondition(
+							PlanVariantDtlMaxOop.class, new String[] { "planVariantDtlMaxOopId", "lkPlanVariantDtlMaxOopCd",
+									"inNetworkTier1Indv", "inNetworkTier1Family", "inNetworkTier2Indv",
+									"inNetworkTier2Family", "outOfNetworkIndv", "outOfNetworkFamily", "combinedInoutIndv",
+									"combinedInoutFamily" }, new String[] { "planVariantDtl.planVariantDtlId" },
+							new Object[] { planVariantDtl.getPlanVariantDtlId() }, "planVariantDtlMaxOopId", true);
+
+					List<PlanVariantDtlDeductible> planVariantDtlDeductibleCol = queryUtilDAO.findOptimizedListByCondition(
+							PlanVariantDtlDeductible.class, new String[] { "planVariantDtlDeductibleId",
+									"lkPlanVariantDtlDeductibleCd", "inNetworkIndv", "inNetworkFamily",
+									"inNetworkDfltCoins", "inNetworkTier2Indv", "inNetworkTier2Family",
+									"inNetworkTier2DfltCoins", "outOfNetworkIndv", "outOfNetworkFamily",
+									"combinedInoutIndv", "combinedInoutFamily" },
+							new String[] { "planVariantDtl.planVariantDtlId" },
+							new Object[] { planVariantDtl.getPlanVariantDtlId() }, null, false);
+
+					List<PlanVariantDtlCopayCoins> planVariantDtlCopayCoinsCol = queryUtilDAO.findOptimizedListByCondition(
+							PlanVariantDtlCopayCoins.class, new String[] { "planVariantDtlCopayCoinsId",
+									"lkCopayCoinsTypeCd", "copayInNetworkTier1", "copayInNetworkTier2", "copayOutOfNetwork",
+									"coinsInNetworkTier1", "coinsInNetworkTier2", "coinsOutOfNetwork" },
+							new String[] { "planVariantDtl.planVariantDtlId" },
+							new Object[] { planVariantDtl.getPlanVariantDtlId() }, null, false);
+
+					planVariantDtl.setPlanVariantDtlMaxOops(new HashSet<PlanVariantDtlMaxOop>(planVariantDtlMaxOopCol));
+					planVariantDtl.setPlanVariantDtlDeductibles(new HashSet<PlanVariantDtlDeductible>(
+							planVariantDtlDeductibleCol));
+					planVariantDtl.setPlanVariantDtlCopayCoinses(new HashSet<PlanVariantDtlCopayCoins>(
+							planVariantDtlCopayCoinsCol));
+				}
+				planBenefitMstr.setPlanVariantDtls(new HashSet<PlanVariantDtl>(planVariantDtlCol));
+				planBenefitMstr.setPlanBenefitDetails(new HashSet<PlanBenefitDetail>(planBenefitDetailCol));
+			}
+			planMstr.setPlanBenefitMstrs(new HashSet<PlanBenefitMstr>(planBenefitMstrCol));
+		}
+		log.exit();
+		return planMstr;
+	}
+
+	/**
+	 * This method returns PlanLifecycle object's list based on given criteria. Here we could return PlanMstr object instead
+	 * PlanLifecycle. But we need PlanMstr object with its Status which is in PlanLifecycle, That's why we here returned
+	 * PlanLifecycle object
+	 */
+	@Override
+	public List<PlanLifecycle> searchPlans(PlanSearchCriteria criteria) {
+
+		String[] returnProperty = new String[] { "planLifecycleId", "lkPlanStatusCd", "planMstr.planMstrId",
+				"planMstr.cvgYr", "planMstr.lvlCvgCd", "planMstr.planHiosId", "planMstr.planMktngName",
+				"planMstr.carrierAdminInfo.carrierMstr.carrierId", "planMstr.carrierAdminInfo.carrierMstr.carrierIdNbr",
+				"planMstr.carrierAdminInfo.carrierMstr.carrierName" };
+
+		List<String> propertyNameList = new ArrayList<String>(0);
+		List<Object> propertyValueList = new ArrayList<Object>(0);
+		if (!PMPAccessController.getInstance().hasAllCarrierAccessForCurrentUser()) {
+			propertyNameList.add("planMstr.carrierAdminInfo.carrierMstr.carrierIdNbr");
+			propertyValueList.add(PMPAccessController.getInstance().getCurrentUserCarrierId());
+		}
+		propertyNameList.add("planMstr.deletedIndicator");
+		propertyValueList.add("N");
+
+		if (criteria != null) {
+
+			if (!StringUtils.isEmpty(criteria.getSearchPlanId())) {
+				propertyNameList.add("planMstr.planHiosId");
+				propertyValueList.add(StringUtils.trim(criteria.getSearchPlanId()));
+			}
+			if (!StringUtils.isEmpty(criteria.getSearchPlanName())) {
+				propertyNameList.add("planMstr.planMktngName");
+				// here % will automatically handle like and equal ignore case condition internally (toUpperCase is must)
+				propertyValueList.add("%" + StringUtils.trim(criteria.getSearchPlanName().toUpperCase()) + "%");
+			}
+
+			if (!StringUtils.isEmpty(criteria.getSearchYear())) {
+				propertyNameList.add("planMstr.cvgYr");
+				propertyValueList.add(ConversionUtil.toShort(StringUtils.trim(criteria.getSearchYear())));
+			}
+
+			if (!StringUtils.isEmpty(criteria.getSearchCarrierNbr())) {
+				propertyNameList.add("planMstr.carrierAdminInfo.carrierMstr.carrierIdNbr");
+				propertyValueList.add(ConversionUtil.toLong(StringUtils.trim(criteria.getSearchCarrierNbr())));
+			}
+		}
+		propertyNameList.add("activeInd");
+		propertyValueList.add(YesNo.YES.getCode());
+
+		String[] propertyNames = new String[propertyNameList.size()];
+		Object[] propertyValues = new Object[propertyValueList.size()];
+
+		propertyNames = propertyNameList.toArray(propertyNames);
+		propertyValues = propertyValueList.toArray(propertyValues);
+
+		@SuppressWarnings("unchecked")
+		List<PlanLifecycle> planLifecycleCols = (List<PlanLifecycle>) queryUtilDAO.findOptimizedListByCondition(
+				PlanLifecycle.class, returnProperty, propertyNames, propertyValues,
+				"planMstr.cvgYr, planMstr.carrierAdminInfo.carrierMstr.carrierId, planMstr.planHiosId, lkPlanStatusCd",
+				false);
+		//	Collections.sort(planLifecycleCols, new PlanSearchResultComparator());
+		return planLifecycleCols;
+	}
+
+	@Override
+	public List<PlanRateDetail> searchPlanRates(PlanRateSearchCriteria criteria) {
+
+		String[] returnProperty = new String[] { "lkRatingAreaId", "lkTobaccoCd", "lkAgeCd", "indvRateAmt" };
+
+		List<String> propertyNameList = new ArrayList<String>(0);
+		List<Object> propertyValueList = new ArrayList<Object>(0);
+		propertyNameList.add("planMstr.deletedIndicator");
+		propertyValueList.add("N");
+		if (criteria != null) {
+			if (!StringUtils.isEmpty(criteria.getPlanId())) {
+				propertyNameList.add("planMstr.planMstrId");
+				propertyValueList.add(ConversionUtil.toLong(criteria.getPlanId()));
+			}
+			if (!StringUtils.isEmpty(criteria.getAge())) {
+				propertyNameList.add("lkAgeCd");
+				propertyValueList.add(criteria.getAge());
+			}
+
+			if (!StringUtils.isEmpty(criteria.getRatingArea())) {
+				propertyNameList.add("lkRatingAreaId");
+				propertyValueList.add(criteria.getRatingArea());
+			}
+			/*if (!StringUtils.isEmpty(criteria.getTobaccoPreference())) {
+				propertyNameList.add("lkTobaccoCd");
+				propertyValueList.add(criteria.getTobaccoPreference());
+			}*/
+		}
+		String[] propertyNames = new String[propertyNameList.size()];
+		Object[] propertyValues = new Object[propertyValueList.size()];
+
+		propertyNames = propertyNameList.toArray(propertyNames);
+		propertyValues = propertyValueList.toArray(propertyValues);
+
+		@SuppressWarnings("unchecked")
+		List<PlanRateDetail> planRateDetailCols = (List<PlanRateDetail>) queryUtilDAO.findOptimizedListByCondition(
+				PlanRateDetail.class, returnProperty, propertyNames, propertyValues, "lkRatingAreaId, lkAgeCd", false);
+
+		return planRateDetailCols;
+	}
+
+	@Override
+	public void updatePlanStatusByPlanId(Long planId, String status) {
+		Session session = getCurrentSession();
+
+		String hql = "update PlanLifecycle as pl set pl.activeInd=:inactive where pl.planMstr.planMstrId=:planId";
+		Query q = session.createQuery(hql);
+		q.setString("inactive", YesNo.NO.getCode());
+		q.setLong("planId", planId);
+		q.executeUpdate();
+
+		PlanMstr planMstr = new PlanMstr();
+		planMstr.setPlanMstrId(planId);
+
+		PlanLifecycle newPlanLifecycle = new PlanLifecycle();
+		newPlanLifecycle.setActiveInd(YesNo.YES.getCode());
+		newPlanLifecycle.setPlanMstr(planMstr);
+		newPlanLifecycle.setLkPlanStatusCd(status);
+		newPlanLifecycle.setStatusChangeDt(APIUtil.getCurrentDate()); // needs to be confirmed
+		String user = ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class).getLoginId();
+		if (StringUtils.isBlank(user)) {
+			user = "system";
+		}
+		newPlanLifecycle.setStatusChangeUsrId(user); // needs to be confirmed
+		session.save(newPlanLifecycle);
+		session.flush();
+
+	}
+
+	@Override
+	public void lockPlan(Long planId) {
+		int recordsUpdated = performBulkUpdate(PlanMstr.class, new String[] { "carrierUpdatesAllowedInd" },
+				new Object[] { YesNo.NO.getCode() }, new String[] { "planMstrId" }, new Object[] { planId });
+		log.debug("lockPlan : updated {} records", recordsUpdated);
+	}
+
+	@Override
+	public void unlockPlan(Long planId) {
+		int recordsUpdated = performBulkUpdate(PlanMstr.class, new String[] { "carrierUpdatesAllowedInd" },
+				new Object[] { YesNo.YES.getCode() }, new String[] { "planMstrId" }, new Object[] { planId });
+		log.debug("unlockPlan : updated {} records", recordsUpdated);
+	}
+
+	public QueryUtilDAO getQueryUtilDAO() {
+		return queryUtilDAO;
+	}
+
+	public void setQueryUtilDAO(QueryUtilDAO queryUtilDAO) {
+		this.queryUtilDAO = queryUtilDAO;
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<PlanUploadHist> retrievePlanUploadHistory(Short coverageYear, Long carrierId) {
+		log.entry();
+		Session session = getCurrentSession();
+		Criteria criteria = session.createCriteria(PlanUploadHist.class);
+		criteria.createAlias("carrierAdminInfo", "carrierAdminInfo");
+		criteria.createAlias("carrierAdminInfo.carrierMstr", "carrierMstr");
+		criteria.add(Restrictions.eq("carrierMstr.carrierIdNbr", carrierId));
+
+		criteria.addOrder(Order.desc("uploadTs"));
+
+		return log.exit(criteria.list());
+	}
+
+	@Override
+	public void savePlanUpdateHistory(PlanMstrHist history) {
+		log.entry();
+		Session session = getCurrentSession();
+		session.save(history);
+		session.flush();
+
+		log.exit();
+
+	}
+
+	@Override
+	public CarrierNetwork retrieveNetworkById(String nwId, Long carrierAdminInfoId) {
+		@SuppressWarnings("unchecked")
+		List<CarrierNetwork> nwList = queryUtilDAO.findOptimizedListByCondition(CarrierNetwork.class, new String[] {
+				"networkIdNbr", "url", "networkId" },
+				new String[] { "networkId", "carrierAdminInfo.carrierAdminInfoIdNbr" }, new Object[] { nwId,
+						carrierAdminInfoId }, "networkIdNbr", true);
+
+		CarrierNetwork nw = null;
+		if (nwList != null && nwList.size() > 0) {
+			nw = nwList.get(0);
+		}
+		return nw;
+	}
+
+	@Override
+	public CarrierFormularyInfo retrieveCarrierFormularyInfoById(String carrFormlryId, Long carrierAdminInfoId) {
+
+		@SuppressWarnings("unchecked")
+		List<CarrierFormularyInfo> carrFormlryList = queryUtilDAO.findOptimizedListByCondition(CarrierFormularyInfo.class,
+				new String[] { "carrierFormularyInfoId", "formularyUrlLink", "formularyId" }, new String[] { "formularyId",
+						"carrierAdminInfo.carrierAdminInfoIdNbr" }, new Object[] { carrFormlryId, carrierAdminInfoId },
+				"carrierFormularyInfoId", true);
+
+		CarrierFormularyInfo info = null;
+		if (carrFormlryList != null && carrFormlryList.size() > 0) {
+			info = carrFormlryList.get(0);
+		}
+		return info;
+	}
+
+	/**
+	 * Method to perform bulk updation based on given conditions, here propertyName array contains the properties which have
+	 * to be updated and propertyValue array contains respective value to be set. conditionPropertyName array contains those
+	 * properties which will be used as a condition in where clause <br>
+	 * 
+	 * @author Abhishek
+	 * @param aClass
+	 * @param propertyName
+	 * @param propertyValue
+	 * @param conditionPropertyName
+	 * @param conditionPropertyValue
+	 * 
+	 * @return Number of records updated
+	 */
+	@Override
+	public int updateEntity(@SuppressWarnings("rawtypes") Class clazz, String[] propertyName, Object[] propertyValue,
+			String[] conditionPropertyName, Object[] conditionPropertyValue) {
+		int recordsUpdated = performBulkUpdate(clazz, propertyName, propertyValue, conditionPropertyName,
+				conditionPropertyValue);
+		return recordsUpdated;
+	}
+
+	@Override
+	public List<PlanMstrHist> retrievePlanUpdateHistoryByPlanId(Long planId) {
+
+		@SuppressWarnings("unchecked")
+		List<PlanMstrHist> planMstrHistCol = queryUtilDAO.findOptimizedListByCondition(PlanMstrHist.class, new String[] {
+				"planHistId", "chngByUsr", "comments", "dtChng", "changeLocationTxt", "changeDetailTxt",
+				"planMstr.planMstrId", "planMstr.planMktngName" }, new String[] { "planMstr.planMstrId" },
+				new Object[] { planId }, "planHistId", false);
+		return planMstrHistCol;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public List<PlanMstrHist> retrievePlanUpdateHistory(PlanHistorySearchCriteria criteria) {
+		log.entry();
+		String[] returnProperty = new String[] { "planHistId", "planMstr.planHiosId", "planMstr.planMktngName", "chngByUsr",
+				"comments", "dtChng", "changeLocationTxt", "changeDetailTxt",
+				"planMstr.carrierAdminInfo.carrierMstr.carrierName" };
+
+		List<String> propertyNameList = new ArrayList<String>(0);
+		List<Object> propertyValueList = new ArrayList<Object>(0);
+
+		if (criteria != null) {
+			if (!StringUtils.isEmpty(criteria.getSearchPlanId())) {
+				propertyNameList.add("planMstr.planHiosId");
+				propertyValueList.add(StringUtils.trim(criteria.getSearchPlanId()));
+			}
+			if (!StringUtils.isEmpty(criteria.getSearchCarrierNbr())) {
+				propertyNameList.add("planMstr.carrierAdminInfo.carrierMstr.carrierIdNbr");
+				propertyValueList.add(ConversionUtil.toLong(StringUtils.trim(criteria.getSearchCarrierNbr())));
+			}
+
+			if (!StringUtils.isEmpty(criteria.getSearchPlanName())) {
+				propertyNameList.add("planMstr.planMktngName");
+				// here % will automatically handle like and equal ignore case condition internally (toUpperCase is must)
+				propertyValueList.add("%" + StringUtils.trim(criteria.getSearchPlanName().toUpperCase()) + "%");
+
+			}
+			if (!StringUtils.isEmpty(criteria.getSearchYear())) {
+				propertyNameList.add("planMstr.cvgYr");
+				propertyValueList.add(ConversionUtil.toShort(StringUtils.trim(criteria.getSearchYear())));
+			}
+		}
+		String[] propertyNames = new String[propertyNameList.size()];
+		Object[] propertyValues = new Object[propertyValueList.size()];
+
+		propertyNames = propertyNameList.toArray(propertyNames);
+		propertyValues = propertyValueList.toArray(propertyValues);
+
+		List<PlanMstrHist> planHistoryCols = (List<PlanMstrHist>) queryUtilDAO.findOptimizedListByCondition(
+				PlanMstrHist.class, returnProperty, propertyNames, propertyValues, "dtChng", true);
+
+		return log.exit(planHistoryCols);
+	}
+
+	@Override
+	public void saveDisplayPlans(Collection<TDsplPlanStg> displayPlans, CarrierMstr carrierMstr) {
+		Session session = getCurrentSession();
+
+		if (CollectionUtils.isNotEmpty(displayPlans)) {
+
+			//Mark all as deleted for carrier
+			Query q = session
+					.createQuery("update TDsplPlanStg stg set stg.logclDeleteIn=:deleted where"
+							+ " (stg.logclDeleteIn  = 'N' or stg.logclDeleteIn is null ) and stg.carrierId = :carrierId and year = :year");
+
+			q.setString("carrierId", carrierMstr.getCarrierId());
+			q.setCharacter("deleted", 'Y');
+			q.setShort("year", displayPlans.iterator().next().getYear());
+			int count = q.executeUpdate();
+			log.debug("Marked as deleted {} TDsplPlanStg records", count);
+
+			session.flush();
+
+			for (TDsplPlanStg stg : displayPlans) {
+				stg.setLogclDeleteIn('N');
+				session.merge(stg);
+
+			}
+			TCarrierStg stgCarrier = (TCarrierStg) session
+					.createQuery("from TCarrierStg carr where carr.carrierId = :carrierId")
+					.setString("carrierId", carrierMstr.getCarrierId()).uniqueResult();
+			if (stgCarrier == null) {
+				stgCarrier = new TCarrierStg();
+				stgCarrier.setCarrierId(carrierMstr.getCarrierId());
+				if (carrierMstr.getAddress() != null) {
+					stgCarrier.setAdrLine1Tx(carrierMstr.getAddress().getAdrLine1());
+					stgCarrier.setAdrLine2Tx(carrierMstr.getAddress().getAdrLine2());
+					stgCarrier.setCityNa(carrierMstr.getAddress().getCityNm());
+					stgCarrier.setCarrierStateTx(carrierMstr.getAddress().getStateCd());
+					stgCarrier.setZipCodeAd(carrierMstr.getAddress().getZipCd());
+				}
+				stgCarrier.setCarrierNa(carrierMstr.getCarrierName());
+				stgCarrier.setCarrUrlTx(carrierMstr.getPrimaryUrl());
+				stgCarrier.setNaicCompyCd(carrierMstr.getNaicCmpnyCd());
+				stgCarrier.setNaicGroupCd(carrierMstr.getNaicGrpCd());
+				stgCarrier.setPhoneNb(carrierMstr.getContactPhoneNbr());
+				stgCarrier.setTaxpayerIdTx(carrierMstr.getTinIdNbr());
+
+				Blob blob = carrierDAO.retrieveCarrierLogo(carrierMstr.getCarrierIdNbr());
+				stgCarrier.setCarrierLogoImage(blob);
+				session.save(stgCarrier);
+				log.debug("Saving TCarrierStg for a new carrier : {}", stgCarrier.getCarrierId());
+			}
+		}
+		session.flush();
+
+	}
+
+	@Override
+	public Collection<TDsplPlanStg> retrieveDisplayPlanStagingRecords(String carrierId, String coverageYear) {
+		Criteria crit = getCurrentSession().createCriteria(TDsplPlanStg.class);
+		crit.add(Restrictions.eq("carrierId", carrierId));
+		crit.add(Restrictions.eq("year", Short.parseShort(coverageYear)));
+		crit.add(Restrictions.eq("logclDeleteIn", 'N'));
+		@SuppressWarnings("unchecked")
+		List<TDsplPlanStg> results = crit.list();
+		log.debug("Found {} records for TDsplPlanStg of carrier {} for year {}", results.size(), carrierId, coverageYear);
+		return results;
+	}
+
+	@Override
+	public Collection<CarrierNetwork> retrieveCarrierNetworks(long carrierAdminIdNbr) {
+
+		Criteria crit = getCurrentSession().createCriteria(CarrierNetwork.class);
+		crit.createAlias("carrierAdminInfo", "carrierAdminInfo");
+		crit.add(Restrictions.eq("carrierAdminInfo.carrierAdminInfoIdNbr", carrierAdminIdNbr));
+
+		@SuppressWarnings("unchecked")
+		List<CarrierNetwork> results = crit.list();
+		log.debug("Found {} records for CarrierNetwork of carrier admin id{}", results.size(), carrierAdminIdNbr);
+		return results;
+
+	}
+
+	@Override
+	public Collection<CarrierFormularyInfo> retrieveCarrierFormularyInfo(long carrierAdminIdNbr) {
+
+		Criteria crit = getCurrentSession().createCriteria(CarrierFormularyInfo.class);
+		crit.createAlias("carrierAdminInfo", "carrierAdminInfo");
+		crit.add(Restrictions.eq("carrierAdminInfo.carrierAdminInfoIdNbr", carrierAdminIdNbr));
+
+		@SuppressWarnings("unchecked")
+		List<CarrierFormularyInfo> results = crit.list();
+		log.debug("Found {} records for CarrierFormularyInfo of carrier admin id{}", results.size(), carrierAdminIdNbr);
+		return results;
+
+	}
+
+	public CarrierDAO getCarrierDAO() {
+		return carrierDAO;
+	}
+
+	public void setCarrierDAO(CarrierDAO carrierDAO) {
+		this.carrierDAO = carrierDAO;
+	}
+
+	@Override
+	public void updateDisplayPlans(List<TDsplPlanStgUpdate> updates) {
+		if (updates != null) {
+			Query query = null;
+			for (TDsplPlanStgUpdate update : updates) {
+
+				if (MapUtils.isNotEmpty(update.getFieldUpdates())) {
+					StringBuilder hql = new StringBuilder("update TDsplPlanStg stg set");
+					Map<String, Object> paramMap = new HashMap<String, Object>();
+					int size = update.getFieldUpdates().size();
+					int index = 0;
+					for (Map.Entry<Object, Object> fieldUpdate : update.getFieldUpdates().entrySet()) {
+						hql.append(" stg.").append(fieldUpdate.getKey()).append(" = :").append(fieldUpdate.getKey())
+								.append(" ");
+						paramMap.put(fieldUpdate.getKey().toString(), fieldUpdate.getValue());
+						index++;
+						if (index < size) {
+							hql.append(", ");
+						}
+
+					}
+					if (StringUtils.isNotBlank(update.getPlanVariantHiosId())) {
+						String dsplPlanId = update.getYear() + "-" + update.getPlanVariantHiosId();
+						hql.append("where stg.id.dsplPlanId = :dsplPlanId ");
+						if (StringUtils.isNotEmpty(update.getLanguage())) {
+							hql.append(" and stg.id.langCdTx = :langCdTx");
+						}
+						paramMap.put("dsplPlanId", dsplPlanId);
+						if (StringUtils.isNotEmpty(update.getLanguage())) {
+							paramMap.put("langCdTx", ConversionUtil.getTwoLetterLanguageCode(update.getLanguage()));
+						}
+					} else {
+						hql.append("where stg.planId = :planId and stg.year = :year");
+						if (StringUtils.isNotBlank(update.getLanguage())) {
+							hql.append(" and stg.id.langCdTx = :langCdTx ");
+						}
+						paramMap.put("planId", update.getPlanHiosId());
+						paramMap.put("year", Short.parseShort(update.getYear()));
+						if (StringUtils.isNotEmpty(update.getLanguage())) {
+							paramMap.put("langCdTx", ConversionUtil.getTwoLetterLanguageCode(update.getLanguage()));
+						}
+					}
+					query = getCurrentSession().createQuery(hql.toString());
+					query.setProperties(paramMap);
+					int count = query.executeUpdate();
+					log.debug("Executed Update of {}, and resulted in {} update rows",
+							ReflectionToStringBuilder.reflectionToString(update), count);
+				}
+
+			}
+		}
+
+	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public boolean checkDuplicatePlan(Long planMstrId, String planId) {
+		Session session = getReadOnlySession();
+		Criteria criteriaObj = session.createCriteria(PlanMstr.class);
+		criteriaObj.setProjection(Projections.property("planMstrId"));
+
+		criteriaObj.add(Restrictions.eq("planHiosId", planId));
+		criteriaObj.add(Restrictions.ne("planMstrId", planMstrId));
+
+		List col = criteriaObj.list();
+
+		if (CollectionUtils.isNotEmpty(col) && col.size() > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public TDsplPlanStg retrieveDisplayPlanStagingRecords(String planVariantHiosId, String language, Short year) {
+		TDsplPlanStgId id = new TDsplPlanStgId();
+		id.setDsplPlanId(year + "-" + planVariantHiosId);
+		id.setLangCdTx(ConversionUtil.getTwoLetterLanguageCode(language));
+		return (TDsplPlanStg) getCurrentSession().get(TDsplPlanStg.class, id);
+	}
+
+	@Override
+	public TDsplPlanStg retrieveDisplayPlanStagingRecord(String dsplPlanId, String localeCode) {
+		Criteria crit = getCurrentSession().createCriteria(TDsplPlanStg.class);
+		crit.add(Restrictions.eq("logclDeleteIn", 'N'));
+		crit.add(Restrictions.eq("id.dsplPlanId", dsplPlanId));
+		crit.add(Restrictions.eq("id.langCdTx", ConversionUtil.getTwoLetterLanguageCode(localeCode)));
+		TDsplPlanStg result = (TDsplPlanStg) crit.uniqueResult();
+		log.debug("Found result for TDsplPlanStg of dspl planid {} for language {}",dsplPlanId, localeCode);
+		return result;
+	}
+
+}

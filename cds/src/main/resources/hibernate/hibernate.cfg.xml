@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD//EN"
+                                         "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+	<session-factory name="sessionFactory">
+		<property name="hibernate.connection.pool_size">50</property>
+		<property name="dialect">org.hibernate.dialect.MySQLDialect</property>
+		<!-- <property name="dialect">org.hibernate.dialect.H2Dialect</property> -->
+		<property name="hibernate.transaction.factory_class">org.hibernate.transaction.JDBCTransactionFactory</property>
+		<!-- Added entries for Hibernate Caching -->
+		<property name="hibernate.cache.use_query_cache">true</property>
+		<property name="hibernate.cache.use_second_level_cache">true</property>
+		<property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory</property>
+		<property name="net.sf.ehcache.configurationResourceName">hibernate/ehcache.xml</property>
+
+		<property name="hibernate.generate_statistics">false</property>
+
+		<!-- START: Added for Coherence Server implementation -->
+		<!-- <property name="hibernate.cache.use_query_cache">true</property> -->
+		<!-- <property name="hibernate.cache.use_second_level_cache">true</property> -->
+		<!-- <property name="hibernate.cache.provider_class">com.tangosol.coherence.hibernate.CoherenceCacheProvider</property> -->
+		<!-- <property name="hibernate.generate_statistics">true</property> -->
+		<!-- <property name="hibernate.cache.default_cache_concurrency_strategy">READ_WRITE</property> -->
+		<!-- START: Added for Coherence Server implementation -->
+
+		<property name="hibernate.show_sql">false</property>
+		<property name="hibernate.format_sql">false</property>
+		<property name="hibernate.use_sql_comments">false</property>
+		<property name="hibernate.jdbc.batch_size">0</property>
+		<property name="hibernate.validator.apply_to_ddl">false</property>
+		<property name="hibernate.validator.autoregister_listeners">false</property>
+		
+		<mapping resource="/hibernate/hbm/common/LookUpManager.hbm.xml" />
+		        
+	</session-factory>
+
+
+</hibernate-configuration>

@@ -1,0 +1,180 @@
+package com.hixapi.web.framework.service;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.namespace.QName;
+import javax.xml.ws.BindingProvider;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.env.IEnvironmentProvider;
+
+public class BaseJaxWSServiceClient {
+
+	private static final Logger log = LogManager.getLogger(BaseJaxWSServiceClient.class);
+
+	private static final String SUFFIX_NAMESPACE = ".interface.namespace";
+	private static final String SUFFIX_INTERFACE_NAME = ".interface.name";
+	private static final String SUFFIX_WSDL_LOCATION = ".wsdl.url";
+	private static final String SUFFIX_PROXY_CLASS = ".interface.proxy";
+	private static final String SUFFIX_TIMEOUT = ".response.timeout";
+
+	private List<String> serviceNames;
+	private IEnvironmentProvider environmentProvider;
+	private Map<String, Object> serviceMap = new HashMap<String, Object>();
+
+	public IEnvironmentProvider getEnvironmentProvider() {
+		return environmentProvider;
+	}
+
+	public void setEnvironmentProvider(IEnvironmentProvider environmentProvider) {
+		this.environmentProvider = environmentProvider;
+	}
+
+	public void initialize() throws Exception {
+		log.entry();
+		Validate.notNull(serviceNames, "argument cannot be null");
+
+		for (String serviceName : serviceNames) {
+			/** WSDL url **/
+			final String urlLocation = environmentProvider.getPropertyInGroup(APIConstants.PROPGROUP_WEB_SERVICES,
+					serviceName + SUFFIX_WSDL_LOCATION, String.class, "");
+			if (StringUtils.isBlank(urlLocation)) {
+				throw log.throwing(new NullPointerException("Url value not found with key :" + serviceName
+						+ SUFFIX_WSDL_LOCATION));
+			}
+			URL url = new URL(urlLocation);
+			/** QName **/
+			final String namespace = environmentProvider.getPropertyInGroup(APIConstants.PROPGROUP_WEB_SERVICES,
+					serviceName + SUFFIX_NAMESPACE, String.class, "");
+			final String localName = environmentProvider.getPropertyInGroup(APIConstants.PROPGROUP_WEB_SERVICES,
+					serviceName + SUFFIX_INTERFACE_NAME, String.class, "");
+			if (StringUtils.isBlank(namespace)) {
+				throw log.throwing(new NullPointerException("Service Namespace value not found with key :" + serviceName
+						+ SUFFIX_NAMESPACE));
+			}
+			QName serviceQName = new QName(namespace, localName);
+
+			/** Instantiate proxy **/
+			final String proxyClassName = environmentProvider.getPropertyInGroup(APIConstants.PROPGROUP_WEB_SERVICES,
+					serviceName + SUFFIX_PROXY_CLASS, String.class, "");
+			if (StringUtils.isEmpty(proxyClassName)) {
+				throw log.throwing(new NullPointerException("Service Proxy Class Name  value not found with key :"
+						+ serviceName + SUFFIX_PROXY_CLASS));
+			}
+			@SuppressWarnings("rawtypes")
+			Class proxyClass = Class.forName(proxyClassName);
+			Object proxy = null;
+			try {
+				proxy = instantiateProxy(proxyClass, url, serviceQName);
+			} catch (Exception ex) {
+				log.error("Error occured instantiating instance of service :" + serviceName, ex);
+			}
+			if (proxy == null) {
+				log.error("Service instance not initialized, see any prior error logs : {}", serviceName);
+			} else {
+				final String timeout = environmentProvider.getPropertyInGroup(APIConstants.PROPGROUP_WEB_SERVICES,
+						serviceName + SUFFIX_TIMEOUT, String.class, "30");
+
+				setTimeoutProperty(proxy, timeout);
+				serviceMap.put(serviceName, proxy);
+				log.info("Cached {} service proxy successfully", serviceName);
+			}
+		}
+		log.exit();
+
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void setTimeoutProperty(Object proxy, String timeout) {
+		log.entry();
+		Class clazz = proxy.getClass();
+		try {
+			Method method = clazz.getMethod("_getDescriptor");
+			if (method != null) {
+				Object descriptor = method.invoke(proxy);
+				if (descriptor != null) {
+					Class descriptorClass = descriptor.getClass();
+					Method proxyMethod = descriptorClass.getMethod("getProxy");
+
+					Object realProxy = proxyMethod.invoke(descriptor);
+					if (realProxy != null && realProxy instanceof BindingProvider) {
+						((BindingProvider) realProxy).getRequestContext().put(APIConstants.JAX_WS_SERVICE_TIMEOUT, timeout);
+					} else {
+						log.error("BindingProvider proxy not found for " + proxy.getClass());
+					}
+				}
+			}
+		} catch (Exception ex) {
+			log.error("*****Warning!!!**** : Unable to set web service timeout property on " + proxy.getClass().getName(),
+					ex);
+		}
+		log.exit();
+	}
+
+	@SuppressWarnings("rawtypes")
+	private Object instantiateProxy(Class proxyClass, URL url, QName serviceQName) throws Exception {
+		log.entry();
+		Object result = null;
+		Constructor[] constructors = proxyClass.getConstructors();
+		Constructor requiredConstructor = null;
+		if (constructors != null && constructors.length > 0) {
+			for (Constructor constructor : constructors) {
+				Type[] paramTypes = constructor.getGenericParameterTypes();
+				if (paramTypes != null && paramTypes.length == 2 && paramTypes[0].equals(URL.class)
+						&& paramTypes[1].equals(QName.class)) {
+					requiredConstructor = constructor;
+					break;
+				}
+			}
+		}
+		if (requiredConstructor != null) {
+			result = requiredConstructor.newInstance(url, serviceQName);
+		} else {
+			log.error("Constructor taking URL and QName parameters not found for {}", proxyClass.getName());
+		}
+
+		return log.exit(result);
+	}
+
+	public List<String> getServiceNames() {
+		return serviceNames;
+	}
+
+	public void setServiceNames(List<String> serviceNames) {
+		this.serviceNames = serviceNames;
+	}
+
+	@SuppressWarnings("unchecked")
+	protected <E> E getService(String name, Class<E> clazz) {
+		log.entry();
+		Object service = null;
+		if (serviceMap != null) {
+			service = serviceMap.get(name);
+
+		}
+		if (service == null) {
+			throw new IllegalArgumentException("Service not found : " + name);
+		}
+		log.exit();
+		return (E) service;
+
+	}
+
+	protected String getServiceProperty(String key, String defaultVal) {
+		log.entry();
+		return log.exit(environmentProvider
+				.getPropertyInGroup(APIConstants.PROPGROUP_WEB_SERVICES, key, String.class, defaultVal));
+	}
+
+}

@@ -1,0 +1,655 @@
+package com.hixapi.pmp.service.plan.mapping;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanVariant;
+import com.hixapi.pmp.entity.model.PlanBenefitMstr;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanVariantDtl;
+import com.hixapi.pmp.entity.model.PlanVariantDtlCopayCoins;
+import com.hixapi.pmp.entity.model.PlanVariantDtlDeductible;
+import com.hixapi.pmp.entity.model.PlanVariantDtlMaxOop;
+
+public class ConsistentTextMapper {
+
+	private static final String DEDUCTIBLE_ALL_SMALL = "deductible";
+
+	private static final String DEDUCTIBLE_INIT_CAP = "Deductible";
+
+	private static final String SUFFIX_HMO_DENTAL_CHILD = "; 1 visit per six (6) months";
+
+	private static final String SUFFIX_HMO_EMERGENCYROOM = "; Out-of-Network coverage same as In-Network";
+
+	private static final String SUFFIX_PPO_CHILD_DENTAL = "; 1 visit per six (6) months - applies to In-Network and Out-of-Network";
+
+	private static final String SUFFIX_COPAY = " Copay";
+
+	private static final Logger log = LogManager.getLogger(ConsistentTextMapper.class);
+
+	private static final String SUFFIX_COINSURANCE = " Coinsurance";
+
+	private static final String TEXT_INCLUDED_IN_DED = "Included in deductible";
+
+	private static final String IN_NETWORK_SMALL_N = "In-network";
+
+	private static final String IN_NETWORK_CAPITAL_N = "In-Network";
+
+	private static final String TEXT_INCLUDED_IN_MOOP = "Included in Out-Of-Pocket Maximum";
+
+	private static final String TXT_WHEN_MEDICALLY_NECESSARY = " when medically necessary";
+
+	private Pattern familyCSRPattern;
+
+	public ConsistentTextMapper() {
+		familyCSRPattern = Pattern.compile(".*per person[^|]* \\|.*per group");
+	}
+
+	public void applyConsistentText(PlanMstr plan) {
+		log.entry();
+		log.debug("Applying consistent text rules on plan id {} ", plan.getPlanHiosId());
+		Set<PlanBenefitMstr> pbList = plan.getPlanBenefitMstrs();
+		if (CollectionUtils.isNotEmpty(pbList)) {
+			for (PlanBenefitMstr pbMstr : pbList) {
+				Set<PlanVariantDtl> variantList = pbMstr.getPlanVariantDtls();
+				if (CollectionUtils.isNotEmpty(variantList)) {
+					for (PlanVariantDtl variant : variantList) {
+						Set<PlanVariantDtlDeductible> csrTypeList = variant.getPlanVariantDtlDeductibles();
+						if (CollectionUtils.isNotEmpty(csrTypeList)) {
+							applyFamilyCSRRuleForDeductible(csrTypeList);
+							if ("HMO".equalsIgnoreCase(StringUtils.trimToEmpty(plan.getPlanTypCd()))) {
+								applyHMORulesForDeductible(csrTypeList);
+							}
+							if ("Yes".equalsIgnoreCase(variant.getMedAndDrgDeducIntgFlg())
+									&& !PlanVariant.VAR_02.getCode().equals(variant.getVarId())) {
+								applyIntegratedDrugTextUpdate(csrTypeList);
+							} else if ("No".equalsIgnoreCase(variant.getMedAndDrgDeducIntgFlg())) {
+								//TODO - Temporary - Swap deducitble between med and combined to support UI
+								//swapCombinedWithMedicalDeductible(csrTypeList);
+							}
+
+						}
+						Set<PlanVariantDtlMaxOop> csrTypeOOPList = variant.getPlanVariantDtlMaxOops();
+						if (CollectionUtils.isNotEmpty(csrTypeOOPList)) {
+							applyFamilyCSRRuleForOOP(csrTypeOOPList);
+							if ("HMO".equalsIgnoreCase(StringUtils.trimToEmpty(plan.getPlanTypCd()))) {
+								applyHMORulesForMaxOOP(csrTypeOOPList);
+							}
+							if ("Yes".equalsIgnoreCase(variant.getMedAndDrgMaxOutOfPocketIntgFlg())
+									&& !PlanVariant.VAR_02.equals(variant.getVarId())) {
+								applyIntegratedDrugTextMoopUpdate(csrTypeOOPList);
+							}
+						}
+						Set<PlanVariantDtlCopayCoins> csrTypeCopayCoinsList = variant.getPlanVariantDtlCopayCoinses();
+						if (CollectionUtils.isNotEmpty(csrTypeCopayCoinsList)) {
+							applyAmountSuffix(csrTypeCopayCoinsList);
+							if (StringUtils.isNotBlank(plan.getMaxDaysChargingCopayNbr())) {
+								log.debug("Applying max days copay rule");
+								applyHospitalStayRuleForInNetwork(csrTypeCopayCoinsList, plan.getMaxDaysChargingCopayNbr());
+							}
+
+							if ("HMO".equals(plan.getPlanTypCd())) {
+								log.debug("Applying HMO rules");
+								applyHMORules(csrTypeCopayCoinsList);
+							} else if ("PPO".equals(plan.getPlanTypCd()) || "POS".equals(plan.getPlanTypCd())) {
+								log.debug("Applying PPO/POS rules");
+								applyPPORules(csrTypeCopayCoinsList);
+							}
+							final String maxCoinsNbr = StringUtils.trimToEmpty(plan.getMaxCoinsNbr());
+							if (StringUtils.isNotEmpty(maxCoinsNbr)) {
+								applySpecialtyDrugRules(csrTypeCopayCoinsList, maxCoinsNbr,
+										"Yes".equalsIgnoreCase(variant.getMedAndDrgDeducIntgFlg()));
+							}
+
+						}
+
+						//HSA secondary name
+						if (plan.getPlanMktngName().contains("HSA")) {
+							if ("No".equals(variant.getHsaEligibleFlag())) {
+								if ("01".equals(variant.getVarId())) {
+									log.debug("Setting secondary Plan Name for Standard Plan");
+									variant.setPlanSecondaryName("(Standard Plan - This plan is not HSA compatible)");
+								} else if ("02".equals(variant.getVarId())) {
+									log.debug("Setting secondary Plan Name for ZCSR");
+									variant.setPlanSecondaryName("(ZCSR - This plan is not HSA compatible)");
+								} else if ("03".equals(variant.getVarId())) {
+									log.debug("Setting secondary Plan Name for LCSR");
+									variant.setPlanSecondaryName("(LCSR - This plan is not HSA compatible)");
+								} else if ("04".equals(variant.getVarId())) {
+									log.debug("Setting secondary Plan Name for 73% CSR");
+									variant.setPlanSecondaryName("(73% CSR - This plan is not HSA compatible)");
+								} else if ("05".equals(variant.getVarId())) {
+									log.debug("Setting secondary Plan Name for 87% CSR");
+									variant.setPlanSecondaryName("(87% CSR - This plan is not HSA compatible)");
+								} else if ("06".equals(variant.getVarId())) {
+									log.debug("Setting secondary Plan Name for 97% CSR");
+									variant.setPlanSecondaryName("(94% CSR - This plan is not HSA compatible");
+								}
+
+							}
+						} else {
+							if ("01".equals(variant.getVarId())) {
+								log.debug("Setting secondary Plan Name for Standard Plan");
+								variant.setPlanSecondaryName("");
+							} else if ("02".equals(variant.getVarId())) {
+								log.debug("Setting secondary Plan Name for ZCSR");
+								variant.setPlanSecondaryName("(ZCSR)");
+							} else if ("03".equals(variant.getVarId())) {
+								log.debug("Setting secondary Plan Name for LCSR");
+								variant.setPlanSecondaryName("(LCSR)");
+							} else if ("04".equals(variant.getVarId())) {
+								log.debug("Setting secondary Plan Name for 73% CSR");
+								variant.setPlanSecondaryName("(73% CSR)");
+							} else if ("05".equals(variant.getVarId())) {
+								log.debug("Setting secondary Plan Name for 87% CSR");
+								variant.setPlanSecondaryName("(87% CSR)");
+							} else if ("06".equals(variant.getVarId())) {
+								log.debug("Setting secondary Plan Name for 97% CSR");
+								variant.setPlanSecondaryName("(94% CSR)");
+							}
+						}
+						//apply text case consistency throughout
+						applyTextCaseUpdates(variant);
+					}
+				}
+			}
+		}
+
+		log.exit();
+	}
+
+	/*private void swapCombinedWithMedicalDeductible(Set<PlanVariantDtlDeductible> csrTypeList) {
+		PlanVariantDtlDeductible cmd = null;
+		PlanVariantDtlDeductible med = null;
+		for (PlanVariantDtlDeductible csrType : csrTypeList) {
+			if ("MED".equals(csrType.getLkPlanVariantDtlDeductibleCd())) {
+				med = csrType;
+			} else if ("CMD".equals(csrType.getLkPlanVariantDtlDeductibleCd())) {
+				cmd = csrType;
+			}
+		}
+
+		if (cmd != null && med != null) {
+			cmd.setCombinedInoutFamily(med.getCombinedInoutFamily());
+			cmd.setCombinedInoutIndv(med.getCombinedInoutIndv());
+			cmd.setInNetworkDfltCoins(med.getInNetworkDfltCoins());
+			cmd.setInNetworkFamily(med.getInNetworkFamily());
+			cmd.setInNetworkIndv(med.getInNetworkIndv());
+			cmd.setInNetworkTier2DfltCoins(med.getInNetworkTier2DfltCoins());
+			cmd.setInNetworkTier2Family(med.getInNetworkTier2Family());
+			cmd.setInNetworkTier2Indv(med.getInNetworkTier2Indv());
+			cmd.setOutOfNetworkFamily(med.getOutOfNetworkFamily());
+			cmd.setOutOfNetworkIndv(med.getOutOfNetworkIndv());
+		}
+	}*/
+
+	private void applyTextCaseUpdates(PlanVariantDtl variant) {
+		Set<PlanVariantDtlDeductible> deductibles = variant.getPlanVariantDtlDeductibles();
+		if (CollectionUtils.isNotEmpty(deductibles)) {
+			for (PlanVariantDtlDeductible deductible : deductibles) {
+				deductible.setCombinedInoutFamily(StringUtils.replace(deductible.getCombinedInoutFamily(),
+						DEDUCTIBLE_INIT_CAP, DEDUCTIBLE_ALL_SMALL));
+				deductible.setCombinedInoutIndv(StringUtils.replace(deductible.getCombinedInoutIndv(), DEDUCTIBLE_INIT_CAP,
+						DEDUCTIBLE_ALL_SMALL));
+				deductible.setInNetworkDfltCoins(StringUtils.replace(deductible.getInNetworkDfltCoins(),
+						DEDUCTIBLE_INIT_CAP, DEDUCTIBLE_ALL_SMALL));
+				deductible.setInNetworkIndv(StringUtils.replace(deductible.getInNetworkIndv(), DEDUCTIBLE_INIT_CAP,
+						DEDUCTIBLE_ALL_SMALL));
+				deductible.setInNetworkFamily(StringUtils.replace(deductible.getInNetworkFamily(), DEDUCTIBLE_INIT_CAP,
+						DEDUCTIBLE_ALL_SMALL));
+				deductible.setInNetworkTier2DfltCoins(StringUtils.replace(deductible.getInNetworkTier2DfltCoins(),
+						DEDUCTIBLE_INIT_CAP, DEDUCTIBLE_ALL_SMALL));
+				deductible.setInNetworkTier2Family(StringUtils.replace(deductible.getInNetworkTier2Family(),
+						DEDUCTIBLE_INIT_CAP, DEDUCTIBLE_ALL_SMALL));
+				deductible.setInNetworkTier2Indv(StringUtils.replace(deductible.getInNetworkTier2Indv(),
+						DEDUCTIBLE_INIT_CAP, DEDUCTIBLE_ALL_SMALL));
+				deductible.setOutOfNetworkFamily(StringUtils.replace(deductible.getOutOfNetworkFamily(),
+						DEDUCTIBLE_INIT_CAP, DEDUCTIBLE_ALL_SMALL));
+				deductible.setOutOfNetworkIndv(StringUtils.replace(deductible.getOutOfNetworkIndv(), DEDUCTIBLE_INIT_CAP,
+						DEDUCTIBLE_ALL_SMALL));
+
+				deductible.setCombinedInoutFamily(StringUtils.replace(deductible.getCombinedInoutFamily(),
+						IN_NETWORK_SMALL_N, IN_NETWORK_CAPITAL_N));
+				deductible.setCombinedInoutIndv(StringUtils.replace(deductible.getCombinedInoutIndv(), IN_NETWORK_SMALL_N,
+						IN_NETWORK_CAPITAL_N));
+				deductible.setInNetworkDfltCoins(StringUtils.replace(deductible.getInNetworkDfltCoins(), IN_NETWORK_SMALL_N,
+						IN_NETWORK_CAPITAL_N));
+				deductible.setInNetworkIndv(StringUtils.replace(deductible.getInNetworkIndv(), IN_NETWORK_SMALL_N,
+						IN_NETWORK_CAPITAL_N));
+				deductible.setInNetworkFamily(StringUtils.replace(deductible.getInNetworkFamily(), IN_NETWORK_SMALL_N,
+						IN_NETWORK_CAPITAL_N));
+				deductible.setInNetworkTier2DfltCoins(StringUtils.replace(deductible.getInNetworkTier2DfltCoins(),
+						IN_NETWORK_SMALL_N, IN_NETWORK_CAPITAL_N));
+				deductible.setInNetworkTier2Family(StringUtils.replace(deductible.getInNetworkTier2Family(),
+						IN_NETWORK_SMALL_N, IN_NETWORK_CAPITAL_N));
+				deductible.setInNetworkTier2Indv(StringUtils.replace(deductible.getInNetworkTier2Indv(), IN_NETWORK_SMALL_N,
+						IN_NETWORK_CAPITAL_N));
+				deductible.setOutOfNetworkFamily(StringUtils.replace(deductible.getOutOfNetworkFamily(), IN_NETWORK_SMALL_N,
+						IN_NETWORK_CAPITAL_N));
+				deductible.setOutOfNetworkIndv(StringUtils.replace(deductible.getOutOfNetworkIndv(), IN_NETWORK_SMALL_N,
+						IN_NETWORK_CAPITAL_N));
+
+			}
+
+		}
+
+		Set<PlanVariantDtlCopayCoins> copayCoins = variant.getPlanVariantDtlCopayCoinses();
+		if (CollectionUtils.isNotEmpty(copayCoins)) {
+			for (PlanVariantDtlCopayCoins record : copayCoins) {
+				record.setCopayInNetworkTier1(StringUtils.replace(record.getCopayInNetworkTier1(), "copayment", "Copay"));
+				record.setCopayInNetworkTier1(StringUtils.replace(record.getCopayInNetworkTier1(), "copay", "Copay"));
+
+				record.setCopayInNetworkTier2(StringUtils.replace(record.getCopayInNetworkTier2(), "copayment", "Copay"));
+				record.setCopayInNetworkTier2(StringUtils.replace(record.getCopayInNetworkTier2(), "copay", "Copay"));
+
+				record.setCopayOutOfNetwork(StringUtils.replace(record.getCopayOutOfNetwork(), "copayment", "Copay"));
+				record.setCopayOutOfNetwork(StringUtils.replace(record.getCopayOutOfNetwork(), "copay", "Copay"));
+
+				record.setCoinsInNetworkTier1(StringUtils.replace(record.getCoinsInNetworkTier1(), "coinsurance",
+						"Coinsurance"));
+				record.setCoinsOutOfNetwork(StringUtils.replace(record.getCoinsOutOfNetwork(), "coinsurance", "Coinsurance"));
+
+			}
+		}
+
+	}
+
+	private void applySpecialtyDrugRules(Set<PlanVariantDtlCopayCoins> csrTypeCopayCoinsList, String maxTier4Coins,
+			boolean medAndDrugIntegratedDed) {
+
+		log.debug("Max Co insurance $ for Specialty Drugs : {}", maxTier4Coins);
+		if (!(StringUtils.trimToEmpty(maxTier4Coins).startsWith("$"))) {
+			maxTier4Coins = "$" + maxTier4Coins;
+		}
+		for (PlanVariantDtlCopayCoins field : csrTypeCopayCoinsList) {
+			if ("SDG".equals(field.getLkCopayCoinsTypeCd()) && !field.getCoinsInNetworkTier1().endsWith("per prescription")) {
+				log.debug("Checking whether to apply Specialty Drug Rule");
+				String original = StringUtils.trimToEmpty(field.getCoinsInNetworkTier1());
+				String modified = "";
+				log.debug("Original Co-insurance value: {}", original);
+				if (StringUtils.endsWithIgnoreCase(original, "Coinsurance after deductible")) {
+					if (medAndDrugIntegratedDed) {
+						log.debug("Ex 1 ending with 'Coinsurance after deductible' integrated ded case");
+						modified = original + " to a maximum of " + maxTier4Coins + " per prescription";
+						field.setCoinsInNetworkTier1(modified);
+					} else {
+						log.debug("Ex 1 ending with 'Coinsurance after deductible' non-integrated ded case");
+						modified = StringUtils.replace(original, "after", "after Prescription Drug") + " to a maximum of "
+								+ maxTier4Coins + " per prescription";
+						field.setCoinsInNetworkTier1(modified);
+					}
+				} else if (StringUtils.endsWithIgnoreCase(original, "Coinsurance")) {
+					log.debug("Ex 2 and Ex 4 ending with 'xx Coinsurance'");
+					modified = original + " to a maximum of " + maxTier4Coins + " per prescription";
+					field.setCoinsInNetworkTier1(modified);
+				}
+				break;
+			}
+		}
+
+	}
+
+	private void applyIntegratedDrugTextUpdate(Set<PlanVariantDtlDeductible> csrTypeList) {
+		for (PlanVariantDtlDeductible csrType : csrTypeList) {
+			if ("DRD".equals(csrType.getLkPlanVariantDtlDeductibleCd())) {
+				log.debug("Updating text as Included in deductible");
+				csrType.setInNetworkIndv(TEXT_INCLUDED_IN_DED);
+				csrType.setInNetworkFamily(TEXT_INCLUDED_IN_DED);
+				csrType.setInNetworkTier2Indv(TEXT_INCLUDED_IN_DED);
+				csrType.setInNetworkTier2Family(TEXT_INCLUDED_IN_DED);
+				csrType.setOutOfNetworkIndv(TEXT_INCLUDED_IN_DED);
+				csrType.setOutOfNetworkFamily(TEXT_INCLUDED_IN_DED);
+				break;
+			}
+		}
+	}
+
+	private void applyIntegratedDrugTextMoopUpdate(Set<PlanVariantDtlMaxOop> csrTypeList) {
+		for (PlanVariantDtlMaxOop csrType : csrTypeList) {
+			if ("MPD".equals(csrType.getLkPlanVariantDtlMaxOopCd())) {
+				log.debug("Updating text as Included in Out-Of-Pocket Maximum");
+				csrType.setInNetworkTier1Family(TEXT_INCLUDED_IN_MOOP);
+				csrType.setInNetworkTier1Indv(TEXT_INCLUDED_IN_MOOP);
+				csrType.setInNetworkTier2Indv(TEXT_INCLUDED_IN_MOOP);
+				csrType.setInNetworkTier2Family(TEXT_INCLUDED_IN_MOOP);
+				csrType.setOutOfNetworkIndv(TEXT_INCLUDED_IN_MOOP);
+				csrType.setOutOfNetworkFamily(TEXT_INCLUDED_IN_MOOP);
+
+				break;
+			}
+		}
+	}
+
+	private void applyPPORules(Set<PlanVariantDtlCopayCoins> csrTypeCopayCoinsList) {
+
+		for (PlanVariantDtlCopayCoins field : csrTypeCopayCoinsList) {
+			if ("DCC".equals(field.getLkCopayCoinsTypeCd())) {
+				if (!field.getCopayInNetworkTier1().endsWith(SUFFIX_PPO_CHILD_DENTAL)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCopayInNetworkTier1())) {
+					field.setCopayInNetworkTier1(field.getCopayInNetworkTier1() + SUFFIX_PPO_CHILD_DENTAL);
+				}
+				if (!field.getCoinsInNetworkTier1().endsWith(SUFFIX_PPO_CHILD_DENTAL)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCoinsInNetworkTier1())) {
+					field.setCoinsInNetworkTier1(field.getCoinsInNetworkTier1() + SUFFIX_PPO_CHILD_DENTAL);
+				}
+				if (!field.getCopayInNetworkTier2().endsWith(SUFFIX_PPO_CHILD_DENTAL)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCopayInNetworkTier2())) {
+					field.setCopayInNetworkTier2(field.getCopayInNetworkTier2() + SUFFIX_PPO_CHILD_DENTAL);
+				}
+				if (!field.getCoinsOutOfNetwork().endsWith(SUFFIX_PPO_CHILD_DENTAL)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCoinsOutOfNetwork())) {
+					field.setCoinsOutOfNetwork(field.getCoinsOutOfNetwork() + SUFFIX_PPO_CHILD_DENTAL);
+				}
+				if (!field.getCopayOutOfNetwork().endsWith(SUFFIX_PPO_CHILD_DENTAL)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCopayOutOfNetwork())) {
+					field.setCopayOutOfNetwork(field.getCopayOutOfNetwork() + SUFFIX_PPO_CHILD_DENTAL);
+				}
+			}
+
+		}
+
+	}
+
+	private void applyHMORules(Set<PlanVariantDtlCopayCoins> csrTypeCopayCoinsList) {
+
+		for (PlanVariantDtlCopayCoins field : csrTypeCopayCoinsList) {
+			//Emergency Room Services
+			if ("ERS".equals(field.getLkCopayCoinsTypeCd())) {
+				if (!field.getCoinsInNetworkTier1().endsWith(SUFFIX_HMO_EMERGENCYROOM)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCoinsInNetworkTier1())) {
+					field.setCoinsInNetworkTier1(field.getCoinsInNetworkTier1() + SUFFIX_HMO_EMERGENCYROOM);
+				}
+				if (!field.getCoinsInNetworkTier2().endsWith(SUFFIX_HMO_EMERGENCYROOM)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCoinsInNetworkTier2())) {
+					field.setCoinsInNetworkTier2(field.getCoinsInNetworkTier2() + SUFFIX_HMO_EMERGENCYROOM);
+				}
+				if (!field.getCopayInNetworkTier1().endsWith(SUFFIX_HMO_EMERGENCYROOM)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCopayInNetworkTier1())) {
+					field.setCopayInNetworkTier1(field.getCopayInNetworkTier1() + SUFFIX_HMO_EMERGENCYROOM);
+				}
+				if (!field.getCopayInNetworkTier2().endsWith(SUFFIX_HMO_EMERGENCYROOM)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCopayInNetworkTier2())) {
+					field.setCopayInNetworkTier2(field.getCopayInNetworkTier2() + SUFFIX_HMO_EMERGENCYROOM);
+				}
+			}
+			//Child dental 
+			else if ("DCC".equals(field.getLkCopayCoinsTypeCd())) {
+				if (!field.getCoinsInNetworkTier1().endsWith(SUFFIX_HMO_DENTAL_CHILD)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCoinsInNetworkTier1())) {
+					field.setCoinsInNetworkTier1(field.getCoinsInNetworkTier1() + SUFFIX_HMO_DENTAL_CHILD);
+				}
+				if (!field.getCopayInNetworkTier1().endsWith(SUFFIX_HMO_DENTAL_CHILD)
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCopayInNetworkTier1())) {
+					field.setCopayInNetworkTier1(field.getCopayInNetworkTier1() + SUFFIX_HMO_DENTAL_CHILD);
+				}
+			}
+			//clearing outofnetwork for HMO
+			field.setCoinsOutOfNetwork("");
+			field.setCopayOutOfNetwork("");
+		}
+
+	}
+
+	private void applyHMORulesForDeductible(Set<PlanVariantDtlDeductible> deductibleList) {
+		log.debug("Clearing OON fields for HMO");
+		for (PlanVariantDtlDeductible field : deductibleList) {
+
+			//clearing outofnetwork for HMO
+			field.setOutOfNetworkFamily("");
+			field.setOutOfNetworkIndv("");
+		}
+
+	}
+
+	private void applyHMORulesForMaxOOP(Set<PlanVariantDtlMaxOop> oopList) {
+		log.debug("Clearing OON fields for HMO");
+		for (PlanVariantDtlMaxOop field : oopList) {
+
+			//clearing outofnetwork for HMO
+			field.setOutOfNetworkFamily("");
+			field.setOutOfNetworkIndv("");
+		}
+
+	}
+
+	private void applyAmountSuffix(Set<PlanVariantDtlCopayCoins> csrTypeCopayCoinsList) {
+
+		for (PlanVariantDtlCopayCoins field : csrTypeCopayCoinsList) {
+			field.setCopayInNetworkTier1(applyTextSuffix(field, StringUtils.trimToEmpty(field.getCopayInNetworkTier1()),
+					SUFFIX_COPAY));
+			field.setCopayInNetworkTier2(applyTextSuffix(field, StringUtils.trimToEmpty(field.getCopayInNetworkTier2()),
+					SUFFIX_COPAY));
+			field.setCopayOutOfNetwork(applyTextSuffix(field, StringUtils.trimToEmpty(field.getCopayOutOfNetwork()),
+					SUFFIX_COPAY));
+			field.setCoinsInNetworkTier1(applyTextSuffix(field, StringUtils.trimToEmpty(field.getCoinsInNetworkTier1()),
+					SUFFIX_COINSURANCE));
+			field.setCoinsInNetworkTier2(applyTextSuffix(field, StringUtils.trimToEmpty(field.getCoinsInNetworkTier2()),
+					SUFFIX_COINSURANCE));
+			field.setCoinsOutOfNetwork(applyTextSuffix(field, StringUtils.trimToEmpty(field.getCoinsOutOfNetwork()),
+					SUFFIX_COINSURANCE));
+
+			//Copy over coins tier1 to copay tier1 to support UI where innw copay is NA and innw coins is not NA
+			/*
+						if ((StringUtils.isBlank(field.getCopayInNetworkTier1()) || APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field
+								.getCopayInNetworkTier1()))
+								&& (StringUtils.isNotBlank(field.getCoinsInNetworkTier1()) && !APIConstants.NOT_APPLICABLE
+										.equalsIgnoreCase(field.getCoinsInNetworkTier1()))) {
+							field.setCopayInNetworkTier1(field.getCoinsInNetworkTier1());
+						}
+
+						if ((StringUtils.isBlank(field.getCoinsOutOfNetwork()) || APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field
+								.getCoinsOutOfNetwork()))
+								&& (StringUtils.isNotBlank(field.getCopayOutOfNetwork()) && !APIConstants.NOT_APPLICABLE
+										.equalsIgnoreCase(field.getCopayOutOfNetwork()))) {
+							field.setCoinsOutOfNetwork(field.getCopayOutOfNetwork());
+						}*/
+			if ("OCD".equals(field.getLkCopayCoinsTypeCd())) {
+				if (StringUtils.isNotBlank(field.getCoinsInNetworkTier1())
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCoinsInNetworkTier1())
+						&& ! field.getCoinsInNetworkTier1().endsWith(TXT_WHEN_MEDICALLY_NECESSARY)) {
+					field.setCoinsInNetworkTier1(field.getCoinsInNetworkTier1() + TXT_WHEN_MEDICALLY_NECESSARY);
+				}
+				
+				if (StringUtils.isNotBlank(field.getCoinsInNetworkTier2())
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCoinsInNetworkTier2())
+						&& ! field.getCoinsInNetworkTier2().endsWith(TXT_WHEN_MEDICALLY_NECESSARY)) {
+					field.setCoinsInNetworkTier2(field.getCoinsInNetworkTier2() + TXT_WHEN_MEDICALLY_NECESSARY);
+				}
+				if (StringUtils.isNotBlank(field.getCopayInNetworkTier1())
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCopayInNetworkTier1())
+						&& ! field.getCopayInNetworkTier1().endsWith(TXT_WHEN_MEDICALLY_NECESSARY)) {
+					field.setCopayInNetworkTier1(field.getCopayInNetworkTier1() + TXT_WHEN_MEDICALLY_NECESSARY);
+				}
+				if (StringUtils.isNotBlank(field.getCopayInNetworkTier2())
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCopayInNetworkTier2())
+						&& ! field.getCopayInNetworkTier2().endsWith(TXT_WHEN_MEDICALLY_NECESSARY)) {
+					field.setCopayInNetworkTier2(field.getCopayInNetworkTier2() + TXT_WHEN_MEDICALLY_NECESSARY);
+				}
+				if (StringUtils.isNotBlank(field.getCoinsOutOfNetwork())
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCoinsOutOfNetwork())
+						&& ! field.getCoinsOutOfNetwork().endsWith(TXT_WHEN_MEDICALLY_NECESSARY)) {
+					field.setCoinsOutOfNetwork(field.getCoinsOutOfNetwork() + TXT_WHEN_MEDICALLY_NECESSARY);
+				}
+				if (StringUtils.isNotBlank(field.getCopayOutOfNetwork())
+						&& !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(field.getCopayOutOfNetwork())
+						&& ! field.getCopayOutOfNetwork().endsWith(TXT_WHEN_MEDICALLY_NECESSARY)) {
+					field.setCopayOutOfNetwork(field.getCopayOutOfNetwork() + TXT_WHEN_MEDICALLY_NECESSARY);
+				}
+
+			}
+		}
+
+	}
+
+	private String applyTextSuffix(PlanVariantDtlCopayCoins field, String value, String suffix) {
+		String modifiedValue = value;
+		if ((value.startsWith("$") && NumberUtils.isParsable(value.substring(1)))
+				|| (value.endsWith("%") && NumberUtils.isParsable(value.substring(0, value.length() - 1)))) {
+			modifiedValue = value + suffix;
+			log.debug("Modified value for {} from {} to {}", field.getLkCopayCoinsTypeCd(), value, modifiedValue);
+
+		}
+		return modifiedValue;
+	}
+
+	private void applyFamilyCSRRuleForDeductible(Set<PlanVariantDtlDeductible> csrTypeList) {
+
+		for (PlanVariantDtlDeductible csrType : csrTypeList) {
+			//Rule 1
+			if ("MED".equals(csrType.getLkPlanVariantDtlDeductibleCd())
+					|| "DRD".equals(csrType.getLkPlanVariantDtlDeductibleCd())
+					|| "CMD".equals(csrType.getLkPlanVariantDtlDeductibleCd())) {
+				String value = StringUtils.trimToEmpty(csrType.getInNetworkFamily());
+				String modifiedValue = null;
+				if (StringUtils.isNotBlank(value)) {
+					modifiedValue = getModifiedFamilyCSRTypeValue(value, familyCSRPattern);
+					log.debug(
+							"Consistent text update for In Network Family Deductible Type: {}: Original Value: {}, Modified Value: {}",
+							csrType.getLkPlanVariantDtlDeductibleCd(), value, modifiedValue);
+					csrType.setInNetworkFamily(modifiedValue);
+				}
+				value = StringUtils.trimToEmpty(csrType.getInNetworkTier2Family());
+				if (StringUtils.isNotBlank(value)) {
+					modifiedValue = getModifiedFamilyCSRTypeValue(value, familyCSRPattern);
+					log.debug(
+							"Consistent text update for In Network Tier 2 Family Deductible Type: {}: Original Value: {}, Modified Value: {}",
+							csrType.getLkPlanVariantDtlDeductibleCd(), value, modifiedValue);
+					csrType.setInNetworkTier2Family(modifiedValue);
+				}
+
+				value = StringUtils.trimToEmpty(csrType.getOutOfNetworkFamily());
+				if (StringUtils.isNotBlank(value)) {
+					modifiedValue = getModifiedFamilyCSRTypeValue(value, familyCSRPattern);
+					log.debug(
+							"Consistent text update for Out of  Network Family Deductible Type: {}: Original Value: {}, Modified Value: {}",
+							csrType.getLkPlanVariantDtlDeductibleCd(), value, modifiedValue);
+					csrType.setOutOfNetworkFamily(modifiedValue);
+				}
+				value = StringUtils.trimToEmpty(csrType.getCombinedInoutFamily());
+				if (StringUtils.isNotBlank(value)) {
+					modifiedValue = getModifiedFamilyCSRTypeValue(value, familyCSRPattern);
+					log.debug(
+							"Consistent text update for Combined In/Out Family Deductible Type: {}: Original Value: {}, Modified Value: {}",
+							csrType.getLkPlanVariantDtlDeductibleCd(), value, modifiedValue);
+					csrType.setCombinedInoutFamily(modifiedValue);
+				}
+			}
+		}
+	}
+
+	private void applyFamilyCSRRuleForOOP(Set<PlanVariantDtlMaxOop> csrTypeList) {
+
+		for (PlanVariantDtlMaxOop csrType : csrTypeList) {
+			//Rule 1
+			if ("MPM".equals(csrType.getLkPlanVariantDtlMaxOopCd()) || "MMD".equals(csrType.getLkPlanVariantDtlMaxOopCd())
+					|| "MPD".equals(csrType.getLkPlanVariantDtlMaxOopCd())) {
+				String value = StringUtils.trimToEmpty(csrType.getInNetworkTier1Family());
+				String modifiedValue = null;
+				if (StringUtils.isNotBlank(value)) {
+					modifiedValue = getModifiedFamilyCSRTypeValue(value, familyCSRPattern);
+					log.debug(
+							"Consistent text update for In Network Family OOP Type: {}: Original Value: {}, Modified Value: {}",
+							csrType.getLkPlanVariantDtlMaxOopCd(), value, modifiedValue);
+					log.debug("Plan Variant Moop Detail ID : ", csrType.getPlanVariantDtlMaxOopId());
+					csrType.setInNetworkTier1Family(modifiedValue);
+				}
+				value = StringUtils.trimToEmpty(csrType.getInNetworkTier2Family());
+				if (StringUtils.isNotBlank(value)) {
+					modifiedValue = getModifiedFamilyCSRTypeValue(value, familyCSRPattern);
+					log.debug(
+							"Consistent text update for In Network Tier 2 Family OOP Type: {}: Original Value: {}, Modified Value: {}",
+							csrType.getLkPlanVariantDtlMaxOopCd(), value, modifiedValue);
+					csrType.setInNetworkTier2Family(modifiedValue);
+				}
+
+				value = StringUtils.trimToEmpty(csrType.getOutOfNetworkFamily());
+				if (StringUtils.isNotBlank(value)) {
+					modifiedValue = getModifiedFamilyCSRTypeValue(value, familyCSRPattern);
+					log.debug(
+							"Consistent text update for Out of  Network Family OOP Type: {}: Original Value: {}, Modified Value: {}",
+							csrType.getLkPlanVariantDtlMaxOopCd(), value, modifiedValue);
+					csrType.setOutOfNetworkFamily(modifiedValue);
+				}
+				value = StringUtils.trimToEmpty(csrType.getCombinedInoutFamily());
+				if (StringUtils.isNotBlank(value)) {
+					modifiedValue = getModifiedFamilyCSRTypeValue(value, familyCSRPattern);
+					log.debug(
+							"Consistent text update for Combined In/Out Family OOP Type: {}: Original Value: {}, Modified Value: {}",
+							csrType.getLkPlanVariantDtlMaxOopCd(), value, modifiedValue);
+					csrType.setCombinedInoutFamily(modifiedValue);
+				}
+			}
+		}
+	}
+
+	private void applyHospitalStayRuleForInNetwork(Set<PlanVariantDtlCopayCoins> csrTypeList, String maxDays) {
+
+		for (PlanVariantDtlCopayCoins csrType : csrTypeList) {
+			//Rule 1
+			if ("IHS".equals(csrType.getLkCopayCoinsTypeCd())) {
+				String value = StringUtils.trimToEmpty(csrType.getCopayInNetworkTier1());
+				String modifiedValue = null;
+				double totalCopay = 0d;
+				if (StringUtils.isNotBlank(value)) {
+					double copayPerDay = 0d;
+					if (StringUtils.containsIgnoreCase(value, "per day") && NumberUtils.isNumber(maxDays)
+							&& !value.endsWith("per admission")//If already modified ignore
+					) {
+						modifiedValue = value;
+						if (modifiedValue.startsWith("$")) {
+							modifiedValue = value.substring(1);
+						}
+						int spaceIndex = modifiedValue.indexOf(' ');
+						if (spaceIndex != -1) {
+							modifiedValue = StringUtils.trimToEmpty(modifiedValue.substring(0, spaceIndex));
+						}
+						if (NumberUtils.isNumber(modifiedValue)) {
+							copayPerDay = NumberUtils.toDouble(modifiedValue);
+							totalCopay = copayPerDay * NumberUtils.toDouble(maxDays);
+							log.debug("Daily Copay:{}, Max Days:{}, Total Copay:{}", modifiedValue, maxDays, totalCopay);
+
+							final BigDecimal bdValue = new BigDecimal(totalCopay).setScale(0, RoundingMode.HALF_UP);
+							String formatted = String.format("%,d", bdValue.longValue());
+							modifiedValue = value + " to a maximum of $" + formatted + " per admission";
+						} else {
+							log.error("Parsed copay as not a number for IHS for plan: {}, value:{}", csrType
+									.getPlanVariantDtl().getVarId(), value);
+						}
+						log.debug(
+								"Consistent text update for Hospital stay with per day copay: Original Value: {}, Modified Value: {}",
+								value, modifiedValue);
+
+						csrType.setCopayInNetworkTier1(modifiedValue);
+					}
+				}
+				break;
+			}
+		}
+
+	}
+
+	private String getModifiedFamilyCSRTypeValue(String value, Pattern pattern) {
+		String modifiedValue = value;
+		if (pattern.matcher(value).matches()) {
+			int indexOfPipe = value.indexOf('|');
+			if (indexOfPipe != -1) {
+				String subString = value.substring(indexOfPipe + 1);
+				modifiedValue = StringUtils.trimToEmpty(subString.replaceAll("per group", ""));
+
+			}
+		} else if (value.equalsIgnoreCase("per person not applicable | per group not applicable")) {
+			modifiedValue = "Not Applicable";
+		}
+		return modifiedValue;
+	}
+
+}

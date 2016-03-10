@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.PlanLifecycle" table="PLAN_LIFECYCLE" optimistic-lock="version">
+        <id name="planLifecycleId" type="java.lang.Long">
+            <column name="PLAN_LIFECYCLE_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_PLAN_LIFECYCLE_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="planMstr" class="com.hixapi.pmp.entity.model.PlanMstr" fetch="select">
+            <column name="PLAN_MSTR_ID" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="lkPlanStatusCd" type="string">
+            <column name="LK_PLAN_STATUS_CD" length="3" not-null="true" />
+        </property>
+        <property name="activeInd" type="string">
+            <column name="ACTIVE_IND" length="1" not-null="true">
+                <comment>Y/N Flag</comment>
+            </column>
+        </property>
+        <property name="statusChangeDt" type="java.util.Date">
+            <column name="STATUS_CHANGE_DT" length="26" not-null="true" />
+        </property>
+        <property name="statusChangeUsrId" type="string">
+            <column name="STATUS_CHANGE_USR_ID" length="30" not-null="true" />
+        </property>
+    </class>
+</hibernate-mapping>

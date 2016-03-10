@@ -1,0 +1,278 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.prescreen;
+
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.beanutils.BeanComparator;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.pmp.dao.prescreen.PlanListingDAO;
+import com.hixapi.prescreening.api.model.DocumentView;
+import com.hixapi.prescreening.api.model.HealthPlan;
+import com.hixapi.prescreening.api.model.Individual;
+import com.hixapi.prescreening.api.model.plan.HealthPlanDeterminant;
+import com.hixapi.prescreening.api.model.plan.Plan;
+import com.hixapi.prescreening.api.model.plan.PlanContainer;
+
+/**
+ * @author spoorthi
+ *
+ */
+public class PlanListingServiceImpl implements PlanListingService {
+
+	private static final Logger log = LogManager.getLogger(PlanListingServiceImpl.class);
+
+	private PlanListingDAO planListingDAO;
+
+	@Override
+	public PlanContainer getPlansList(HealthPlanDeterminant planDeterminant) throws Exception {
+		// if household has only qhp members then need to set as below
+		if (planDeterminant.getAgeCategories() == null) {
+
+			final List<String> hshlAgeCategories = determineAgeCategories(planDeterminant.getMemberList());
+			String ratingAreaId = getPlanListingDAO().getRatingAreaId(planDeterminant.getCounty());
+			planDeterminant.setRatingAreaId(ratingAreaId);
+			planDeterminant.setAgeCategories(hshlAgeCategories);
+			for (Individual ind : planDeterminant.getMemberList()) {
+				String ageCategory = findAgeCategory(ind);
+				ind.setAgeCategory(ageCategory);
+			}
+
+		}
+		boolean flag = checkCatastrophicEligible(planDeterminant.getMemberList());
+		planDeterminant.setCatastrophicElig(flag);
+		List<Plan> allPlans = getAllPlansForHouseHold(planDeterminant);
+		PlanContainer planContainer = new PlanContainer();
+		planContainer.setCatastrophicFlag(flag);
+		planContainer.setPlans(allPlans);
+
+		return planContainer;
+	}
+
+	private List<Plan> getAllPlansForHouseHold(HealthPlanDeterminant hpDeterminant) {
+		Map<Integer, List<HealthPlan>> planMap = getHealthPlansForFamily(hpDeterminant);
+		// calculate Premium of a plan for household and convert from map of
+		// plans to list of plan.
+		List<Plan> allPlans = calculateEachHealthPlanRateForFamily(hpDeterminant, planMap);
+		// List<Plan> allPlans = new ArrayList<Plan>();
+
+		return allPlans;
+
+	}
+
+	private List<Plan> calculateEachHealthPlanRateForFamily(HealthPlanDeterminant hpDeterminant,
+			Map<Integer, List<HealthPlan>> planMap) {
+		Plan plan = null;
+		List<Plan> finalPlanList = new ArrayList<Plan>();
+		// Map<String, Boolean> eligres = checkAddable(dataSet);
+		Double totalCost = 0d;
+		Double expectedOOPCost = 0D;
+		Double aptcAmount = hpDeterminant.getAptcAmount() == null ? 0d : hpDeterminant.getAptcAmount();
+		Map<String, Integer> ageCounterMap = new HashMap<String, Integer>();
+		for (Integer id : planMap.keySet()) {
+			final List<HealthPlan> planList = planMap.get(id);
+			for (Individual member : hpDeterminant.getMemberList()) {
+
+				String age = String.valueOf(member.getAge());
+				if (ageCounterMap.containsKey(age)) {
+					final int countVal = ageCounterMap.get(age).intValue();
+					if (isChildAgeCategory(age) && countVal == 3) {
+						log.debug("Ignoring more than 3 children");
+						continue;
+					} else {
+						ageCounterMap.put(age, countVal + 1);
+					}
+				} else {
+					ageCounterMap.put(age, 1);
+				}
+
+				HealthPlan planEntry = findHealthPlanForMember(member, planList, false);
+				Double planRate = planEntry.getPlanRate();
+				totalCost = totalCost + planRate;
+
+			}
+
+			plan = new Plan();
+
+			BigDecimal premium = null;
+			final HealthPlan aPlan = planList.get(0);
+			//if (AppConstants.METAL_CATASTROPHIC.equalsIgnoreCase(aPlan
+			//	.getMetalLevel())) {
+			premium = new BigDecimal(totalCost).setScale(2, RoundingMode.HALF_UP);
+			//			} else {
+			//				Double ehb = aPlan.getEhb() == null ? 100d : aPlan.getEhb();
+			//				Double ehbPremium = totalCost * ehb / 100;
+			//				if (ehbPremium <= aptcAmount) {
+			//					premium = new BigDecimal(totalCost - ehbPremium).setScale(
+			//							2, RoundingMode.HALF_UP);
+			//				} else {
+			//					premium = new BigDecimal(totalCost - aptcAmount).setScale(
+			//							2, RoundingMode.HALF_UP);
+			//				}
+			//			}
+
+			if (premium.doubleValue() < 0) {
+				premium = new BigDecimal(0.00);
+			}
+			premium.setScale(2, RoundingMode.HALF_UP);
+			plan.setPremiumAmt(premium);
+
+			plan.setCarrierId(aPlan.getCarrierId());
+			plan.setInNetworkDoctorsLink(aPlan.getCheckDocLink());
+			// plan.setCsrText(null);
+			plan.setEmergencyRoom(StringUtils.defaultIfEmpty(aPlan.getEmergencyRoom(), "$0"));
+			plan.setMetalLevelCode(aPlan.getMetalLevel());
+			plan.setPlanDetailsDisplayId(aPlan.getPlanDetailsDisplayId());
+			plan.setPlanId(aPlan.getPlanId());
+			// plan.setPlanId(plan.getPlanDetailsDisplayId());
+			plan.setPlanName(aPlan.getPlanName());
+			plan.setPrimCareCoPay(StringUtils.defaultIfEmpty(aPlan.getPrimCareCoPay(), "$0"));
+			plan.setRatingCode(String.valueOf(aPlan.getQualityRating()));
+			plan.setDeductibleAmt("$" + StringUtils.defaultIfEmpty(aPlan.getAnnualDeductible(), "0"));
+			plan.setOutOfPocketMaxAmt(StringUtils.defaultIfEmpty(aPlan.getAnnualOutOfPocMax(), "$0"));
+			plan.setCarrierName(aPlan.getCarrierName());
+			// TODO remove this Vibhor
+			plan.setMinPremium("3");
+			plan.setActualPremium(plan.getPremiumAmt().toString());
+			plan.setExpectedOOP(new BigDecimal(expectedOOPCost.doubleValue()));
+
+			if (plan.getCarrierId().equals("76962")) {
+				plan.setCarrierImageName("carrier76962.jpg");
+			} else if (plan.getCarrierId().equals("86545")) {
+				plan.setCarrierImageName("carrier86545.jpg");
+			} else if (plan.getCarrierId().equals("91069")) {
+				plan.setCarrierImageName("carrier91069.jpg");
+			} else if (plan.getCarrierId().equals("49650")) {
+				plan.setCarrierImageName("carrier49650.jpg");
+			} else {
+				plan.setCarrierImageName("logo_noCarrier.jpg");
+			}
+
+			finalPlanList.add(plan);
+			ageCounterMap.clear();
+			totalCost = 0d;
+			// if household has Pregnant Woman, the values of annual deductible
+			// and annualoutofMax are divided by 2
+			if (hpDeterminant.isPregnantPersonPresent()) {
+
+				if (StringUtils.isNotBlank(aPlan.getAnnualDeductible())) {
+					String annualDeductible = aPlan.getAnnualDeductible().replace('$', ' ').trim();
+					double annualDeduct = Double.parseDouble(annualDeductible) / 2;
+					plan.setDeductibleAmt("$".concat(String.valueOf(annualDeduct)));
+				}
+
+				if (StringUtils.isNotBlank(aPlan.getAnnualOutOfPocMax())) {
+					String annualOutofPocMax = aPlan.getAnnualOutOfPocMax().replace('$', ' ').trim();
+					double anOutofPocMax = Double.parseDouble(annualOutofPocMax) / 2;
+					plan.setOutOfPocketMaxAmt("$".concat(String.valueOf(anOutofPocMax)));
+				}
+			}
+			String viewUrl;
+			try {
+				viewUrl = "docFileName=" + aPlan.getPlanEvidCov() + "&carrierNameValue="
+						+ URLEncoder.encode(plan.getCarrierName(), "utf-8");
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
+			DocumentView docView = new DocumentView();
+			docView.setViewUrl(viewUrl);
+			// plan.set(docView);
+		}
+		Collections.sort(finalPlanList, new BeanComparator<Plan>("premiumAmt"));
+		return finalPlanList;
+	}
+
+	private HealthPlan findHealthPlanForMember(Individual member, List<HealthPlan> planList, boolean ignoreIfNotFound) {
+		for (HealthPlan plan : planList) {
+			if (member.getAgeCategory().equals(plan.getAge())) {
+				return plan;
+			}
+		}
+		if (!ignoreIfNotFound) {
+			throw new RuntimeException("No plan found for member matching age and tobacco user type " + member.getAge()
+					+ ", ");
+		}
+		return null;
+	}
+
+	public boolean isChildAgeCategory(String category) {
+		if (ScreeningConstants.AGEGROUP_0_20.equals(category)) {
+			return true;
+		}
+		return false;
+	}
+
+	private Map<Integer, List<HealthPlan>> getHealthPlansForFamily(HealthPlanDeterminant hpDeterminant) {
+		String csrVarId = hpDeterminant.getCsrVarIdForPlansFetch();
+		Map<Integer, List<HealthPlan>> planMap = new LinkedHashMap<Integer, List<HealthPlan>>();
+		planMap.putAll(getPlanListingDAO().getAllHealthPlansForFamily(hpDeterminant.getCoverageYear(),
+				hpDeterminant.getRatingAreaId(), hpDeterminant.getAgeCategories(), csrVarId,
+				hpDeterminant.getCatastrophicElig()));
+		return planMap;
+	}
+
+	private boolean checkCatastrophicEligible(List<Individual> members) {
+		boolean flag = true;
+		for (Individual member : members) {
+			if (member.getAge() > 29) {
+				flag = false;
+				break;
+			}
+		}
+		return flag;
+
+	}
+
+	public PlanListingDAO getPlanListingDAO() {
+		return planListingDAO;
+	}
+
+	/**
+	 * This method prepares a list of ageCategory which the persons belong to.
+	 * 
+	 * @param membersList
+	 * @param dataSet
+	 */
+	public List<String> determineAgeCategories(List<Individual> membersList) {
+		List<String> ageCategory = new ArrayList<String>();
+
+		for (Individual member : membersList) {
+			final String category = findAgeCategory(member);
+			if (!ageCategory.contains(category)) {
+				ageCategory.add(category);
+			}
+		}
+
+		return log.exit(ageCategory);
+
+	}
+
+	public String findAgeCategory(Individual member) {
+		if (member.getAge() <= 20) {
+			return (ScreeningConstants.AGEGROUP_0_20);
+		} else if ((member.getAge() > 20) && (member.getAge() <= 64)) {
+			return (String.valueOf(member.getAge()));
+		} else {
+			return (ScreeningConstants.AGEGROUP_65_AND_OVER);
+		}
+
+	}
+
+	public void setPlanListingDAO(PlanListingDAO planListingDAO) {
+		this.planListingDAO = planListingDAO;
+	}
+
+}

@@ -1,0 +1,787 @@
+package com.hixapi.pmp.service.user;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.pmp.api.model.APICodeConstants.UserActivationStatus;
+import com.hixapi.pmp.entity.model.idm.IDMUser;
+import com.ibm.itim.ws.model.WSAccount;
+import com.ibm.itim.ws.model.WSAttribute;
+import com.ibm.itim.ws.model.WSOrganizationalContainer;
+import com.ibm.itim.ws.model.WSPerson;
+import com.ibm.itim.ws.model.WSRequest;
+import com.ibm.itim.ws.model.WSSession;
+import com.ibm.itim.ws.services.ArrayOfTns1WSAttribute;
+import com.ibm.itim.ws.services.ArrayOfXsdString;
+import com.ibm.itim.ws.services.WSAccountServiceProxy;
+import com.ibm.itim.ws.services.WSInvalidPasswordException;
+import com.ibm.itim.ws.services.WSPasswordRuleException;
+import com.ibm.itim.ws.services.WSPersonServiceProxy;
+import com.ibm.itim.ws.services.WSRequestServiceProxy;
+import com.ibm.itim.ws.services.WSSearchArguments;
+
+public class IdentityManagerServiceImpl extends BaseIsimServiceImpl implements IdentityManagerService {
+
+	private static final int SLEEP_MIN = 0;
+	private static final int SLEEP_MAX = 2000;
+
+	private static final Logger log = LogManager.getLogger(IdentityManagerServiceImpl.class);
+
+	public IDMUser retrieveUser(String loginId) throws BusinessServiceException {
+		log.entry(loginId);
+		if (StringUtils.isBlank(loginId)) {
+			return null;
+		}
+		WSSession session = null;
+		IDMUser user = null;
+		try {
+
+			session = login();
+			log.debug("Logged in to ISIM with id : {}", session.getSessionID());
+			List<String> attrList = ConversionUtil
+					.parseCommaSeparatedStrings("uid,sn,givenname,cn,telephoneNumber,ctmfacredid,mail,mobile,passwordexpired,businesspartnerorg,ctcusattr1,erpersonstatus,ctcusattr3");
+
+			WSPersonServiceProxy personService = getPersonService();
+			WSAccountServiceProxy accountService = getAccountService();
+
+			List<WSPerson> lstWSPersons = personService.searchPersonsFromRoot(session, "(uid=" + loginId + ")", attrList);
+			Map<String, String> attributeMap = new HashMap<String, String>();
+			if (CollectionUtils.isNotEmpty(lstWSPersons)) {
+				log.debug("Found person with id {}", loginId);
+				List<WSAttribute> wsAttrs = lstWSPersons.get(0).getAttributes().getItem();
+
+				for (WSAttribute wsAttribute : wsAttrs) {
+					for (String attr : attrList) {
+						if (wsAttribute.getName().equals(attr)) {
+							final String attrValue = wsAttribute.getValues().getItem().get(0);
+							attributeMap.put(attr, attrValue);
+							log.trace("Adding Attribute {} : {}", attr, attrValue);
+						}
+					}
+				}
+
+				WSSearchArguments searchArgs = new WSSearchArguments();
+				searchArgs.setFilter("(eruid=" + loginId + ")");
+				List<WSAccount> lstWSAccounts = accountService.searchAccounts(session, searchArgs);
+				if (lstWSAccounts != null) {
+					log.debug("Found {} account records in ISIM for user {}", lstWSAccounts.size(), loginId);
+					for (WSAccount wsAcct : lstWSAccounts) {
+						log.debug("Checking account : {} :{}", wsAcct.getName(), wsAcct.getServiceName(), wsAcct.getItimDN());
+						if (loginId.equalsIgnoreCase(wsAcct.getName())) {
+							ArrayOfTns1WSAttribute arrayOfTns1WSAttribute = wsAcct.getAttributes();
+							List<WSAttribute> lstWSAttributes = arrayOfTns1WSAttribute.getItem();
+							if (lstWSAttributes != null) {
+								for (WSAttribute wsAttribute : lstWSAttributes) {
+									if (wsAttribute.getName().equalsIgnoreCase("erlostpasswordanswer")) {
+										attributeMap.put("erlostpasswordanswer", wsAttribute.getValues().getItem().get(0));
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+
+			} else {
+				log.info("User with id {}, not found in ISIM", loginId);
+			}
+
+			if (MapUtils.isNotEmpty(attributeMap)) {
+				user = buildIDMUser(attributeMap);
+			}
+
+		} catch (Exception e) {
+			BusinessServiceException idmException = new BusinessServiceException(e,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		} finally {
+			if (session != null) {
+				logout(session);
+			}
+		}
+		return log.exit(user);
+
+	}
+
+	private IDMUser buildIDMUser(Map<String, String> personMap) {
+		log.entry();
+		IDMUser u = new IDMUser();
+		u.setLoginId(personMap.get("uid"));
+		u.setLastName(personMap.get("sn"));
+		u.setFirstName(personMap.get("givenname"));
+		u.setEmail(personMap.get("mail"));
+
+		if (StringUtils.isNotBlank(personMap.get("passwordexpired"))) {
+			u.setPasswordExpired(Boolean.valueOf(personMap.get("passwordexpired")));
+		}
+		if (personMap.get("mobile") != null && !StringUtils.isEmpty(personMap.get("mobile"))
+				&& StringUtils.isNumeric(personMap.get("mobile").replaceAll("-", ""))) {
+			u.setMobilePhoneNumber((personMap.get("mobile").replaceAll("-", "")));
+		}
+		u.setUserSource(personMap.get("ctcusattr1"));
+
+		//		tUserForAccount.setConflictFlag(personMap.get("ctcusattr3"));
+
+		if (personMap.get("erpersonstatus") != null) {
+			if (Integer.parseInt(personMap.get("erpersonstatus")) == 1) {
+				u.setUserStatusCode(UserActivationStatus.DEACTIVATED.getCode());
+			} else {
+				u.setUserStatusCode(UserActivationStatus.ACTIVE.getCode());
+			}
+		} else {
+			u.setUserStatusCode(UserActivationStatus.ACTIVE.getCode());
+		}
+		u.setPhoneNumber(personMap.get(APIConstants.WS_ISIM_CODE_PHONE));
+		return log.exit(u);
+	}
+
+	public void saveCarrierUser(IDMUser user) throws BusinessServiceException {
+		log.entry();
+		int counter = 0;
+		long start = System.currentTimeMillis();
+		int statusCheckCounter = Integer.parseInt(getServiceProperty(APIConstants.PROPKEY_ISIM_RETRY_COUNTER, "5"));
+		int statusCheckSleepDuration = Integer.valueOf(getServiceProperty(APIConstants.PROPKEY_ISIM_SLEEP_DURATION, "1000"));
+
+		WSRequestServiceProxy wsRequestService = getRequestService();
+		WSSession session = null;
+		try {
+			session = login();
+			log.debug("Logged in to ISIM with session id : {}", session.getSessionID());
+			WSOrganizationalContainer wsContainer = getOrganizationUnitContainer(session,
+					getServiceProperty(APIConstants.PROPKEY_ISIM_CARRIER_CONTAINER, ""));
+			log.debug("Got ws container {} : {}", wsContainer.getName(), wsContainer.getItimDN());
+			WSPersonServiceProxy personService = getPersonService();
+			List<WSPerson> lstWSPersons = null;
+			{
+				log.debug("Searching from root for uid: {}", user.getLoginId());
+				lstWSPersons = personService.searchPersonsFromRoot(session, "(uid=" + user.getLoginId() + ")", null);
+				if (CollectionUtils.isNotEmpty(lstWSPersons)) {
+
+					BusinessServiceException idmException = new BusinessServiceException(
+							APIConstants.WS_ISIM_ERRORCODE_USER_EXISTS);
+					log.error("Throwing error - User ID already exists in ISIM: {}", user.getLoginId());
+					throw idmException;
+				}
+			}
+			{
+				WSSearchArguments searchArgs = new WSSearchArguments();
+				searchArgs.setFilter("mail=" + user.getEmail());
+				log.debug("Searching from root for mail: {}", user.getEmail());
+				lstWSPersons = personService.searchPersonsFromRoot(session, "(mail=" + user.getEmail() + ")", null);
+				if (CollectionUtils.isNotEmpty(lstWSPersons)) {
+					BusinessServiceException idmException = new BusinessServiceException(
+							APIConstants.WS_ISIM_ERRORCODE_EMAIL_EXISTS);
+					log.error("Throwing error - Email already exists in ISIM: {}", user.getEmail());
+					throw idmException;
+				}
+
+			}
+			final ArrayList<String> attrList = new ArrayList<String>();
+			{
+				WSSearchArguments searchArgs = new WSSearchArguments();
+				searchArgs.setFilter("eruid=" + getServiceProperty(APIConstants.PROP_KEY_ISIM_PASSWORD_VALIDATOR_ID, ""));
+
+				List<WSAccount> lstWSAccounts = getAccountService().searchAccounts(session, searchArgs);
+				if (CollectionUtils.isNotEmpty(lstWSAccounts)) {
+					for (WSAccount wsacct : lstWSAccounts) {
+						attrList.add(wsacct.getItimDN());
+					}
+
+				} else {
+
+					log.error("Unable to retreive the WSAccount objects to validate password using filter {}",
+							searchArgs.getFilter());
+					BusinessServiceException idmException = new BusinessServiceException(
+							APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+					log.error("Throwing error - Unable to validate password for {}", user.getLoginId());
+					throw idmException;
+
+				}
+
+				if (!getPasswordService().isPasswordValid(session, attrList, user.getPassword())) {
+					BusinessServiceException idmException = new BusinessServiceException(
+							APIConstants.WS_ISIM_ERRORCODE_INVALID_PASSWORD);
+					log.info("Password not accepted for {}", user.getLoginId());
+					throw idmException;
+
+				} else {
+					log.debug("Password validated as OK for user {}", user.getLoginId());
+				}
+			}
+			attrList.clear();
+
+			WSPerson wsPerson = buildWSPerson(user);
+			log.debug("Constructed WSPerson object");
+
+			wsPerson.setProfileName(getServiceProperty(APIConstants.PROP_KEY_ISIM_EXTERNAL_USER_PROFILE_NAME, ""));
+
+			WSAttribute wsAttr = new WSAttribute();
+			wsAttr.setName(APIConstants.WS_ISIM_CODE_ERROLES);
+			ArrayOfXsdString arrStringValues = new ArrayOfXsdString();
+			final String roleDN = getRoleDN(session, getServiceProperty(APIConstants.PROP_KEY_ISIM_CARRIER_ROLE_NAME, ""));
+			arrStringValues.getItem().addAll(Arrays.asList(roleDN));
+			wsAttr.setValues(arrStringValues);
+
+			wsPerson.getAttributes().getItem().add(wsAttr);
+
+			if (personService.isCreatePersonAllowed(session)) {
+
+				WSRequest wsRequest = personService.createPerson(session, wsContainer, wsPerson, null);
+				log.debug("Submitted request to create person of id {}", user.getLoginId());
+				while (!wsRequest.getProcessState().equals(APIConstants.WS_ISIM_REQUEST_STATUS_COMPLETE)) {
+					try {
+
+						log.debug("ISIM Request " + wsRequest.getRequestId() + ", status is  " + wsRequest.getStatusString());
+						log.debug("Request Status Check Cycle {}, Sleeping for {}", counter, statusCheckSleepDuration);
+						if (counter >= statusCheckCounter) {
+							log.debug("Request Status Check Cycle {}. Exiting the Loop", counter);
+							break;
+						}
+						counter++;
+						if (statusCheckSleepDuration >= SLEEP_MIN && statusCheckSleepDuration <= SLEEP_MAX) {
+							Thread.sleep(statusCheckSleepDuration);
+						} else {
+							log.warn("Sleep duration supplied is invalid : {}, using default 1000", statusCheckSleepDuration);
+							Thread.sleep(1000);
+						}
+
+					} catch (InterruptedException e) {
+
+						log.error("Interrupted in status check sleep", e);
+					}
+					wsRequest = wsRequestService.getRequest(session, wsRequest.getRequestId());
+				}
+
+				if (wsRequest.getStatusString().equals(APIConstants.WS_ISIM_USER_CREATE_STATUS_FAILED)) {
+					attrList.clear();
+					attrList.add("uid");
+					lstWSPersons = personService.searchPersonsFromRoot(session, "(uid=" + user.getLoginId() + ")", attrList);
+					if (lstWSPersons != null) {
+						if (lstWSPersons.isEmpty()) {
+							log.error("Failed to create user for unknown reason : {}", user.getLoginId());
+							BusinessServiceException idmException = new BusinessServiceException(
+									APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+							throw log.throwing(idmException);
+						} else if (lstWSPersons.size() > 0) {
+							log.error("User creation partially failed for {}, doing clean up", user.getLoginId());
+							wsPerson = lstWSPersons.get(0);
+							String personDN = null;
+							for (WSAttribute wsArrtibute : wsPerson.getAttributes().getItem()) {
+								if (wsArrtibute.getName().equals(APIConstants.WS_ISIM_CODE_USER_ID)) {
+									if (wsArrtibute.getValues().getItem().get(0).equals(user.getLoginId())) {
+										personDN = wsPerson.getItimDN();
+									}
+								}
+							}
+							log.debug("invoking delete for {}", personDN);
+							personService.deletePerson(session, personDN, null);
+							log.debug("Sent request to ISIM to delete the person " + user.getLoginId());
+						}
+					}
+					log.error("Failed to create user for unknown reason : {}", user.getLoginId());
+					BusinessServiceException idmException = new BusinessServiceException(
+							APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+					throw log.throwing(idmException);
+				} else {
+					log.debug("Carrier User created successfully");
+				}
+				attrList.clear();
+
+			} else {
+				log.error("Create Person is not allowed in session. throwing..");
+				BusinessServiceException idmException = new BusinessServiceException(
+						APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+				throw log.throwing(idmException);
+			}
+		} catch (WSInvalidPasswordException wsex1) {
+
+			BusinessServiceException idmException = new BusinessServiceException(wsex1,
+					APIConstants.WS_ISIM_ERRORCODE_INVALID_PASSWORD);
+			log.error(wsex1.getMessage());
+			throw idmException;
+		} catch (WSPasswordRuleException wsex1) {
+
+			BusinessServiceException idmException = new BusinessServiceException(wsex1,
+					APIConstants.WS_ISIM_ERRORCODE_INVALID_PASSWORD);
+			log.error(wsex1.getMessage());
+			throw idmException;
+		} catch (Exception e) {
+			if(e instanceof BusinessServiceException){
+				throw (BusinessServiceException)e;
+			}
+			BusinessServiceException idmException = new BusinessServiceException(e,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		} finally {
+			if (session != null) {
+				logout(session);
+			}
+			log.debug("Duration of saveUser operation (regardless of outcome): {} ms ", (System.currentTimeMillis() - start));
+		}
+		log.exit();
+	}
+
+	public void resetUserPassword(IDMUser user) throws BusinessServiceException {
+		log.entry();
+		long start = System.currentTimeMillis();
+		List<String> accountDNs = new ArrayList<String>();
+		WSSearchArguments searchArgs = new WSSearchArguments();
+		searchArgs.setFilter("eruid=" + getServiceProperty(APIConstants.PROP_KEY_ISIM_PASSWORD_VALIDATOR_ID, ""));
+
+		WSSession session = null;
+		try {
+			session = login();
+
+			// account verification
+			List<WSAccount> lstWSAccounts = getAccountService().searchAccounts(session, searchArgs);
+			if (lstWSAccounts != null) {
+				for (WSAccount wsacct : lstWSAccounts) {
+					log.debug("Found DN as {}", wsacct.getItimDN());
+					accountDNs.add(wsacct.getItimDN());
+				}
+
+			} else {
+				log.error("passwordvalidator user not found in ISIM");
+				BusinessServiceException idmException = new BusinessServiceException(
+						APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+				throw log.throwing(idmException);
+			}
+
+			if (getPasswordService().isPasswordValid(session, accountDNs, user.getPassword())) {
+				log.debug("Searching from root for uid={}", user.getLoginId());
+				List<WSPerson> lstWSPersons = getPersonService().searchPersonsFromRoot(session,
+						"(uid=" + user.getLoginId() + ")", null);
+				String personDN = null;
+				if (CollectionUtils.isNotEmpty(lstWSPersons)) {
+					WSPerson person = lstWSPersons.get(0);
+					personDN = person.getItimDN();
+					log.debug("Found DN for password reset as {}", personDN);
+				} else {
+					log.error("User not found in ISIM to reset password : {}", user.getLoginId());
+					BusinessServiceException idmException = new BusinessServiceException(
+							APIConstants.WS_ISIM_ERRORCODE_USER_NOT_FOUND);
+					throw log.throwing(idmException);
+				}
+
+				WSRequest wsRequest = getPersonService().synchPasswords(session, personDN, user.getPassword(), null, false);
+				int counter = 0;
+
+				int statusCheckCounterLimit = Integer.parseInt(getServiceProperty(APIConstants.PROPKEY_ISIM_RETRY_COUNTER,
+						"5"));
+				int statusCheckSleepDuration = Integer.valueOf(getServiceProperty(APIConstants.PROPKEY_ISIM_SLEEP_DURATION,
+						"1000"));
+
+				while (!wsRequest.getProcessState().equals(APIConstants.WS_ISIM_REQUEST_STATUS_COMPLETE)) {
+					try {
+
+						log.debug("ISIM Request {}, status is {} ", wsRequest.getRequestId(), wsRequest.getStatusString());
+						log.debug("Request Status Check Cycle {}, sleeping for {}", counter, statusCheckSleepDuration);
+						if (counter >= statusCheckCounterLimit) {
+							log.debug("Request Status Check Cycle reached {}. Exiting the Loop", counter);
+							break;
+						}
+						counter++;
+						if (statusCheckSleepDuration >= SLEEP_MIN && statusCheckSleepDuration <= SLEEP_MAX) {
+							Thread.sleep(statusCheckSleepDuration);
+						} else {
+							log.warn("Sleep duration is invalid : {}, using 1000 as default", statusCheckSleepDuration);
+							Thread.sleep(1000);
+						}
+					} catch (InterruptedException e) {
+
+						log.error("Sleep interrupted", e);
+					}
+					wsRequest = getRequestService().getRequest(session, wsRequest.getRequestId());
+				}
+
+				if (!wsRequest.getStatusString().equalsIgnoreCase(APIConstants.WS_ISIM_REQUEST_STATUS_SUCCEEDED)) {
+					log.error("Failed to change password for user for unknown reason : {}, status {}", user.getLoginId(),
+							wsRequest.getStatusString());
+					BusinessServiceException idmException = new BusinessServiceException(
+							APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+					throw log.throwing(idmException);
+				} else {
+					log.debug("Password changed successfully for user : {}", user.getLoginId());
+				}
+
+			} else {
+				log.info("Password entered is not valid for user {}", user.getLoginId());
+				BusinessServiceException idmException = new BusinessServiceException(
+						APIConstants.WS_ISIM_ERRORCODE_INVALID_PASSWORD);
+				throw log.throwing(idmException);
+
+			}
+
+		} catch (WSInvalidPasswordException wsex1) {
+
+			BusinessServiceException idmException = new BusinessServiceException(wsex1,
+					APIConstants.WS_ISIM_ERRORCODE_INVALID_PASSWORD);
+			log.error(wsex1.getMessage());
+			throw idmException;
+		} catch (WSPasswordRuleException wsex1) {
+
+			BusinessServiceException idmException = new BusinessServiceException(wsex1,
+					APIConstants.WS_ISIM_ERRORCODE_INVALID_PASSWORD);
+			log.error(wsex1.getMessage());
+			throw idmException;
+		}
+
+		catch (Exception e) {
+			if(e instanceof BusinessServiceException){
+				throw (BusinessServiceException)e;
+			}
+			BusinessServiceException idmException = new BusinessServiceException(e,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		} finally {
+			if (session != null) {
+				logout(session);
+			}
+			log.debug("Duration of resetPassword operation (regardless of outcome): {} ms ",
+					(System.currentTimeMillis() - start));
+		}
+		log.exit();
+	}
+
+	public void updateUser(IDMUser user) throws BusinessServiceException {
+		log.entry();
+		int counter = 0;
+		long start = System.currentTimeMillis();
+		int statusCheckCounterLimit = Integer.parseInt(getServiceProperty(APIConstants.PROPKEY_ISIM_RETRY_COUNTER, "5"));
+		int statusCheckSleepDuration = Integer.valueOf(getServiceProperty(APIConstants.PROPKEY_ISIM_SLEEP_DURATION, "1000"));
+
+		WSPersonServiceProxy personService = getPersonService();
+		WSRequestServiceProxy wsRequestService = getRequestService();
+		List<String> attrList = new ArrayList<String>();
+		WSSession session = null;
+		try {
+			session = login();
+			attrList.add("uid");
+			log.debug("Searching for mail={} for persons other than uid={} from root", user.getEmail(), user.getLoginId());
+			List<WSPerson> lstWSPersons = personService.searchPersonsFromRoot(session, "(&(mail=" + user.getEmail() + ")"
+					+ "(!(uid=" + user.getLoginId() + ")))", attrList);
+
+			if (CollectionUtils.isNotEmpty(lstWSPersons)) {
+				BusinessServiceException idmException = new BusinessServiceException(
+						APIConstants.WS_ISIM_ERRORCODE_EMAIL_EXISTS);
+				log.error("Throwing error - Email already exists in ISIM for another user: {}", user.getEmail());
+				throw idmException;
+			}
+
+			lstWSPersons = personService.searchPersonsFromRoot(session, "(uid=" + user.getLoginId() + ")", attrList);
+
+			if (CollectionUtils.isNotEmpty(lstWSPersons)) {
+
+				WSPerson wsPerson = lstWSPersons.get(0);
+
+				String personDN = wsPerson.getItimDN();
+				log.debug("Found WSPerson to update {}", personDN);
+				buildWSPersonForUpdate(wsPerson, user);
+
+				WSRequest wsRequest = personService
+						.modifyPerson(session, personDN, wsPerson.getAttributes().getItem(), null);
+				log.debug("Submitted update Request for {}", personDN);
+				while (!wsRequest.getProcessState().equals(APIConstants.WS_ISIM_REQUEST_STATUS_COMPLETE)) {
+					try {
+
+						log.debug("ISIM Update Request {}, status is {} ", wsRequest.getRequestId(),
+								wsRequest.getStatusString());
+						log.debug("Request Status Check Cycle {}, sleeping for {}", counter, statusCheckSleepDuration);
+						if (counter >= statusCheckCounterLimit) {
+							log.debug("Request Status Check Cycle reached {}. Exiting the Loop", counter);
+							break;
+						}
+						counter++;
+						if (statusCheckSleepDuration >= SLEEP_MIN && statusCheckSleepDuration <= SLEEP_MAX) {
+							Thread.sleep(statusCheckSleepDuration);
+						} else {
+							Thread.sleep(SLEEP_MIN);
+						}
+					} catch (InterruptedException e) {
+
+						log.error("Sleep interrupted", e);
+					}
+					wsRequest = wsRequestService.getRequest(session, wsRequest.getRequestId());
+				}
+
+				if (!wsRequest.getStatusString().equalsIgnoreCase(APIConstants.WS_ISIM_REQUEST_STATUS_SUCCEEDED)) {
+					log.error("Failed to update user for unknown reason : {}, status {}", user.getLoginId(),
+							wsRequest.getStatusString());
+					BusinessServiceException idmException = new BusinessServiceException(
+							APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+					throw log.throwing(idmException);
+				} else {
+					log.debug("Update successful for user : {}", user.getLoginId());
+				}
+
+			} else {
+				log.error("User not found in ISIM to update : {}", user.getLoginId());
+				BusinessServiceException idmException = new BusinessServiceException(
+						APIConstants.WS_ISIM_ERRORCODE_USER_NOT_FOUND);
+				throw log.throwing(idmException);
+			}
+		} catch (Exception e) {
+			if(e instanceof BusinessServiceException){
+				throw (BusinessServiceException)e;
+			}
+			BusinessServiceException idmException = new BusinessServiceException(e,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		} finally {
+			if (session != null) {
+				logout(session);
+			}
+			log.debug("Duration of updateUser operation (regardless of outcome): {} ms ",
+					(System.currentTimeMillis() - start));
+		}
+		log.exit();
+	}
+
+	@Override
+	public void suspendUser(IDMUser user) throws BusinessServiceException {
+		log.entry();
+		int counter = 0;
+		long start = System.currentTimeMillis();
+		int statusCheckCounterLimit = Integer.parseInt(getServiceProperty(APIConstants.PROPKEY_ISIM_RETRY_COUNTER, "5"));
+		int statusCheckSleepDuration = Integer.valueOf(getServiceProperty(APIConstants.PROPKEY_ISIM_SLEEP_DURATION, "1000"));
+
+		WSAccountServiceProxy accountService = getAccountService();
+		WSRequestServiceProxy wsRequestService = getRequestService();
+		WSSession session = null;
+		try {
+			session = login();
+			WSSearchArguments searchArgs = new WSSearchArguments();
+			searchArgs.setFilter("(eruid=" + user.getLoginId() + ")");
+			log.debug("Searching for accounts using eruid={}", user.getLoginId());
+			List<WSAccount> lstWSAccounts = accountService.searchAccounts(session, searchArgs);
+			if (lstWSAccounts != null) {
+				for (WSAccount wsAcct : lstWSAccounts) {
+					log.debug("Checking account for suspend {}: {} :{}", wsAcct.getName(), wsAcct.getServiceName(),
+							wsAcct.getItimDN());
+					if (user.getLoginId().equalsIgnoreCase(wsAcct.getName())) {
+
+						GregorianCalendar gcal = new GregorianCalendar();
+						gcal.setTime(APIUtil.getCurrentDate());
+						XMLGregorianCalendar xgcal = DatatypeFactory.newInstance().newXMLGregorianCalendar(gcal);
+
+						// should be submitted
+						WSRequest wsRequest = accountService.suspendAccount(session, wsAcct.getItimDN(), xgcal);
+						log.debug("Request submitted for account suspend for {}, expire on {}", wsAcct.getItimDN(),
+								gcal.toString());
+						while (!wsRequest.getProcessState().equals(APIConstants.WS_ISIM_REQUEST_STATUS_COMPLETE)) {
+							try {
+
+								log.debug("ISIM Request for suspend {}, status is {} ", wsRequest.getRequestId(),
+										wsRequest.getStatusString());
+								log.debug("Request Status for suspend Check Cycle {}, sleeping for {}", counter,
+										statusCheckSleepDuration);
+								if (counter >= statusCheckCounterLimit) {
+									log.debug("Request Status Check Cycle reached {}. Exiting the Loop", counter);
+									break;
+								}
+								counter++;
+								if (statusCheckSleepDuration >= SLEEP_MIN && statusCheckSleepDuration <= SLEEP_MAX) {
+									Thread.sleep(statusCheckSleepDuration);
+								} else {
+									Thread.sleep(SLEEP_MIN);
+								}
+							} catch (InterruptedException e) {
+
+								log.error("Sleep interrupted", e);
+							}
+							wsRequest = wsRequestService.getRequest(session, wsRequest.getRequestId());
+						}
+
+						if (!wsRequest.getStatusString().equalsIgnoreCase(APIConstants.WS_ISIM_REQUEST_STATUS_SUCCEEDED)) {
+							log.error("Failed to suspend user for unknown reason : {}, status {}", user.getLoginId(),
+									wsRequest.getStatusString());
+							BusinessServiceException idmException = new BusinessServiceException(
+									APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+							throw log.throwing(idmException);
+						} else {
+							log.debug("Suspend successful for user : {}", user.getLoginId());
+						}
+					}
+				}
+			} else {
+				log.error("User not found in ISIM to suspend : {}", user.getLoginId());
+				BusinessServiceException idmException = new BusinessServiceException(
+						APIConstants.WS_ISIM_ERRORCODE_USER_NOT_FOUND);
+				throw log.throwing(idmException);
+			}
+
+		} catch (Exception e) {
+			if(e instanceof BusinessServiceException){
+				throw (BusinessServiceException)e;
+			}
+			BusinessServiceException idmException = new BusinessServiceException(e,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		} finally {
+			if (session != null) {
+				logout(session);
+			}
+			log.debug("Duration of suspendUser operation (regardless of outcome): {} ms ",
+					(System.currentTimeMillis() - start));
+		}
+		log.exit();
+
+	}
+
+	@Override
+	public void restoreUser(IDMUser user) throws BusinessServiceException {
+		log.entry();
+		int counter = 0;
+		long start = System.currentTimeMillis();
+		int statusCheckCounterLimit = Integer.parseInt(getServiceProperty(APIConstants.PROPKEY_ISIM_RETRY_COUNTER, "5"));
+		int statusCheckSleepDuration = Integer.valueOf(getServiceProperty(APIConstants.PROPKEY_ISIM_SLEEP_DURATION, "1000"));
+
+		WSAccountServiceProxy accountService = getAccountService();
+		WSRequestServiceProxy wsRequestService = getRequestService();
+		WSSession session = null;
+		try {
+			session = login();
+			WSSearchArguments searchArgs = new WSSearchArguments();
+			searchArgs.setFilter("(eruid=" + user.getLoginId() + ")");
+			List<WSAccount> lstWSAccounts = accountService.searchAccounts(session, searchArgs);
+			if (lstWSAccounts != null) {
+				for (WSAccount wsAcct : lstWSAccounts) {
+					log.debug("Checking account for restore {}: {} :{}", wsAcct.getName(), wsAcct.getServiceName(),
+							wsAcct.getItimDN());
+					if (user.getLoginId().equalsIgnoreCase(wsAcct.getName())) {
+						GregorianCalendar gcal = new GregorianCalendar();
+						gcal.setTime(APIUtil.getCurrentDate());
+						XMLGregorianCalendar xgcal = DatatypeFactory.newInstance().newXMLGregorianCalendar(gcal);
+
+						// should be submitted
+						WSRequest wsRequest = accountService.restoreAccount(session, wsAcct.getItimDN(), null, xgcal);
+						log.debug("Request submitted for account suspend for {}, expire on {}", wsAcct.getItimDN(),
+								gcal.toString());
+						while (!wsRequest.getProcessState().equals(APIConstants.WS_ISIM_REQUEST_STATUS_COMPLETE)) {
+							try {
+
+								log.debug("ISIM Request for suspend {}, status is {} ", wsRequest.getRequestId(),
+										wsRequest.getStatusString());
+								log.debug("Request Status for suspend Check Cycle {}, sleeping for {}", counter,
+										statusCheckSleepDuration);
+								if (counter >= statusCheckCounterLimit) {
+									log.debug("Request Status Check Cycle reached {}. Exiting the Loop", counter);
+									break;
+								}
+								counter++;
+								if (statusCheckSleepDuration >= SLEEP_MIN && statusCheckSleepDuration <= SLEEP_MAX) {
+									Thread.sleep(statusCheckSleepDuration);
+								} else {
+									Thread.sleep(SLEEP_MIN);
+								}
+							} catch (InterruptedException e) {
+
+								log.error("Sleep interrupted", e);
+							}
+							wsRequest = wsRequestService.getRequest(session, wsRequest.getRequestId());
+						}
+
+						if (!wsRequest.getStatusString().equalsIgnoreCase(APIConstants.WS_ISIM_REQUEST_STATUS_SUCCEEDED)) {
+							log.error("Failed to restore user for unknown reason : {}, status {}", user.getLoginId(),
+									wsRequest.getStatusString());
+							BusinessServiceException idmException = new BusinessServiceException(
+									APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+							throw log.throwing(idmException);
+						} else {
+							log.debug("Suspend successful for user : {}", user.getLoginId());
+						}
+					}
+				}
+			} else {
+				log.error("User not found in ISIM to suspend : {}", user.getLoginId());
+				BusinessServiceException idmException = new BusinessServiceException(
+						APIConstants.WS_ISIM_ERRORCODE_USER_NOT_FOUND);
+				throw log.throwing(idmException);
+			}
+
+		} catch (Exception e) {
+			if(e instanceof BusinessServiceException){
+				throw (BusinessServiceException)e;
+			}
+			BusinessServiceException idmException = new BusinessServiceException(e,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		} finally {
+			if (session != null) {
+				logout(session);
+			}
+			log.debug("Duration of restoreUser operation (regardless of outcome): {} ms ",
+					(System.currentTimeMillis() - start));
+		}
+		log.exit();
+
+	}
+
+	public void deleteUser(IDMUser user) throws BusinessServiceException {
+		log.entry();
+		long start = System.currentTimeMillis();
+		WSSession session = null;
+		try {
+			session = login();
+			List<String> attrList = new ArrayList<String>();
+			attrList.add("uid");
+			List<WSPerson> lstWSPersons = getPersonService().searchPersonsFromRoot(session,
+					"(uid=" + user.getLoginId() + ")", attrList);
+			if (lstWSPersons != null) {
+				if (lstWSPersons.isEmpty()) {
+					log.error("Failed to create user for unknown reason : {}", user.getLoginId());
+					BusinessServiceException idmException = new BusinessServiceException(
+							APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+					throw log.throwing(idmException);
+				} else if (lstWSPersons.size() > 0) {
+					log.error("User creation partially failed for {}, doing clean up", user.getLoginId());
+					WSPerson wsPerson = lstWSPersons.get(0);
+					String personDN = null;
+					for (WSAttribute wsArrtibute : wsPerson.getAttributes().getItem()) {
+						if (wsArrtibute.getName().equals(APIConstants.WS_ISIM_CODE_USER_ID)) {
+							if (wsArrtibute.getValues().getItem().get(0).equals(user.getLoginId())) {
+								personDN = wsPerson.getItimDN();
+							}
+						}
+					}
+					log.debug("invoking delete for {}", personDN);
+					getPersonService().deletePerson(session, personDN, null);
+					log.debug("Sent request to ISIM to delete the person {}", personDN);
+				}
+
+			}
+		} catch (Exception ex) {
+			if(ex instanceof BusinessServiceException){
+				throw (BusinessServiceException)ex;
+			}
+			BusinessServiceException idmException = new BusinessServiceException(ex,
+					APIConstants.WS_ISIM_ERRORCODE_CONNECTIVITY);
+			throw log.throwing(idmException);
+		} finally {
+			if (session != null) {
+				logout(session);
+			}
+			log.debug("Duration of deleteUser operation (regardless of outcome): {} ms ",
+					(System.currentTimeMillis() - start));
+		}
+		log.exit();
+	}
+
+}

@@ -1,0 +1,35 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.admin;
+
+import java.util.List;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.service.IService;
+import com.hixapi.pmp.api.model.SystemPreferenceVO;
+import com.hixapi.pmp.api.model.UserVO;
+import com.hixapi.pmp.entity.model.ExceptionLog;
+import com.hixapi.pmp.entity.model.FunctionRole;
+
+/**
+ * @author admin
+ *
+ */
+public interface SystemAdministrationService extends IService {
+
+	List<SystemPreferenceVO> retrieveSystemPreferences() throws BusinessServiceException;
+
+	void updateSystemPreferences(List<SystemPreferenceVO> list) throws BusinessServiceException;
+	
+	void saveLoginAudit(UserVO vo) throws BusinessServiceException;
+
+	List<FunctionRole> retrieveFunctionRoles();
+	
+	void saveExceptionLog(ExceptionLog log);
+	
+	boolean verifyNASConnectivity(String pathToCheck);
+	
+	
+
+}

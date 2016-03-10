@@ -1,0 +1,245 @@
+package com.hixapi.pmp.struts.prescreen;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.HashMap;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.prescreening.api.model.AptcDeterminant;
+import com.hixapi.prescreening.api.model.Eligibility;
+import com.hixapi.prescreening.api.model.Household;
+import com.hixapi.prescreening.api.model.plan.PlanContainer;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+import com.hixapi.web.framework.struts.SessionController;
+
+public class PlanListingAction extends BaseSecureAction {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5036585345699319849L;
+
+	private static final String AJAX_ADD_COMPARE = "add-to-compare";
+
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager
+			.getLogger(PlanListingAction.class);
+
+	private PlanContainer planContainer;
+	private AptcDeterminant aptcFactors;
+	private Household household;
+
+	private String planVariantHiosId;
+
+	private String planName;
+
+	private HashMap<String, String> comparePlans;
+
+	private Eligibility eligibility;
+
+	private String selectedAptcAmount;
+
+	private void setYearlyHouseholdIncome(){
+		if(!(household.getHouseholdIncome().equalsIgnoreCase("")))
+		{
+		Integer houseIncome = Integer.parseInt(household.getHouseholdIncome());
+		if("M".equals(household.getHouseholdIncomeTypeCode())){
+			houseIncome = houseIncome / 12;
+			household.setHouseholdIncome(String.valueOf(houseIncome));
+		}
+		else if("W".equals(household.getHouseholdIncomeTypeCode())){
+			houseIncome = houseIncome / 52;
+			household.setHouseholdIncome(String.valueOf(houseIncome));
+		}
+		}
+		household.setHouseholdIncomeTypeCode("A");
+	}
+	
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		eligibility = SessionController.getEligibility();
+		household = SessionController.getHousehold();
+		aptcFactors = eligibility.getAptcFactors();
+
+		comparePlans = SessionController.getComparePlans();
+
+		LOG.debug("*******************************************************" + household.getHouseholdIncomeTypeCode());
+		
+		setYearlyHouseholdIncome();
+		initPlanList(eligibility);
+		if (eligibility.isCreditEligibility()) {
+			selectedAptcAmount = ConversionUtil.toString(eligibility.getAptcAmount());
+		}
+
+	}
+
+	public PlanContainer getPlanContainer() {
+		return planContainer;
+	}
+
+	public void setPlanContainer(PlanContainer planContainer) {
+		this.planContainer = planContainer;
+	}
+
+	private void initPlanList(Eligibility elig) {
+		planContainer = new PlanContainer();
+		planContainer.setPlans(elig.getAllPlans());
+	}
+
+	/*
+	 * Method for returning to Household Page on click of Back Button
+	 */
+	public String goBack() {
+		log.debug("IN GOBACK");
+
+		return BACK;
+	}
+
+	public String ajaxAddToComparePlans() {
+		if (StringUtils.isNotBlank(planVariantHiosId) && StringUtils.isNotBlank(planName)) {
+			comparePlans = SessionController.getComparePlans();
+			if (comparePlans == null) {
+				comparePlans = new HashMap<String, String>();
+				SessionController.setComparePlans(comparePlans);
+			}
+			if (!comparePlans.containsKey(planVariantHiosId)) {
+				comparePlans.put(planVariantHiosId, planName);
+			}
+		}
+		return AJAX_ADD_COMPARE;
+	}
+
+	void validate_ajaxAddToComparePlans() {
+		comparePlans = SessionController.getComparePlans();
+		if (comparePlans.size() == 3) {
+			LOG.debug("Compare Plans Size: ", comparePlans.size());
+			super.addValidationError("Maximum 3 plans can be compared at a time.", "");
+		}
+	}
+
+	public void onValidationError() throws Exception {
+		loadDisplayContents();
+	}
+
+	public String ajaxRemoveFromComparePlans() {
+		if (StringUtils.isNotBlank(planVariantHiosId)) {
+			comparePlans = SessionController.getComparePlans();
+			if (comparePlans != null) {
+				comparePlans.remove(planVariantHiosId);
+			}
+
+		}
+		return AJAX_ADD_COMPARE;
+	}
+
+	public AptcDeterminant getAptcFactors() {
+		return aptcFactors;
+	}
+
+	public void setAptcFactors(AptcDeterminant aptcFactors) {
+		this.aptcFactors = aptcFactors;
+	}
+
+	public Household getHousehold() {
+		return household;
+	}
+
+	public void setHousehold(Household household) {
+		this.household = household;
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String getPlanVariantHiosId() {
+		return planVariantHiosId;
+	}
+
+	public void setPlanVariantHiosId(String planVariantHiosId) {
+		this.planVariantHiosId = planVariantHiosId;
+	}
+
+	public String getPlanName() {
+		return planName;
+	}
+
+	public void setPlanName(String planName) {
+		this.planName = planName;
+	}
+
+	public HashMap<String, String> getComparePlans() {
+		return comparePlans;
+	}
+
+	public void setComparePlans(HashMap<String, String> comparePlans) {
+		this.comparePlans = comparePlans;
+	}
+
+	public Eligibility getEligibility() {
+		return eligibility;
+	}
+
+	public void setEligibility(Eligibility eligibility) {
+		this.eligibility = eligibility;
+	}
+
+	public String getSelectedAptcAmount() {
+		return selectedAptcAmount;
+	}
+
+	public void setSelectedAptcAmount(String selectedAptcAmount) {
+		this.selectedAptcAmount = selectedAptcAmount;
+	}
+
+	//Used from JSP
+	public String calculateCurrentPremium(String actualPremium, String minPremium) {
+		String result = null;
+		if (selectedAptcAmount == null) {
+			if (eligibility == null) {
+				eligibility = SessionController.getEligibility();
+			}
+			if (eligibility != null && eligibility.isCreditEligibility()) {
+				selectedAptcAmount = ConversionUtil.toString(eligibility.getAptcAmount());
+			}
+		}
+		if (StringUtils.isBlank(selectedAptcAmount)) {
+			selectedAptcAmount = "0";
+		}
+		double actualD = Double.parseDouble(actualPremium);
+		double minD = Double.parseDouble(minPremium);
+		double selectedAptcD = Double.parseDouble(selectedAptcAmount);
+		double potentialPremium = actualD - selectedAptcD;
+		if (potentialPremium <= minD) {
+			potentialPremium = minD;
+		}
+		result = new BigDecimal(potentialPremium).setScale(2, RoundingMode.HALF_UP).toString();
+		return result;
+	}
+
+	//Called from JSP
+	public boolean isPresentInComparisonList(String planId) {
+		boolean result = false;
+		if (SessionController.getComparePlans() != null) {
+			result = SessionController.getComparePlans().containsKey(planId);
+		}
+
+		return result;
+	}
+	
+	public String formatAsDollar(String val) {
+		String out = val;
+		if (!StringUtils.contains(val, '%')) {
+			String stripped = StringUtils.trimToEmpty(val).replaceAll("\\D+", "");
+
+			if (NumberUtils.isParsable(stripped)) {
+				double valD = Double.parseDouble(stripped);
+				out = ConversionUtil.toDollarAmount(valD);
+			}
+		}
+		return out;
+	}
+}

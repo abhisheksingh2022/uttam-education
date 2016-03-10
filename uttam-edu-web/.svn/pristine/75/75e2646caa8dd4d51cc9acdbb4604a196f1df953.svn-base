@@ -1,0 +1,533 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp"%>
+<script>
+	isDirty = false;
+
+	$(document).ready(function() {
+		$(document).on('change', '.updateableDropDowns', function(e) {
+			isDirty = true;
+		});
+		$('img[alt="Tooltip"]').tooltip();
+		<s:if test="readOnly==true">
+		$('.disableMe').prop("disabled", true);
+		$('a.disableMe').attr('onclick', 'return false;');
+		$("a.disableMe").attr("style","pointer-events:none; cursor:default;");
+		$('a.disableMe').css('background-color', 'grey');
+		$('a.disableMe').css('border', 'grey');
+		</s:if>
+		<s:else>
+		$('.disableMe').prop("disabled", false);
+		</s:else>
+		$('.disableForever').prop("disabled", true);
+
+		$(document).on("click", "#tablist1-tab2", function() {
+		navigateAway('showRates');
+			//setActionAndSubmit("id_form_plan_manage_profile", "showRates");
+			//			window.location="planmgmt/plan-manage_showRates"
+		});
+		$(document).on("click", "#tablist1-tab3", function() {
+			navigateAway('showBenefits');
+			//setActionAndSubmit("id_form_plan_manage_profile", "showBenefits");
+			//			window.location="planmgmt/plan-manage_showBenefits"
+		});
+
+		/*<s:if test="variantSelected == true">
+		$('#planPreviewModal').modal('show');
+		//alert("variantIndexInteger");
+		//alert("true");
+		</s:if>*/
+	});
+
+	function navigateAway(URL) {
+		$targetURL = URL;
+		formId = 'id_form_plan_manage_profile';
+		formDefaultAction = 'plan-manage';
+		formAction = formDefaultAction + '_' + URL;
+//alert(isDirty);
+		if (isDirty) {
+			var onConfirmAction = "return setActionAndSubmit(" + "'" + formId
+					+ "','" + URL + "')";
+			$('#id_button_confirm_warning').attr('onclick', onConfirmAction);
+			if ((URL == "showRates") || (URL == "showBenefits")) {
+
+				$('#tablist1-tab3').removeClass(
+						'responsive-tabs__list__item--active');
+				$('#tablist1-panel3').css('display', 'none');
+				$('#tablist1-tab2').removeClass(
+						'responsive-tabs__list__item--active');
+				$('#tablist1-panel2').css('display', 'none');
+				$('#tablist1-tab1').addClass(
+						'responsive-tabs__list__item--active');
+				$('#tablist1-panel1').css('display', 'block');
+			}
+			$("#warningPopUp").appendTo("body").modal("show");
+		} else {
+			/* if (URL == "showRates") {
+				$(".benefitsTabClickDetector").hide();
+				$(".ratesTabClickDetector")
+						.after(
+								"<div><h2><img class='plan-centeredLoading' src='<s:property value='rootPath'/>static/custom/images/loader.gif' /></h2></div>");
+
+			} else if (URL == "showProfile") {
+				$(".benefitsTabClickDetector").hide();
+				$(".ratesTabClickDetector").hide();
+				$(".profileTabClickDetector")
+						.after(
+								"<div><h2><img class='plan-centeredLoading' src='<s:property value='rootPath'/>static/custom/images/loader.gif' /></h2></div>");
+
+			} */
+			return setActionAndSubmit(formId, URL);
+		}
+	}
+
+	function setDirty() {
+		isDirty = true;
+	}
+
+	function saveExchangeStatus() {
+		if ("AC" == $('#exchangestatus').val()) {
+			$('#confirmActivatedModel').modal('show');
+			return false;
+		} else {
+			return setActionAndSubmit('id_form_plan_manage_profile',
+					'saveExchangeStatus');
+		}
+
+	}
+
+	function dismissExchange() {
+		$('#myModal').modal('hide');
+		return false;
+	}
+
+	$(function() {
+		$("#datepicker").datepicker({
+			changeMonth : true,
+			changeYear : true
+		});
+	});
+
+	function openPlanPreview() {
+		//alert($('#id_sel_lookupLanguage').attr('mylanguage') + " , " + $('#variantOptionSelect').val() +" , " +$('#id_sel_coverage_year').attr('mycoverageyear'));
+		//alert($('#myPlanId').val());
+		return ajaxGet({
+			/* formId : 'id_form_plan_manage_profile', */
+			resource : 'plan-preview_input',
+			targetId : 'id_plan_preview',
+			blockId : 'id_plan_preview',
+			urlparams : {
+				"language" : $('#id_sel_lookupLanguage').attr('mylanguage'),
+				"variantIndex" : $('#variantOptionSelect').val(),
+				"coverageYear" : $('#id_sel_coverage_year').attr(
+						'mycoverageyear'),
+				"planId" : $("#myPlanId").val()
+			}
+		/* ,
+		callback : 'response_callback' */
+		});
+
+	}
+
+	function changeLanguage() {
+		setActionAndSubmit("id_form_plan_manage_profile", "changePlanLanguage");
+	}
+</script>
+<script>
+	(function($) {
+		$(document).ready(function() {
+			$("#thisclick").click(function(show) {
+				$("#datatable").slideToggle("slow");
+			});
+		});
+	})(jQuery);
+</script>
+
+
+<div class="row">
+	<div class="body-bg">
+		<h2 class="inner-heading">
+			<s:text name="txt.planmanage.manageplans"></s:text>
+		</h2>
+		<div class="clear20"></div>
+		<div class="">
+			<s:form autocomplete="off" action="plan-manage" id="id_form_plan_manage_profile">
+				<s:token id="updatedtoken" />
+				<s:hidden name="ajaxRequest" value="false" />
+				<s:hidden name="formId" />
+				<s:hidden id="myPlanId" name="planId" />
+				<s:hidden name="plan.coverageYear" />
+
+				<div class="carrier-fieldA lange">
+					<label style="width: 100px;"><s:text name="txt.planmanage.viewplan"></s:text>:</label> <span> <s:select
+							list="lookups.Languages" class="form-control" id="id_sel_lookupLanguage" name="plan.language"
+							mylanguage="%{plan.language}" headerKey="" headerValue="%{selectBoxHeader}" onchange="changeLanguage()"
+							listKey="value" listValue="label"></s:select>
+					</span>
+				</div>
+				<s:if test="planFound==true">
+					<s:if test="allowCarrierUpdatesToBeShown==true">
+						<div class="manage-planright">
+							<a href="" onclick="return setActionAndSubmit('id_form_plan_manage_profile','changeLockStatus')" class="save-btn">
+								<s:if test="plan.carrierUpdateAllowed==false">
+									<s:text name="txt.planmanage.allowcarrierupdates"></s:text>
+								</s:if> <s:else>
+									<s:text name="txt.planmanage.disallowcarrierupdates"></s:text>
+								</s:else>
+							</a>
+						</div>
+					</s:if>
+					<div class="clear20"></div>
+					<div class="ratestab">
+
+
+						<div class="responsive-tabs">
+							<h2>
+								<s:text name="txt.planmanage.profile"></s:text>
+							</h2>
+							<div>
+
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.coverageyear"></s:text>:<%-- <span class="astrcs">*</span> --%></label> <span>
+										<s:select list="coverageYears" class="form-control disableForever" id="id_sel_coverage_year"
+											mycoverageyear="%{plan.coverageYear}" name="plan.coverageYear" headerKey="" headerValue="%{selectBoxHeader}"
+											type="text"></s:select>
+									</span>
+								</div>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.carriername"></s:text>:<%-- <span class="astrcs">*</span> --%></label> <span>
+										<s:textfield type="text" name="plan.carrierName" class="form-control disableForever" placeholder="" />
+									</span>
+								</div>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.carrierid"></s:text>:<%-- <span class="astrcs">*</span> --%></label> <span>
+										<s:textfield type="text" name="plan.CarrierId" class="form-control disableForever" placeholder="" />
+									</span>
+								</div>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.planname"></s:text>:<span class="astrcs">*</span></label> <span> <s:textfield
+											type="text" name="plan.planName" id="" class="form-control disableMe" placeholder="" onchange="setDirty();"
+											onkeyup="this.onchange();" onpaste="this.onchange();" />
+									</span>
+								</div>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.planid"></s:text>:<%-- <span class="astrcs">*</span> --%></label> <span>
+										<s:textfield type="text" name="plan.planHiosId" class="form-control disableForever" placeholder="" />
+									</span>
+								</div>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.plantype"></s:text>:<span class="astrcs">*</span></label> <span> <%-- <s:textfield
+										type="text" name="plan.planType" class="form-control disableMe" placeholder="HMO" /> --%> <s:select
+											list="lookups.PlanManageType" class="form-control disableMe updateableDropDowns" id="id_sel_PlanType"
+											name="plan.planType" headerKey="" listKey="value" listValue="label" headerValue="%{selectBoxHeader}"></s:select>
+									</span>
+								</div>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.metallevel"></s:text>:<span class="astrcs">*</span></label> <span> <%-- <s:textfield
+										type="text" name="plan.metalLevel" class="form-control disableMe updateableDropDowns" placeholder="Bronze" /> --%>
+										<s:select list="getPlanLookup('MetalLevel')" class="form-control disableMe updateableDropDowns"
+											id="id_sel_MetalLevel" name="plan.metalLevel" headerKey="" listKey="value" listValue="label"
+											headerValue="%{selectBoxHeader}"></s:select>
+
+									</span>
+								</div>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.networkurl"></s:text>:<%-- <span class="astrcs">*</span> --%></label> <span>
+										<s:textfield type="text" name="plan.networkUrl.networkURL" class="form-control disableMe"
+											onchange="setDirty();" onkeyup="this.onchange();" onpaste="this.onchange();" placeholder="http://" />
+									</span>
+								</div>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.qualityrating"></s:text>:<%-- <span class="astrcs">*</span> --%></label> <span>
+										<s:select list="lookups.QualityRating" class="form-control disableMe updateableDropDowns"
+											id="id_sel_QualityRating" name="plan.qualityRating" headerKey="" listKey="value" listValue="label"
+											headerValue="%{selectBoxHeader}"></s:select>
+									</span>
+								</div>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.ehb"></s:text>:<span class="astrcs">*</span></label> <span> <s:textfield
+											type="text" onchange="setDirty();" onkeyup="this.onchange();" onpaste="this.onchange();"
+											name="plan.ehbPercentage" class="form-control disableMe" />
+									</span>
+								</div>
+
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.exchangestatus"></s:text>:<%-- <span class="astrcs">*</span> --%></label> <span>
+										<s:textfield type="text" name="exchangeStatus" class="form-control disableForever" placeholder="" />
+									</span>
+								</div>
+
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.publishdate"></s:text>:<%-- <span class="astrcs">*</span> --%></label> <span>
+										<s:textfield type="text" name="plan.publishDate" id="datepicker" class="form-control disableForever"
+											placeholder="" />
+									</span>
+								</div>
+
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planmanage.lastupdatedate"></s:text>:<%-- <span class="astrcs">*</span> --%></label> <span>
+										<s:textfield type="text" name="plan.lastUpdateDate" class="form-control disableForever" placeholder="" />
+									</span>
+								</div>
+
+								<div class="form-btnA">
+<!-- 								onclick="return setActionAndSubmit('id_form_plan_manage_profile','back')"
+ -->									<a href="javascript:navigateAway('back')"  class="save-btn"><s:text
+											name="txt.global.button2" /></a> <a class="save-btn disableStatus" data-target="#myModal" data-toggle="modal"
+										href=""><s:text name="txt.planmanage.changestatus"></s:text></a> <a href=""
+										onclick="return setActionAndSubmit('id_form_plan_manage_profile','save');" class="save-btn disableMe"> <s:text
+											name="txt.global.save"></s:text>
+									</a> <a class="save-btn" data-target="#myModal2" data-toggle="modal" href=""><s:text
+											name="txt.planmanage.planpreview"></s:text></a>
+
+									<%-- 								<button class="cancel-btn" data-target="#myModal2" data-toggle="modal">
+									<s:text name="txt.planmanage.planpreview"></s:text>
+								</button> --%>
+									<%-- <a class="save-btn"
+									href="Send Email managePlan.html"><s:text name="txt.planmanage.sendnotification"></s:text></a> <a
+									class="cancel-btn" href="work_Item_Assigned_Create.html"><s:text name="txt.planmanage.assignworkitem"></s:text></a> --%>
+									<%-- <button onclick="return setActionAndSubmit('id_form_plan_manage_profile','downloadPlan');" class="save-btn">
+										<s:text name="txt.planmanage.downloadplan"></s:text>
+									</button> --%>
+									<s:url id="fileDownload" action='plan-excel_writeExcel?planId=%{plan.planId}'></s:url>
+									<s:a href="%{fileDownload}" class="save-btn">
+										<s:text name="txt.planmanage.downloadplan"></s:text>
+									</s:a>
+									<s:if test="role=='HIX_PlanManager'">
+										<a href="plan-excel_writeSmallExcel?planId=<s:property value='%{plan.planId}' />" class="save-btn" ><s:text name="txt.planmanage.plantranslationsdownload"/></a>
+									</s:if>
+								</div>
+
+								<div class="modal fade modal1" id="myModal" role="dialog">
+									<div class="modal-dialog">
+
+										<!-- Modal content-->
+										<div class="modal-content">
+
+											<div class="modal-header">
+												<!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
+												<h4 class="modal-title" style="text-align: left;">
+													<s:text name="txt.planmanage.exchangestatus"></s:text>
+												</h4>
+											</div>
+
+											<div class="modal-body" style="margin-bottom: 20px;">
+												<div class="carrier-field" style="float: left; margin-top: 10px; margin-bottom: 10px;">
+													<span> <s:select list="exchangeStatuses" id="exchangestatus" class="form-control" listKey="id"
+															listValue="value" headerKey="" name="plan.exchangeStatus"></s:select>
+
+													</span>
+												</div>
+												<div class="clear20"></div>
+												<a href="" id="Save" onclick="return saveExchangeStatus();" class="save-btn" style="margin-right: 20px;">
+													<s:text name="txt.global.save"></s:text>
+												</a> <a href="" data-toggle="modal" id="Cancel" class="save-btn" data-dismiss="modal"><s:text
+														name="txt.global.cancel"></s:text></a>
+
+												<!--NEWMODAL POPUP-->
+												<script>
+													$(document)
+															.ready(
+																	function() {
+																		//initializeHasMap();
+																		onChangeStatusLoad();
+																	});
+
+													function onChangeStatusLoad() {
+														if ($('#exchangestatus option').length <= 1) {
+															$('.disableStatus')
+																	.prop(
+																			"disabled",
+																			true);
+															$(".disableStatus")
+																	.attr(
+																			"onclick",
+																			"return false;");
+															$(".disableStatus")
+																	.attr(
+																			"style",
+																			"pointer-events:none; cursor:default;");
+															$('a.disableStatus')
+																	.css(
+																			'background-color',
+																			'grey');
+															$('a.disableStatus')
+																	.css(
+																			'border',
+																			'grey');
+														}
+
+													}
+												</script>
+											</div>
+
+										</div>
+
+									</div>
+								</div>
+								<div class="modal fade" id="confirmActivatedModel" role="dialog">
+									<div class="modal-dialog">
+										<div class="modal-content">
+										<div class="modal-header">
+										<h3><s:text name="txt.planmanage.warning"/></h3>
+										</div>
+											<div class="modal-body">
+												<div>
+													 <s:text name="txt.planmanage.statuschangedtoactivated"></s:text>
+													
+												</div>
+												</div>
+												<div class="clear20"></div>
+												<div class="modal-footer">
+												<div align="center">
+													<a href="" id="Yes"
+														onclick="return setActionAndSubmit('id_form_plan_manage_profile','saveExchangeStatus');" class="save-btn"
+														style="margin-right: 20px;"> <s:text name="txt.plansearch.yes"></s:text>
+													</a> <a href="" data-toggle="modal" onclick="return dismissExchange();" id="No" class="save-btn"
+														data-dismiss="modal"><s:text name="txt.plansearch.no"></s:text></a>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<!-- PLan Preview Starts -->
+
+								<div class="modal fade modal1" id="myModal2" role="dialog">
+									<div class="modal-dialog">
+
+										<!-- Modal content-->
+										<div class="modal-content">
+
+											<div class="modal-header">
+												<!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
+												<h4 class="modal-title">
+													<s:text name="txt.planmanage.chooseplanpreview"></s:text>
+												</h4>
+											</div>
+
+											<div class="modal-body">
+
+												<div class="carrier-field">
+													<span> <s:select id="variantOptionSelect" list="plan.planBenefits.get(0).planVariants.keySet()"
+															listKey="variantHiosId" listValue="varTypTxt" class="form-control" name="variantIndex" type="text"></s:select>
+
+													</span>
+												</div>
+
+												<div class="clear20"></div>
+
+												<a href="" onclick="openPlanPreview();" class="save-btn" data-toggle="modal" data-target="#planPreviewModal"
+													data-dismiss="modal"><s:text name="txt.global.view" /></a>
+
+												<!--NEWMODAL POPUP-->
+
+
+
+
+											</div>
+
+										</div>
+
+									</div>
+								</div>
+								<div class="modal fade modal1" id="warningPopUp" role="dialog">
+									<div class="modal-dialog">
+										<!-- Modal content-->
+										<div class="modal-content">
+											<div class="modal-body">
+												<div class="carrier-field">
+													<span>
+														<p>
+															<s:text name="txt.planbenefits.warning-message"></s:text>
+														</p>
+													</span>
+												</div>
+												<div class="clear20"></div>
+
+												<button class="cancel-btn" id="id_button_discard_warning" data-dismiss="modal" onclick="cancelChanges()">
+													<s:text name="txt.planbenefits.warning-keep-changes"></s:text>
+												</button>
+												<button class="save-btn" data-dismiss="modal" id="id_button_confirm_warning"
+													onclick="return setActionAndSubmit('id_form_plan-benefits','uploadPdf')">
+													<s:text name="txt.planbenefits.warning-discard-changes"></s:text>
+												</button>
+												<!--NEWMODAL POPUP-->
+											</div>
+										</div>
+									</div>
+								</div>
+
+
+								<div class="modal fade" id="planPreviewModal" role="dialog">
+									<div class="modal-dialog">
+										<div class="modal-content">
+											<div id="id_plan_preview"></div>
+										</div>
+									</div>
+								</div>
+								<%-- <%@include file="/jsp/planmgmt/plan-preview.jsp"%> --%>
+
+
+								<div class="clearfix"></div>
+							</div>
+
+							<h2 class="ratesTabClickDetector">
+								<s:text name="txt.planmanage.rates"></s:text>
+							</h2>
+							<div>
+								<h2>
+									<img class='plan-centeredLoading' src='<s:property value='rootPath'/>static/custom/images/loader.gif' />
+								</h2>
+							</div>
+							<h2 class="benefitsTabClickDetector">
+								<s:text name="txt.planmanage.benefits"></s:text>
+							</h2>
+							<div>
+								<h2>
+									<img class='plan-centeredLoading' src='<s:property value='rootPath'/>static/custom/images/loader.gif' />
+								</h2>
+							</div>
+						</div>
+
+
+
+						<div class="clearfix"></div>
+					</div>
+				</s:if>
+				<s:else>
+					<div class="clearfix"></div>
+					<a href="" onclick="return setActionAndSubmit('id_form_plan_manage_profile','back')" class="save-btn"><s:text
+							name="txt.global.button2" /></a>
+				</s:else>
+			</s:form>
+			<div class="clearfix"></div>
+		</div>
+
+
+		<div class="clearfix"></div>
+
+	</div>
+</div>
+
+
+<script type="text/javascript"
+	src="<s:property value='rootPath'/>static/custom/js/script.js?v=<s:property value='buildId'/>""></script>
+<script type="text/javascript"
+	src="<s:property value='rootPath'/>static/custom/js/responsiveTabs.js?v=<s:property value='buildId'/>""></script>
+<script>
+	$(document).ready(function() {
+		RESPONSIVEUI.responsiveTabs();
+	})
+
+	$('#planPreviewModal').on('shown.bs.modal', function() {
+		//alert('hello');
+		$('.modal-content').css('overflow-y', 'auto');
+		$('.modal-content').css('max-height', $(window).height() * 0.9);
+	});
+</script>
+
+
+
+<%@include file="/jsp/includes/footer.jsp"%>
+

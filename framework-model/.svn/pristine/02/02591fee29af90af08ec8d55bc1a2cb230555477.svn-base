@@ -1,0 +1,67 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+public class InOutNetworkVO implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5950223881370819963L;
+	private String inNetworkTier1Individual;
+	private String inNetworkTier1Family;
+	private String inNetworkTier2Individual;
+	private String inNetworkTier2Family;
+	private String outOfNetworkIndividual;
+	private String outOfNetworkFamily;
+	private String combinedInoutIndividual;
+	private String combinedInoutFamily;
+	public String getInNetworkTier1Individual() {
+		return inNetworkTier1Individual;
+	}
+	public void setInNetworkTier1Individual(String inNetworkTier1Individual) {
+		this.inNetworkTier1Individual = inNetworkTier1Individual;
+	}
+	public String getInNetworkTier1Family() {
+		return inNetworkTier1Family;
+	}
+	public void setInNetworkTier1Family(String inNetworkTier1Family) {
+		this.inNetworkTier1Family = inNetworkTier1Family;
+	}
+	public String getInNetworkTier2Individual() {
+		return inNetworkTier2Individual;
+	}
+	public void setInNetworkTier2Individual(String inNetworkTier2Individual) {
+		this.inNetworkTier2Individual = inNetworkTier2Individual;
+	}
+	public String getInNetworkTier2Family() {
+		return inNetworkTier2Family;
+	}
+	public void setInNetworkTier2Family(String inNetworkTier2Family) {
+		this.inNetworkTier2Family = inNetworkTier2Family;
+	}
+	public String getOutOfNetworkIndividual() {
+		return outOfNetworkIndividual;
+	}
+	public void setOutOfNetworkIndividual(String outOfNetworkIndividual) {
+		this.outOfNetworkIndividual = outOfNetworkIndividual;
+	}
+	public String getOutOfNetworkFamily() {
+		return outOfNetworkFamily;
+	}
+	public void setOutOfNetworkFamily(String outOfNetworkFamily) {
+		this.outOfNetworkFamily = outOfNetworkFamily;
+	}
+	public String getCombinedInoutIndividual() {
+		return combinedInoutIndividual;
+	}
+	public void setCombinedInoutIndividual(String combinedInoutIndividual) {
+		this.combinedInoutIndividual = combinedInoutIndividual;
+	}
+	public String getCombinedInoutFamily() {
+		return combinedInoutFamily;
+	}
+	public void setCombinedInoutFamily(String combinedInoutFamily) {
+		this.combinedInoutFamily = combinedInoutFamily;
+	}
+	
+}

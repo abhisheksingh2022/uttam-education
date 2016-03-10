@@ -1,0 +1,15 @@
+package com.hixapi.pmp.dao.prescreen;
+
+import java.util.List;
+import java.util.Map;
+
+import com.hixapi.prescreening.api.model.HealthPlan;
+
+public interface PlanListingDAO {
+
+	public Map<Integer, List<HealthPlan>> getAllHealthPlansForFamily(Integer coverageYear, String ratingAreaId,
+			List<String> ageCategories, String csrId, boolean catastrophicElig);
+	
+	public String getRatingAreaId(String county);
+
+}

@@ -1,0 +1,307 @@
+package com.hixapi.pmp.struts.planmgmt;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.model.LookupBean;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.PlanBenefitVO;
+import com.hixapi.pmp.api.model.PlanPdfVO;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsVO;
+import com.hixapi.pmp.api.model.PlanVariantVO;
+import com.hixapi.pmp.api.model.APICodeConstants.Language;
+import com.hixapi.pmp.common.util.PMPUtil;
+import com.hixapi.pmp.service.plan.PlanManagerService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+
+public class PlanPreviewAction extends BaseSecureAction {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Integer variantIndexInteger = 0;
+	private String language;
+	private String coverageYear;
+	private String variantIndex;
+	private PlanVO planPreview;
+	private Map<String, String> planDetailsKeyLookup;
+	private boolean outOfNetworkToBeDeleted;
+	private String planPreviewPlanType;
+	private String planPreviewPlanLevel;
+	private int qualityRatingInteger;
+	private PlanPdfVO planPdfVO;
+	private int pdfFileLength;
+	private InputStream pdfStream;
+	private String pdfFileName;
+
+	private ArrayList<PlanVariantVO> previewPlanVariants;
+
+	private ArrayList<PlanVariantDetailsVO> previewPlanVariantDetails;
+
+	private static final String PDF_DOWNLOAD = "pdf-download";
+
+	
+	private void setPlanPreviewDownload() {
+		planPdfVO = new PlanPdfVO();
+		planPdfVO.setCarrierId(planPreview.getCarrierId());
+		planPdfVO.setCoverageYear(planPreview.getCoverageYear());
+		planPdfVO.setPlanHiosId(planPreview.getPlanHiosId());
+		planPdfVO.setLanguage(language);
+		//planPdfVO.setPlanIdNumber(planPreview.getPlanId());
+	}
+
+	
+	//Service Call to retrieve Plan Preview
+	private void retrievePlanPreviewFromService(Language lang, String variantHIOSID, Short coverageYear) {
+		planPreview = ServiceLocator.getInstance().getService(PlanManagerService.class)
+				.retrievePlanPreview(variantHIOSID, lang, coverageYear);
+	}
+
+	public String downloadPDF() throws Exception {
+		LOG.debug("*********************************** " + planPdfVO);
+		try {
+			byte[] bArray = ServiceLocator.getInstance().getService(PlanManagerService.class)
+					.downloadDraftPlanPDF(planPdfVO);
+			if (bArray.length != 0) {
+				pdfFileLength = bArray.length;
+				pdfStream = new ByteArrayInputStream(bArray);
+				pdfFileName = planPdfVO.getVariantHiosId() + "_" + planPdfVO.getLanguage() + ".pdf";
+				return PDF_DOWNLOAD;
+			} else {
+				LOG.error("PDF Stream not found for : {}", planPdfVO);
+			}
+
+		} catch (BusinessServiceException bex) {
+			LOG.error("Caught error in plan benefits while downloading PDF", bex);
+			super.addBusinessServiceErrorMessage(bex);
+		} catch (Exception e) {
+			LOG.error("Caught error in plan benefits while downloading PDF", e);
+		}
+		return NOT_FOUND;
+	}
+	
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		// TODO Auto-generated method stub
+		List<LookupBean> lookupIds = getLookups().get("BenefitDetailType");
+		planDetailsKeyLookup = new HashMap<String, String>();
+		for (LookupBean lookupBean : lookupIds) {
+			planDetailsKeyLookup.put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+		retrievePlanPreviewFromService(PMPUtil.getLanguage(language), variantIndex,
+				ConversionUtil.toShort(coverageYear));
+
+
+		variantIndexInteger = 0;
+		if (planPreview != null) {
+			lookupIds = getLookups().get("PlanManageType");
+			for (LookupBean lookupBean : lookupIds) {
+				if (lookupBean.getValue().equalsIgnoreCase(planPreview.getPlanType())) {
+					planPreviewPlanType = lookupBean.getLabel();
+					break;
+				}
+			}
+
+			lookupIds = getLookups(APIUtil.getLocale(language)).get("MetalLevel");
+			planPreviewPlanLevel = "";
+			for (LookupBean lookupBean : lookupIds) {
+				if (lookupBean.getValue().equalsIgnoreCase(planPreview.getMetalLevel())) {
+					planPreviewPlanLevel = lookupBean.getLabel();
+					break;
+				}
+			}
+			if(planPreviewPlanLevel.equalsIgnoreCase("")){
+				planPreviewPlanLevel=planPreview.getMetalLevel();
+			}
+
+			if ("HMO".equalsIgnoreCase(planPreviewPlanType)) {
+				setOutOfNetworkToBeDeleted(true);
+			} else {
+				setOutOfNetworkToBeDeleted(false);
+			}
+			PlanBenefitVO previewBenefitVO = planPreview.getPlanBenefits().get(0);
+			previewPlanVariants = new ArrayList<PlanVariantVO>();
+			previewPlanVariantDetails = new ArrayList<PlanVariantDetailsVO>();
+			Map<PlanVariantVO, PlanVariantDetailsVO> previewBenefitDetails = previewBenefitVO.getPlanVariants();
+			for (Entry<PlanVariantVO, PlanVariantDetailsVO> entry : previewBenefitDetails.entrySet()) {
+				previewPlanVariants.add(entry.getKey());
+				previewPlanVariantDetails.add(entry.getValue());
+			}
+			setPlanPreviewDownload();
+		}
+
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Integer getVariantIndexInteger() {
+		return variantIndexInteger;
+	}
+
+	public void setVariantIndexInteger(Integer variantIndexInteger) {
+		this.variantIndexInteger = variantIndexInteger;
+	}
+
+	public String getVariantIndex() {
+		return variantIndex;
+	}
+
+	public void setVariantIndex(String variantIndex) {
+		this.variantIndex = variantIndex;
+	}
+
+	public PlanVO getPlanPreview() {
+		return planPreview;
+	}
+
+	public void setPlanPreview(PlanVO planPreview) {
+		this.planPreview = planPreview;
+	}
+
+
+	public Map<String, String> getPlanDetailsKeyLookup() {
+		return planDetailsKeyLookup;
+	}
+
+
+	public void setPlanDetailsKeyLookup(Map<String, String> planDetailsKeyLookup) {
+		this.planDetailsKeyLookup = planDetailsKeyLookup;
+	}
+
+
+	public boolean isOutOfNetworkToBeDeleted() {
+		return outOfNetworkToBeDeleted;
+	}
+
+
+	public void setOutOfNetworkToBeDeleted(boolean outOfNetworkToBeDeleted) {
+		this.outOfNetworkToBeDeleted = outOfNetworkToBeDeleted;
+	}
+
+
+	public String getPlanPreviewPlanType() {
+		return planPreviewPlanType;
+	}
+
+
+	public void setPlanPreviewPlanType(String planPreviewPlanType) {
+		this.planPreviewPlanType = planPreviewPlanType;
+	}
+
+
+	public String getPlanPreviewPlanLevel() {
+		return planPreviewPlanLevel;
+	}
+
+
+	public void setPlanPreviewPlanLevel(String planPreviewPlanLevel) {
+		this.planPreviewPlanLevel = planPreviewPlanLevel;
+	}
+
+
+	public int getQualityRatingInteger() {
+		return qualityRatingInteger;
+	}
+
+
+	public void setQualityRatingInteger(int qualityRatingInteger) {
+		this.qualityRatingInteger = qualityRatingInteger;
+	}
+
+
+	public ArrayList<PlanVariantVO> getPreviewPlanVariants() {
+		return previewPlanVariants;
+	}
+
+
+	public void setPreviewPlanVariants(ArrayList<PlanVariantVO> previewPlanVariants) {
+		this.previewPlanVariants = previewPlanVariants;
+	}
+
+
+	public ArrayList<PlanVariantDetailsVO> getPreviewPlanVariantDetails() {
+		return previewPlanVariantDetails;
+	}
+
+
+	public void setPreviewPlanVariantDetails(ArrayList<PlanVariantDetailsVO> previewPlanVariantDetails) {
+		this.previewPlanVariantDetails = previewPlanVariantDetails;
+	}
+
+
+	public String getLanguage() {
+		return language;
+	}
+
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
+
+	public String getCoverageYear() {
+		return coverageYear;
+	}
+
+
+	public void setCoverageYear(String coverageYear) {
+		this.coverageYear = coverageYear;
+	}
+
+
+	public PlanPdfVO getPlanPdfVO() {
+		return planPdfVO;
+	}
+
+
+	public void setPlanPdfVO(PlanPdfVO planPdfVO) {
+		this.planPdfVO = planPdfVO;
+	}
+
+
+	public int getPdfFileLength() {
+		return pdfFileLength;
+	}
+
+
+	public void setPdfFileLength(int pdfFileLength) {
+		this.pdfFileLength = pdfFileLength;
+	}
+
+
+	public InputStream getPdfStream() {
+		return pdfStream;
+	}
+
+
+	public void setPdfStream(InputStream pdfStream) {
+		this.pdfStream = pdfStream;
+	}
+
+
+	public String getPdfFileName() {
+		return pdfFileName;
+	}
+
+
+	public void setPdfFileName(String pdfFileName) {
+		this.pdfFileName = pdfFileName;
+	}
+	
+	
+	
+}

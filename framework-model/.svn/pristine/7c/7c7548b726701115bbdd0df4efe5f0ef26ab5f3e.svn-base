@@ -1,0 +1,133 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+import java.util.List;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.hixapi.prescreening.api.model.plan.Plan;
+
+public class Eligibility implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8312361506474425626L;
+	
+	private List<IndividualEligibilityResults> resultList;
+	//used to check whether aptcAmount needs to be calculated or not.
+	private boolean creditEligibility;
+	private AptcDeterminant aptcFactors;
+	private boolean pregHouse = false;
+	
+	private Double householdFPL;
+	private Boolean allMemberMedicaid=false;
+	private String ratingAreaId;
+	//used for fetch of plansLists
+	
+	private String csrVarIdForPlansFetch;
+	private String coverageYearStr;
+	
+	private List<Plan> allPlans;
+	
+	public boolean isCreditEligibility() {
+		return creditEligibility;
+	}
+
+	public void setCreditEligibility(boolean creditEligibility) {
+		this.creditEligibility = creditEligibility;
+	}
+
+	private double aptcAmount;
+
+	public double getAptcAmount() {
+		return aptcAmount;
+	}
+
+	public void setAptcAmount(double aptcAmount) {
+		this.aptcAmount = aptcAmount;
+	}
+
+	
+	
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+	}
+
+	public List<IndividualEligibilityResults> getResultList() {
+		return resultList;
+	}
+
+	public void setResultList(List<IndividualEligibilityResults> resultList) {
+		this.resultList = resultList;
+	}
+
+	public Double getHouseholdFPL() {
+		return householdFPL;
+	}
+
+	public void setHouseholdFPL(Double householdFPL) {
+		this.householdFPL = householdFPL;
+	}
+
+	public AptcDeterminant getAptcFactors() {
+		return aptcFactors;
+	}
+
+	public void setAptcFactors(AptcDeterminant aptcFactors) {
+		this.aptcFactors = aptcFactors;
+	}
+
+	public boolean isPregHouse() {
+		return pregHouse;
+	}
+
+	public void setPregHouse(boolean pregHouse) {
+		this.pregHouse = pregHouse;
+	}
+
+	public Boolean getAllMemberMedicaid() {
+		return allMemberMedicaid;
+	}
+
+	public void setAllMemberMedicaid(Boolean allMemberMedicaid) {
+		this.allMemberMedicaid = allMemberMedicaid;
+	}
+
+	public String getRatingAreaId() {
+		return ratingAreaId;
+	}
+
+	public void setRatingAreaId(String ratingAreaId) {
+		this.ratingAreaId = ratingAreaId;
+	}
+
+	public String getCsrVarIdForPlansFetch() {
+		return csrVarIdForPlansFetch;
+	}
+
+	public void setCsrVarIdForPlansFetch(String csrVarIdForPlansFetch) {
+		this.csrVarIdForPlansFetch = csrVarIdForPlansFetch;
+	}
+
+	public String getCoverageYearStr() {
+		return coverageYearStr;
+	}
+
+	public void setCoverageYearStr(String coverageYearStr) {
+		this.coverageYearStr = coverageYearStr;
+	}
+
+	public List<Plan> getAllPlans() {
+		return allPlans;
+	}
+
+	public void setAllPlans(List<Plan> allPlans) {
+		this.allPlans = allPlans;
+	}
+
+	
+
+}

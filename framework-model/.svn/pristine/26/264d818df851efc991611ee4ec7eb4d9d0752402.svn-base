@@ -1,0 +1,34 @@
+package com.hixapi.prescreening.api.model.plan;
+
+import java.io.Serializable;
+
+
+public class PhysicianServices implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6646982541639236993L;
+	private InAndOutNetwork preventiveCare;
+	private InAndOutNetwork pVPInjury;
+	private InAndOutNetwork specialistVisit;
+	public InAndOutNetwork getPreventiveCare() {
+		return preventiveCare;
+	}
+	public void setPreventiveCare(InAndOutNetwork preventiveCare) {
+		this.preventiveCare = preventiveCare;
+	}
+	
+	public InAndOutNetwork getpVPInjury() {
+		return pVPInjury;
+	}
+	public void setpVPInjury(InAndOutNetwork pVPInjury) {
+		this.pVPInjury = pVPInjury;
+	}
+	public InAndOutNetwork getSpecialistVisit() {
+		return specialistVisit;
+	}
+	public void setSpecialistVisit(InAndOutNetwork specialistVisit) {
+		this.specialistVisit = specialistVisit;
+	}
+}

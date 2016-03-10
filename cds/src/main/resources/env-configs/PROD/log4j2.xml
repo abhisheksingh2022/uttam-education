@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="fatal">
+	<Properties>
+		<!-- Change this appropriately -->
+		<Property name="log-path">/mnt/vol1/tomcat/tomcat1/logs/cds-web</Property>
+	</Properties>
+	<Appenders>
+		<RollingFile name="RollingFile" fileName="${log-path}/cds-web.log"
+			filePattern="${log-path}/cds-web-%d{yyyy-MM-dd}.log.gz" ignoreExceptions="false">
+			<PatternLayout>
+				<Pattern>%d{DEFAULT}|%p{length=5}|CDS-WEB:%X{REQUEST_UUID}|%c|%M:%L| - %m%n</Pattern>
+			</PatternLayout>
+			<Policies>
+			  <SizeBasedTriggeringPolicy size="25 MB" />
+			  <TimeBasedTriggeringPolicy  interval="1" modulate="true" />
+			</Policies>
+		</RollingFile>
+		
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout
+				pattern="%d|%p{length=5}|CDS-WEB:%X{REQUEST_UUID}|%c|%M:%L| - %m%n" />
+		</Console>
+		
+		<RollingFile name="MetricFile" fileName="${log-path}/cds-web-metrics.log"
+			filePattern="${log-path}/cds-web-metrics-%d{yyyy-MM-dd}.log.gz" ignoreExceptions="true">
+			<PatternLayout>
+				<Pattern>%d{DEFAULT}|%X{CLIENT_IP}|%X{REQUEST_UUID}|%X{SP_ID}|%X{EVENT_NM}|%X{EVENT_SUCCESS_IND}|%X{EVENT_DETAIL}%n</Pattern>
+			</PatternLayout>
+			<Policies>
+			  <SizeBasedTriggeringPolicy size="25 MB" />
+			  <TimeBasedTriggeringPolicy  interval="1" modulate="true" />
+			</Policies>
+		</RollingFile>
+		
+		
+		<!-- <JDBC name="MetricDatabaseAppender" tableName="metric_event"
+			ignoreExceptions="false" bufferSize="5">
+			<DataSource jndiName="java:/comp/env/jdbc/cdsdb" />
+			<Column name="event_ts" isEventTimestamp="true" />
+			<Column name="client_ip" pattern="%X{CLIENT_IP}" />
+			<Column name="request_uuid" pattern="%X{REQUEST_UUID}" />
+			<Column name="service_provider_id" pattern="%X{SP_ID}" />
+			<Column name="event_nm" pattern="%X{EVENT_NM}" />
+			<Column name="event_success_ind" pattern="%X{EVENT_SUCCESS_IND}" />
+			<Column name="event_detail" pattern="%X{EVENT_DETAIL}" />
+		</JDBC>
+		<JDBC name="DatabaseAppender" tableName="system_log"
+			ignoreExceptions="false" bufferSize="5">
+			<DataSource jndiName="java:/comp/env/jdbc/cdsdb" />
+			<Column name="event_ts" isEventTimestamp="true" />
+			<Column name="request_uuid" pattern="%X{REQUEST_UUID}" />
+			<Column name="service_provider_id" pattern="%X{SP}" />
+			<Column name="level" pattern="%level" />
+			<Column name="logger" pattern="%logger" />
+			<Column name="message" pattern="%message" />
+			<Column name="exception" pattern="%ex{full}" />
+		</JDBC>
+		
+		<Failover name="Failover" primary="DatabaseAppender">
+			<Failovers>
+				<AppenderRef ref="Console" />
+			</Failovers>
+		</Failover>
+		<Async name="Async" >
+			<AppenderRef ref="Failover"/>
+			<AppenderRef ref="RollingFile"/>
+			<AppenderRef ref="Console" />
+		</Async>
+		
+		<Failover name="MetricFailover" primary="MetricDatabaseAppender">
+			<Failovers>
+				<AppenderRef ref="Console" />
+			</Failovers>
+		</Failover>
+		<Async name="MetricAsync">
+			<AppenderRef ref="MetricFailover" />
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="MetricFile" />
+		</Async> -->
+	</Appenders>
+	<Loggers>
+	<!-- Catch All logging, logs above WARN into console (non-application components go here) -->
+		<Root level="trace">
+			<AppenderRef ref="Console" level="WARN" />
+		</Root>
+		
+		<!-- Section for all Application logging starts (com.hix)-->
+		<logger name="com.hixapi" additivity="true" level="ALL">
+			<!-- 
+			 - Everything INFO and above will go to DB, note it goes to Root(Console) also due to additivity 
+			   and get logged in Root Logger if above its configured level-->
+			<!-- <AppenderRef ref="Console" level="ERROR" /> -->
+			<!-- 
+			 - Everything INFO and above will go to below logger (RollingFile) also (note it goes to root also due to additivity)
+			   and get logged in Root Logger if above its configured level.
+			 - Change to Console & DEBUG in Eclipse environment for developer usage.
+			 - Remove this line to have only async DB logging for INFO -  Above INFO, goes to DB and Root(Console)
+			  -->
+			<AppenderRef ref="RollingFile" level="INFO" />
+			
+		</logger>
+		
+		<!--  Uncomment the section below if 'com.hix' logger above is set to ERROR, and you want 
+				only performance info/url hits to be logged to DB/File -->
+		<!-- <logger name="com.hix.proxy.framework.net.ApacheHttpConnector" additivity="true">
+			<AppenderRef ref="Failover" level="INFO" />
+			<AppenderRef ref="RollingFile" level="INFO" /> 
+		</logger>
+		<logger name="com.hix.proxy.framework.struts.PerformanceInterceptor" additivity="true">
+			<AppenderRef ref="Failover" level="INFO" />
+			<AppenderRef ref="RollingFile" level="INFO" /> 
+		</logger>
+		-->
+		 
+		<!-- Metrics Logging -->
+		<logger name="com.hixapi.web.framework.context.MetricEvent" additivity="false">
+			<AppenderRef ref="MetricFile" level="INFO" />
+		</logger>
+		<!-- Section for all Application logging ends -->
+	</Loggers>
+</Configuration>

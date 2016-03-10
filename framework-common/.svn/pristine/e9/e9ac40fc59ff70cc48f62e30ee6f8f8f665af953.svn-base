@@ -1,0 +1,56 @@
+package com.hixapi.framework.common.context;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.logging.log4j.ThreadContext;
+
+import com.hixapi.framework.common.APIConstants;
+
+public class ContextProvider {
+
+	private static final ThreadLocal<Map<ContextKeyEnum, Object>> CONTEXT = new ThreadLocal<Map<ContextKeyEnum, Object>>();
+
+	private ContextProvider() {
+
+	}
+
+	public static void setContextField(ContextKeyEnum key, Object value) {
+		if (CONTEXT.get() == null) {
+			CONTEXT.set(new HashMap<ContextKeyEnum, Object>());
+		}
+		CONTEXT.get().put(key, value);
+	}
+
+	public static void unset() {
+		if (CONTEXT.get() != null) {
+			CONTEXT.get().clear();
+			CONTEXT.set(null);
+		}
+		CONTEXT.remove();
+	}
+
+	public static Object getContextField(ContextKeyEnum key) {
+		return CONTEXT.get().get(key);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T getContextField(ContextKeyEnum key, Class<T> clazz) {
+		if (CONTEXT.get() != null) {
+			Object o = CONTEXT.get().get(key);
+			return (T) o;
+		}
+		return null;
+	}
+
+	/**
+	 * Sets the parameter as request id in context map and in Log4J Context Map
+	 * 
+	 * @param id
+	 */
+
+	public static void setRequestId(String id) {
+		setContextField(ContextKeyEnum.REQUEST_UUID, id);
+		ThreadContext.put(APIConstants.REQUEST_UUID, id);
+	}
+}

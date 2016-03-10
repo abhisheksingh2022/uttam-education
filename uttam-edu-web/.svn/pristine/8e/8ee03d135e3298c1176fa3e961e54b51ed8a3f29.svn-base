@@ -1,0 +1,3338 @@
+<%@page import="com.opensymphony.xwork2.ActionContext"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+
+<%@include file="/jsp/includes/container.jsp"%>
+<%@include file="/jsp/prescreen/plan-listing-datatable.jsp"%>
+<link href="<s:property value='rootPath'/>static/custom/css/plan-listing-cp.css?v=<s:property value="buildId"/>"
+	rel="stylesheet" type="text/css">
+<%-- Content Start --%>
+<script>
+$(document).ready(function(){
+		$(".load-block").fadeOut("slow");
+		$('.load-image').fadeOut("slow");
+		//alert(<s:property value='allHMO' />);
+		if(<s:property value='allHMO' />){
+			$('.tier-fixed-height').each(function(){
+				$(this).addClass('tier-fixed-height-HMO');
+				$(this).removeClass('tier-fixed-height');
+			});
+		}
+		
+});
+
+</script>
+
+<style>
+.tier-fixed-height {
+	height: 110px !important;
+}
+.tier-fixed-height-HMO{
+	height: 60px !important;
+}
+
+fieldset {
+	padding: 10px;
+}
+
+fieldset.notice {
+	background: #fffab2;
+	border-radius: 3px;
+	border-color: #ffd46b;
+	box-shadow: 0 0 2px 2px #ffd46c;
+	color: #333333;
+	font-size: 14px;
+	font-family: Arial;
+	vertical-align: middle;
+	text-align: left;
+	padding: 10px;
+}
+
+.no-border {
+	border: none !important;
+}
+
+#table01 {
+	border-radius: 3px 3px 0px 0px !important;
+	float: center;
+	margin-left: 30px;
+	margin-top: 0px;
+}
+
+#table01 caption {
+	display: none;
+}
+
+.standardtable.compare-subsection {
+	border-radius: 0px 0px 3px 3px !important;
+	float: center;
+	line-height: 16px !important;
+	margin-left: 10px;
+	margin-top: 0px;
+	width: 920px;
+}
+
+.comparison-wrapper {
+	box-shadow: 0 0 4px 2px #D6D6D6;
+	float: center;
+	height: 610px;
+	margin-top: -8px;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+table.standardtable.compare-subsection {
+	box-shadow: none;
+	margin-bottom: 0;
+}
+
+table.standardtable.compare-subsection caption {
+	background-color: #f59219;
+	background-image: none !important;
+	border: 1px solid white;
+	color: white;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 16px;
+	font-style: normal;
+	height: 46px;
+	line-height: 24px !important;
+	padding: 10px;
+	text-align: left;
+	text-shadow: none;
+	word-wrap: break-word;
+	border: 1px solid white;
+}
+
+table.standardtable.compare-subsection caption img {
+	margin-top: 5px;
+}
+
+table.standardtable.compare-subsection th {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	padding: 10px;
+}
+
+.preselected-plan {
+	background-color: #F6AC40;
+	color: #666666;
+	font-size: 14px;
+	font-weight: bold;
+	padding: 5px;
+	text-align: center;
+	width: 130px;
+}
+
+.underline {
+	text-decoration: underline;
+}
+
+.noticeList {
+	font-size: 14px;
+	line-height: 16px;
+}
+
+input.back-button {
+	text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+}
+
+#back-button {
+	width: 240px;
+}
+
+.language_es #back-button {
+	/* background-image: url("img/button/back_bg_extra_long.png"); */
+	letter-spacing: 0;
+	width: 295px;
+}
+
+div.tooltip-image {
+	display: inline;
+	height: 100%;
+	width: auto;
+	min-height: 20px;
+	float: left;
+}
+
+div.tooltip-anchor-text {
+	display: inline-block;
+	font-weight: bold;
+	height: auto;
+	width: 105px;
+}
+
+td.font14third div:first-child, td.font14half div:first-child {
+	min-height: 44px;
+}
+</style>
+
+<s:form action="plan-comparison" namespace="/prescreen" id="id_form_plan-comparison">
+	<s:token />
+	<s:hidden name="ajaxRequest" value="false" />
+	<s:hidden name="formId" />
+	<div class="load-block" id="load-block">
+		<img class="load-image" src='<s:property value='rootPath'/>static/custom/images/big_loader.gif' />
+	</div>
+	<div class="row">
+		<div class="clearfix"></div>
+		<div class="body-bg" style="overflow: hidden;">
+			<div class="clearfix"></div>
+			<div class="hedingsec">
+				<h2 class="inner-heading" style="padding-top: 2%;">
+					<s:text name="txt.hix.enrollment.plancompare.title.panel-1" />
+				</h2>
+			</div>
+			<div class="clearfix"></div>
+			<div class="carrier-data" style="overflow: auto;">
+				<s:a id="flow-back-button" cssClass="btn btn-active back-btn-css" action="plan-listing_input" namespace="/prescreen"
+					style="float:right;margin-right:15px;">
+					<em class="fa fa-chevron-left"></em>
+					<s:text name="txt.hix.enrollment.plancompare.link.panel-2.back"></s:text>
+				</s:a>
+				<div class="clearfix"></div>
+				<%-- Back To Explore Your Options - Button --%>
+				<!-- <div class="row button-bar">
+					<div class="row">
+						<div class="span16 pull-right" align="right" style="margin-right: 10px"></div>
+					</div>
+				</div> -->
+				<br />
+				<s:hidden id="selectedAPTC" name="selectedAPTC" />
+
+
+
+
+				<div class="clearfix"></div>
+				<%-- TABLE 1 - Plan Header - Fixed --%>
+				<%-- Pre-Selected Plan - Formatting --%>
+				<%-- 				<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+					<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+						<s:if test="%{comparePlansList.size()>2 && #comparePlansListIndex.index == 0}">
+							<div style="margin-left: 213px;">
+						</s:if>
+						<s:elseif test="%{comparePlansList.size()>2 && #comparePlansListIndex.index == 1}">
+							<div style="margin-left: 470px;">
+						</s:elseif>
+						<s:elseif test="%{comparePlansList.size()>2 && #comparePlansListIndex.index == 2}">
+							<div style="margin-left: 728px;">
+						</s:elseif>
+						<s:elseif test="%{comparePlansList.size()<=2 && #comparePlansListIndex.index == 0}">
+							<div style="margin-left: 278px;">
+						</s:elseif>
+						<s:elseif test="%{comparePlansList.size()<=2 && #comparePlansListIndex.index == 1}">
+							<div style="margin-left: 663px;">
+						</s:elseif>
+						<div style="display: table-cell; padding: 5px;">
+							<s:if test="enrolled">
+								<span class="preselected-plan"><s:text name="Pre-Enrolled Plan" /></span>
+							</s:if>
+							<s:else>
+								<span class="preselected-plan"><s:text name="txt.hix.enrollment.plancompare.preSelectedPlan" /></span>
+							</s:else>
+						</div>
+					</s:if>
+				</s:iterator> --%>
+
+				<table id="table01" class="standardtable even-odd-table" style="width: 95%;"
+					summary="List of Insurance Plans chosen for comparison. The first column is empty">
+					<caption>Plan Comparison</caption>
+					<thead>
+						<tr class="odd">
+							<th scope="row">
+								<div style="margin: 5px 72px 20px 0;">
+									<%-- blank space &nbsp; prevents emtpy th from collapsing --%>
+									&nbsp;
+									<%-- Easy access action class variables --%>
+									<s:hidden id="applyPlanId1" name="applyPlanId" />
+									<s:hidden id="buyPlanId1" name="buyPlanId" />
+									<s:hidden id="removePlanId1" name="removePlanId" />
+								</div>
+							</th>
+							<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+
+								<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+									<s:if test="%{comparePlansList.size()>2}">
+										<td scope="row" class="font14thirdhighlight" style="text-align: center; border-top: 3px solid #F6AC40;">
+									</s:if>
+									<s:else>
+										<td scope="row" class="font14halfhighlight" style="text-align: center; border-top: 3px solid #F6AC40;">
+									</s:else>
+								</s:if>
+								<s:else>
+									<s:if test="%{comparePlansList.size()>2}">
+										<td scope="row" class="font14third" style="text-align: center;">
+									</s:if>
+									<s:else>
+										<td scope="row" class="font14half" style="text-align: center;">
+									</s:else>
+								</s:else>
+								<%-- Plan Name --%>
+								<div>
+									<b><i><s:property value="#tDisplayPlan.planNa" /></i></b>
+									<s:if test='%{#tDisplayPlan.planVarncNa != null}'>
+										</br>
+										<b><i><s:property value="#tDisplayPlan.planVarncNa" /></i></b>
+									</s:if>
+								</div>
+								<br>
+								<%-- Carrier Logo --%>
+								<div>
+									<s:if test='anonymous == true'>
+										<img src="<s:url namespace="/public" action='carrier-image?carrierId=%{#tDisplayPlan.carrierId}' />"
+											style="height: 50px; margin-left: auto; margin-right: auto; display: block;" alt="Carrier Logo" />
+									</s:if>
+									<s:else>
+										<img src="<s:url namespace="/public" action='carrier-image?carrierId=%{#tDisplayPlan.carrierId}' />"
+											style="height: 50px; margin-left: auto; margin-right: auto; display: block;" alt="Carrier Logo" />
+									</s:else>
+								</div>
+
+								<%-- Remove Plan --%>
+								<%-- <div>
+							<s:if test='anonymous == true'>
+								<a id='<s:text name="removePlanId1%{#comparePlansListIndex.index}"/>' href="#"
+									onclick='removeHealthPlan("<s:property value='#tDisplayPlan.displayPlanId'/>")'> <img
+									src="<s:property value="rootPath"/>static/custom/images/btn_remove_OFF.png"
+									style="height: 15px; margin-top: 3px;" alt="Remove Button"> <small><s:text
+											name="txt.hix.enrollment.plancompare.link.panel-2.remove" /></small>
+								</a>
+							</s:if>
+							<s:else>
+								<a id='<s:text name="removePlanId1%{#comparePlansListIndex.index}"/>' href="#"
+									onclick='removeHealthPlanPostShop("<s:property value='#tDisplayPlan.displayPlanId'/>")'> <img
+									src="<s:property value="rootPath"/>static/custom/images/btn_remove_OFF.png"
+									style="height: 15px; margin-top: 3px;" alt="Remove Button"> <small><s:text
+											name="txt.hix.enrollment.plancompare.link.panel-2.remove" /></small>
+								</a>
+							</s:else>
+						</div> --%>
+								<br>
+
+								<%-- Apply || Buy --%>
+								<%-- <s:if test='anonymous == true'>
+							<div>
+								<a id='<s:text name="applyPlanId1%{#comparePlansListIndex.index}"/>' href="#" class="btn btn-primary bold"
+									onclick='applyHealthPlan("<s:property value='#tDisplayPlan.displayPlanId'/>")'> <s:text
+										name="%{getText('hix.enrollment.plancompare.link.panel-2.apply')}" />
+								</a>
+							</div>
+						</s:if>
+						<s:else>
+							<div>
+								<a id='<s:text name="buyPlanId1%{#comparePlansListIndex.index}"/>' href="#" class="btn btn-primary bold"
+									onclick='buyHealthPlan("<s:property value='#tDisplayPlan.displayPlanId'/>")'> <s:text
+										name="%{getText('hix.enrollment.plancompare.link.panel-2.buy')}" />
+								</a>
+							</div>
+						</s:else> --%>
+
+								</td>
+							</s:iterator>
+						</tr>
+					</thead>
+				</table>
+
+
+
+
+				<%-- TABLE 2 - Plan Details - Expandable, Scrollbar --%>
+				<div id="comparison-wrapper"
+					style="width: 100%; height: 610px; overflow-x: hidden; overflow-y: auto; margin-top: -8px; float: center;">
+					<table class="standardtable even-odd-table compare-subsection" style="width: 97%; margin-left: 30px;"
+						summary='<s:text name="Each row shows basic differences between insurance plans." />'>
+						<%--
+  _____  _               _   _      ______      ________ _______      _______ ________          __
+ |  __ \| |        /\   | \ | |    / __ \ \    / /  ____|  __ \ \    / /_   _|  ____\ \        / /
+ | |__) | |       /  \  |  \| |   | |  | \ \  / /| |__  | |__) \ \  / /  | | | |__   \ \  /\  / /
+ |  ___/| |      / /\ \ | . ` |   | |  | |\ \/ / |  __| |  _  / \ \/ /   | | |  __|   \ \/  \/ /
+ | |    | |____ / ____ \| |\  |   | |__| | \  /  | |____| | \ \  \  /   _| |_| |____   \  /\  /
+ |_|    |______/_/    \_\_| \_|    \____/   \/   |______|_|  \_\  \/   |_____|______|   \/  \/
+
+                            --%>
+						<caption data-subsection-id="planOverview" class="">
+							<!-- <img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="planOverview-collapse"
+										style="display:block; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="planOverview-expand"
+										style="display:none; float:left" alt="Click To Expand"> -->
+							<strong>&nbsp; <s:text name="txt.hix.enrollment.plancompare.label.rowtitle.planOverview" />
+							</strong>
+						</caption>
+						<tbody>
+
+							<tr class="planOverview" style="overflow: hidden; display: table-row">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.healthCareProvider.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 10px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.healthCareProvider" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<a id='urlTest1<s:property value="%{#comparePlansListIndex.index}" />' class="toAppendHTTP"
+										onclick='setWebsite("urlTest1<s:property value="%{#comparePlansListIndex.index}"/>"); return false;'
+										href="<s:property value='#tDisplayPlan.hlthPrvdrUrlTx'/>"> <s:text
+											name="txt.hix.enrollment.plancompare.link.panel-2.searchProviders" />
+									</a>
+									</td>
+								</s:iterator>
+							</tr>
+							<%-- Search Providers --%>
+							<%-- Plan Type --%>
+							<tr class="planOverview" style="overflow: hidden; display: table-row">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.planType.help"/>'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 0px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.planType" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:property value="#tDisplayPlan.planTypeNa" />
+									</td>
+								</s:iterator>
+							</tr>
+							<%-- Plan Level --%>
+							<tr class="planOverview" style="overflow: hidden; display: table-row">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.planLevel.help"/>'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="Tooltip" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 0px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.planLevel" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center" style="width:28%" align="center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="width: 42%" align="center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="width: 28%" align="center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="width: 42%" align="center">
+										</s:else>
+									</s:else>
+									<img
+										src="<s:property value="rootPath"/>static/custom/images/metal_tier_<s:property value='#tDisplayPlan.planLevelNa.toUpperCase()'/>.png"
+										alt="Metal Level">
+									<s:property value="#tDisplayPlan.planLevelNa" />
+									<s:if test='%{#tDisplayPlan.planLevelNa.equalsIgnoreCase("Catastrophic")}'>
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.catastrophic.help"/>'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="Tooltip" class="tooltipAnchor"
+											data-placement="right">
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Quality Rating --%>
+							<tr class="planOverview" style="overflow: hidden; display: table-row">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.qualityRating.help"/>'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 15px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.qualityRating" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if test="%{#tDisplayPlan.qltyRatingNb < 1}">
+										<i><s:text name="txt.hix.enrollment.plancompare.noRating"></s:text></i>
+									</s:if>
+									<s:else>
+										<s:iterator var="qualityRating" status="qualityRatingIndex" begin="1" end="4">
+											<s:if test="%{#qualityRatingIndex.index < #tDisplayPlan.qltyRatingNb}">
+												<img class="middle" src="<s:property value="rootPath"/>static/custom/images/star.png" alt="Full Star">
+											</s:if>
+											<s:else>
+												<img class="middle" src="<s:property value="rootPath"/>static/custom/images/star_empty.png" alt="Empty Star">
+											</s:else>
+										</s:iterator>
+									</s:else>
+									</td>
+								</s:iterator>
+							</tr>
+
+
+						</tbody>
+					</table>
+					<table class="standardtable even-odd-table compare-subsection" style="width: 97%; margin-left: 30px;"
+						summary='<s:text name="Each row shows a different cost sharing comparison between insurance plans, such as the deductible or copay." />'>
+						<%--
+
+   _____ ____   _____ _______     _____ _    _          _____  _____ _   _  _____      ______      ________ _______      _______ ________          __
+  / ____/ __ \ / ____|__   __|   / ____| |  | |   /\   |  __ \|_   _| \ | |/ ____|    / __ \ \    / /  ____|  __ \ \    / /_   _|  ____\ \        / /
+ | |   | |  | | (___    | |     | (___ | |__| |  /  \  | |__) | | | |  \| | |  __    | |  | \ \  / /| |__  | |__) \ \  / /  | | | |__   \ \  /\  / /
+ | |   | |  | |\___ \   | |      \___ \|  __  | / /\ \ |  _  /  | | | . ` | | |_ |   | |  | |\ \/ / |  __| |  _  / \ \/ /   | | |  __|   \ \/  \/ /
+ | |___| |__| |____) |  | |      ____) | |  | |/ ____ \| | \ \ _| |_| |\  | |__| |   | |__| | \  /  | |____| | \ \  \  /   _| |_| |____   \  /\  /
+  \_____\____/|_____/   |_|     |_____/|_|  |_/_/    \_\_|  \_\_____|_| \_|\_____|    \____/   \/   |______|_|  \_\  \/   |_____|______|   \/  \/
+
+                             --%>
+						<caption class="">
+							<!-- <img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="costSharingOverview-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="costSharingOverview-expand"
+										style="float:left" alt="Click To Expand"> -->
+							<strong>&nbsp; <s:text name="txt.hix.enrollment.plancompare.label.rowtitle.costSharingOverview" /> <s:text
+									name="txt.hix.enrollment.plancompare.memberpays" />
+							</strong>
+						</caption>
+
+						<s:if test='%{familyValues}'>
+							<tbody>
+								<%-- Deductibles --%>
+								<tr class="costSharingOverview">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.deductibles.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+												data-placement="right"
+												style="float: left; margin-top: 5px; margin-bottom: 0px; margin-left: 0px; margin-right: 10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.deductibles" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14halfhighlight" style="text-align: center">
+											</s:else>
+										</s:if>
+										<s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14half" style="text-align: center">
+											</s:else>
+										</s:else>
+										<%-- Individual --%>
+										<u><s:text name="txt.hix.enrollment.plancompare.label.individual" /></u>
+										<br>
+										<s:if test='%{#tDisplayPlan.csrDdbleInTx != null &&
+																	#tDisplayPlan.csrDdbleInTx != ""}'>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.csrDdbleInTx" />
+										</s:if>
+										<s:if test='%{#tDisplayPlan.csrDdbleOutTx != null &&
+																	#tDisplayPlan.csrDdbleOutTx != ""}'>
+											<br>
+											<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+											<s:property value="#tDisplayPlan.csrDdbleOutTx" />
+										</s:if>
+										<s:if
+											test='%{(#tDisplayPlan.csrDdbleInTx == null || #tDisplayPlan.csrDdbleInTx == "")
+																	&& (#tDisplayPlan.csrDdbleOutTx == null || #tDisplayPlan.csrDdbleOutTx == "")}'>
+											<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+										</s:if>
+
+										<%-- Family --%>
+										<br>
+										<br>
+										<u><s:text name="txt.hix.enrollment.plancompare.label.family" /></u>
+										<br>
+										<s:if
+											test='%{#tDisplayPlan.csrDdbleFmlyInTx != null &&
+																	#tDisplayPlan.csrDdbleFmlyInTx != ""}'>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.csrDdbleFmlyInTx" />
+										</s:if>
+										<s:if
+											test='%{#tDisplayPlan.csrDdbleFmlyOutTx != null &&
+																	#tDisplayPlan.csrDdbleFmlyOutTx != ""}'>
+											<br>
+											<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+											<s:property value="#tDisplayPlan.csrDdbleFmlyOutTx" />
+										</s:if>
+										<s:if
+											test='%{(#tDisplayPlan.csrDdbleFmlyInTx == null || #tDisplayPlan.csrDdbleFmlyInTx == "")
+																	&& (#tDisplayPlan.csrDdbleFmlyOutTx == null || #tDisplayPlan.csrDdbleFmlyOutTx == "")}'>
+											<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+										</s:if>
+										</td>
+									</s:iterator>
+								</tr>
+								<%-- Out-of-Pocket Maximum --%>
+								<tr class="costSharingOverview">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.outOfPocketMaximum.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+												data-placement="right"
+												style="float: left; margin-top: 5px; margin-bottom: 15px; margin-left: 0px; margin-right: 10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.outOfPocketMaximum" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14halfhighlight" style="text-align: center">
+											</s:else>
+										</s:if>
+										<s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14half" style="text-align: center">
+											</s:else>
+										</s:else>
+										<%-- Individual --%>
+										<u><s:text name="txt.hix.enrollment.plancompare.label.individual" /></u>
+										<br>
+										<s:if
+											test='%{#tDisplayPlan.csrOutOfPcktMaxInTx != null &&
+																	#tDisplayPlan.csrOutOfPcktMaxInTx != ""}'>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.csrOutOfPcktMaxInTx" />
+										</s:if>
+										<s:if
+											test='%{#tDisplayPlan.csrOutOfPcktMaxOutTx != null &&
+																	#tDisplayPlan.csrOutOfPcktMaxOutTx != ""}'>
+											<br>
+											<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+											<s:property value="#tDisplayPlan.csrOutOfPcktMaxOutTx" />
+										</s:if>
+										<s:if
+											test='%{(#tDisplayPlan.csrOutOfPcktMaxInTx == null || #tDisplayPlan.csrOutOfPcktMaxInTx == "")
+																	&& (#tDisplayPlan.csrOutOfPcktMaxOutTx == null || #tDisplayPlan.csrOutOfPcktMaxOutTx == "")}'>
+											<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+										</s:if>
+
+										<%-- Family --%>
+										<br>
+										<br>
+										<u><s:text name="txt.hix.enrollment.plancompare.label.family" /></u>
+										<br>
+										<s:if
+											test='%{#tDisplayPlan.csrOutOfPcktMaxFmlyInTx != null &&
+																	#tDisplayPlan.csrOutOfPcktMaxFmlyInTx != ""}'>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.csrOutOfPcktMaxFmlyInTx" />
+										</s:if>
+
+										<s:if
+											test='%{#tDisplayPlan.csrOutOfPcktMaxFmlyOutTx != null &&
+																	#tDisplayPlan.csrOutOfPcktMaxFmlyOutTx != ""}'>
+											<br>
+											<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+											<s:property value="#tDisplayPlan.csrOutOfPcktMaxFmlyOutTx" />
+										</s:if>
+										<s:if
+											test='%{(#tDisplayPlan.csrOutOfPcktMaxFmlyInTx == null || #tDisplayPlan.csrOutOfPcktMaxFmlyInTx == "")
+																	&& (#tDisplayPlan.csrOutOfPcktMaxFmlyOutTx == null || #tDisplayPlan.csrOutOfPcktMaxFmlyOutTx == "")}'>
+											<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+										</s:if>
+										</td>
+									</s:iterator>
+								</tr>
+
+
+
+								<%-- PCP Copay --%>
+								<%-- <tr class="costSharingOverview" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.pcpCopay.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:20px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.pcpCopay" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.csrPcpCopayInTx != null &&
+																	#tDisplayPlan.csrPcpCopayInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.csrPcpCopayInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.csrPcpCopayOutTx != null &&
+																	#tDisplayPlan.csrPcpCopayOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.csrPcpCopayOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.csrPcpCopayInTx == null || #tDisplayPlan.csrPcpCopayInTx == "")
+																	&& (#tDisplayPlan.csrPcpCopayOutTx == null || #tDisplayPlan.csrPcpCopayOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr> --%>
+
+								<%-- Specialist Copay --%>
+								<%-- <tr class="costSharingOverview" >
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.specialistCopay.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:10px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.specialistCopay" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.csrSplstCopayInTx != null &&
+																	#tDisplayPlan.csrSplstCopayInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.csrSplstCopayInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.csrSplstCopayOutTx != null &&
+																	#tDisplayPlan.csrSplstCopayOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.csrSplstCopayOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.csrSplstCopayInTx == null || #tDisplayPlan.csrSplstCopayInTx == "")
+																	&& (#tDisplayPlan.csrSplstCopayOutTx == null || #tDisplayPlan.csrSplstCopayOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr> --%>
+							</tbody>
+						</s:if>
+						<s:else>
+							<tbody>
+								<%-- Deductibles --%>
+								<tr class="costSharingOverview">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.deductibles.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+												data-placement="right"
+												style="float: left; margin-top: 5px; margin-bottom: 0px; margin-left: 0px; margin-right: 10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.deductibles" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14halfhighlight" style="text-align: center">
+											</s:else>
+										</s:if>
+										<s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14half" style="text-align: center">
+											</s:else>
+										</s:else>
+										<s:if test='%{#tDisplayPlan.csrDdbleInTx != null &&
+																	#tDisplayPlan.csrDdbleInTx != ""}'>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.csrDdbleInTx" />
+										</s:if>
+										<s:if test='%{#tDisplayPlan.csrDdbleOutTx != null &&
+																	#tDisplayPlan.csrDdbleOutTx != ""}'>
+											<br>
+											<br>
+											<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+											<s:property value="#tDisplayPlan.csrDdbleOutTx" />
+										</s:if>
+										<s:if
+											test='%{(#tDisplayPlan.csrDdbleInTx == null || #tDisplayPlan.csrDdbleInTx == "")
+																	&& (#tDisplayPlan.csrDdbleOutTx == null || #tDisplayPlan.csrDdbleOutTx == "")}'>
+											<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+										</s:if>
+										</td>
+									</s:iterator>
+								</tr>
+
+								<%-- Prescription Drug Deductible --%>
+								<tr class="costSharingOverview">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.prescriptionDrugDeductible.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+												data-placement="right"
+												style="float: left; margin-top: 5px; margin-bottom: 25px; margin-left: 0px; margin-right: 10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.prescriptionDrugDeductible" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14halfhighlight" style="text-align: center">
+											</s:else>
+										</s:if>
+										<s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14half" style="text-align: center">
+											</s:else>
+										</s:else>
+										<s:if
+											test='%{#tDisplayPlan.csrPrescDrgDdbleInTx != null &&
+																	#tDisplayPlan.csrPrescDrgDdbleInTx != ""}'>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.csrPrescDrgDdbleInTx" />
+										</s:if>
+										<s:if
+											test='%{#tDisplayPlan.csrPrescDrgDdbleOutTx != null &&
+																	#tDisplayPlan.csrPrescDrgDdbleOutTx != ""}'>
+											<br>
+											<br>
+											<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+											<s:property value="#tDisplayPlan.csrPrescDrgDdbleOutTx" />
+										</s:if>
+										<s:if
+											test='%{(#tDisplayPlan.csrPrescDrgDdbleInTx == null || #tDisplayPlan.csrPrescDrgDdbleInTx == "")
+																	&& (#tDisplayPlan.csrPrescDrgDdbleOutTx == null || #tDisplayPlan.csrPrescDrgDdbleOutTx == "")}'>
+											<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+										</s:if>
+										</td>
+									</s:iterator>
+								</tr>
+
+								<%-- Out-of-Pocket Maximum --%>
+								<tr class="costSharingOverview">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.outOfPocketMaximum.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+												data-placement="right"
+												style="float: left; margin-top: 5px; margin-bottom: 15px; margin-left: 0px; margin-right: 10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.outOfPocketMaximum" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14halfhighlight" style="text-align: center">
+											</s:else>
+										</s:if>
+										<s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14half" style="text-align: center">
+											</s:else>
+										</s:else>
+										<s:if
+											test='%{#tDisplayPlan.csrOutOfPcktMaxInTx != null &&
+																	#tDisplayPlan.csrOutOfPcktMaxInTx != ""}'>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.csrOutOfPcktMaxInTx" />
+										</s:if>
+										<s:if
+											test='%{#tDisplayPlan.csrOutOfPcktMaxOutTx != null &&
+																	#tDisplayPlan.csrOutOfPcktMaxOutTx != ""}'>
+											<br>
+											<br>
+											<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+											<s:property value="#tDisplayPlan.csrOutOfPcktMaxOutTx" />
+										</s:if>
+										<s:if
+											test='%{(#tDisplayPlan.csrOutOfPcktMaxInTx == null || #tDisplayPlan.csrOutOfPcktMaxInTx == "")
+																	&& (#tDisplayPlan.csrOutOfPcktMaxOutTx == null || #tDisplayPlan.csrOutOfPcktMaxOutTx == "")}'>
+											<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+										</s:if>
+										</td>
+									</s:iterator>
+								</tr>
+
+								<%-- Prescription Drug Maximum --%>
+								<tr class="costSharingOverview">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.prescriptionDrugMaximum.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+												data-placement="right"
+												style="float: left; margin-top: 5px; margin-bottom: 45px; margin-left: 0px; margin-right: 10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.prescriptionDrugMaximum" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14halfhighlight" style="text-align: center">
+											</s:else>
+										</s:if>
+										<s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14half" style="text-align: center">
+											</s:else>
+										</s:else>
+										<s:if
+											test='%{#tDisplayPlan.csrPresDrgOutOfPcktInTx != null &&
+																	#tDisplayPlan.csrPresDrgOutOfPcktInTx != ""}'>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.csrPresDrgOutOfPcktInTx" />
+										</s:if>
+										<s:if
+											test='%{#tDisplayPlan.csrPresDrgOutOfPcktOutTx != null &&
+																	#tDisplayPlan.csrPresDrgOutOfPcktOutTx != ""}'>
+											<br>
+											<br>
+											<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+											<s:property value="#tDisplayPlan.csrPresDrgOutOfPcktOutTx" />
+										</s:if>
+										<s:if
+											test='%{(#tDisplayPlan.csrPresDrgOutOfPcktInTx == null || #tDisplayPlan.csrPresDrgOutOfPcktInTx == "")
+																	&& (#tDisplayPlan.csrPresDrgOutOfPcktOutTx == null || #tDisplayPlan.csrPresDrgOutOfPcktOutTx == "")}'>
+											<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+										</s:if>
+										</td>
+									</s:iterator>
+								</tr>
+
+								<%-- PCP Copay --%>
+								<%-- <tr class="costSharingOverview" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.pcpCopay.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:20px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.pcpCopay" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.csrPcpCopayInTx != null &&
+																	#tDisplayPlan.csrPcpCopayInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.csrPcpCopayInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.csrPcpCopayOutTx != null &&
+																	#tDisplayPlan.csrPcpCopayOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.csrPcpCopayOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.csrPcpCopayInTx == null || #tDisplayPlan.csrPcpCopayInTx == "")
+																	&& (#tDisplayPlan.csrPcpCopayOutTx == null || #tDisplayPlan.csrPcpCopayOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr> --%>
+
+								<%-- Specialist Copay --%>
+								<tr class="costSharingOverview">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.specialistCopay.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+												data-placement="right"
+												style="float: left; margin-top: 5px; margin-bottom: 10px; margin-left: 0px; margin-right: 10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.specialistCopay" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14halfhighlight" style="text-align: center">
+											</s:else>
+										</s:if>
+										<s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align: center">
+											</s:if>
+											<s:else>
+												<td class="font14half" style="text-align: center">
+											</s:else>
+										</s:else>
+										<s:if
+											test='%{#tDisplayPlan.csrSplstCopayInTx != null &&
+																	#tDisplayPlan.csrSplstCopayInTx != ""}'>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.csrSplstCopayInTx" />
+										</s:if>
+										<s:if
+											test='%{#tDisplayPlan.csrSplstCopayOutTx != null &&
+																	#tDisplayPlan.csrSplstCopayOutTx != ""}'>
+											<br>
+											<br>
+											<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+											<s:property value="#tDisplayPlan.csrSplstCopayOutTx" />
+										</s:if>
+										<s:if
+											test='%{(#tDisplayPlan.csrSplstCopayInTx == null || #tDisplayPlan.csrSplstCopayInTx == "")
+																	&& (#tDisplayPlan.csrSplstCopayOutTx == null || #tDisplayPlan.csrSplstCopayOutTx == "")}'>
+											<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+										</s:if>
+										</td>
+									</s:iterator>
+								</tr>
+							</tbody>
+						</s:else>
+
+					</table>
+					<%--
+  _____  _    ___     _______ _____ _____ _____          _   _        _____ ______ _______      _______ _____ ______  _____
+ |  __ \| |  | \ \   / / ____|_   _/ ____|_   _|   /\   | \ | |      / ____|  ____|  __ \ \    / /_   _/ ____|  ____|/ ____|
+ | |__) | |__| |\ \_/ / (___   | || |      | |    /  \  |  \| |     | (___ | |__  | |__) \ \  / /  | || |    | |__  | (___
+ |  ___/|  __  | \   / \___ \  | || |      | |   / /\ \ | . ` |      \___ \|  __| |  _  / \ \/ /   | || |    |  __|  \___ \
+ | |    | |  | |  | |  ____) |_| || |____ _| |_ / ____ \| |\  |      ____) | |____| | \ \  \  /   _| || |____| |____ ____) |
+ |_|    |_|  |_|  |_| |_____/|_____\_____|_____/_/    \_\_| \_|     |_____/|______|_|  \_\  \/   |_____\_____|______|_____/
+                             --%>
+					<table class="standardtable even-odd-table compare-subsection" style="width: 97%; margin-left: 30px;"
+						summary='<s:text name="Each row compares cost differences between different insurance plans for specific types of services such as immunizations or prenatal care." />'>
+						<caption class="">
+							<!-- <img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="physicianServices-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="physicianServices-expand"
+										style="float:left" alt="Click To Expand"> -->
+							<strong>&nbsp; <s:text name="txt.hix.enrollment.plancompare.label.rowtitle.physicianServices" /> <s:text
+									name="txt.hix.enrollment.plancompare.memberpays" />
+							</strong>
+						</caption>
+						<tbody>
+							<%-- Preventive Care --%>
+							<tr class="physicianServices">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.preventiveCare.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 45px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.preventiveCare" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if
+										test='%{#tDisplayPlan.psPrvntvCareImmnInTx != null &&
+																	#tDisplayPlan.psPrvntvCareImmnInTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.psPrvntvCareImmnInTx" />
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.psPrvntvCareImmnOutTx != null &&
+																	#tDisplayPlan.psPrvntvCareImmnOutTx != ""}'>
+										<br>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.psPrvntvCareImmnOutTx" />
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.psPrvntvCareImmnInTx == null || #tDisplayPlan.psPrvntvCareImmnInTx == "")
+																	&& (#tDisplayPlan.psPrvntvCareImmnOutTx == null || #tDisplayPlan.psPrvntvCareImmnOutTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Primary Care Visit --%>
+							<tr class="physicianServices">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.primaryCareVisit.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 40px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.primaryCareVisit" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if test='%{#tDisplayPlan.csrPcpCopayInTx != null &&
+																	#tDisplayPlan.csrPcpCopayInTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.csrPcpCopayInTx" />
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.csrPcpCopayOutTx != null &&
+																	#tDisplayPlan.csrPcpCopayOutTx != ""}'>
+										<br>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.csrPcpCopayOutTx" />
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.csrPcpCopayInTx == null || #tDisplayPlan.csrPcpCopayInTx == "")
+																	&& (#tDisplayPlan.csrPcpCopayOutTx == null || #tDisplayPlan.csrPcpCopayOutTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Specialist Visit --%>
+							<tr class="physicianServices">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.specialistVisit.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 0px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.specialistVisit" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if
+										test='%{#tDisplayPlan.csrSplstCopayInTx != null &&
+																	#tDisplayPlan.csrSplstCopayInTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.csrSplstCopayInTx" />
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.csrSplstCopayOutTx != null &&
+																	#tDisplayPlan.csrSplstCopayOutTx != ""}'>
+										<br>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.csrSplstCopayOutTx" />
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.csrSplstCopayInTx == null || #tDisplayPlan.csrSplstCopayInTx == "")
+																	&& (#tDisplayPlan.csrSplstCopayOutTx == null || #tDisplayPlan.csrSplstCopayOutTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Prenatal and Postnatal Care --%>
+							<%-- <tr class="physicianServices" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.prenatalAndPostnatalCare.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:15px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.prenatalAndPostnatalCare" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.prntlPostntlInTx != null &&
+																	#tDisplayPlan.prntlPostntlInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.prntlPostntlInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.prntlPostntlOutTx != null &&
+																	#tDisplayPlan.prntlPostntlOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.prntlPostntlOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.prntlPostntlInTx == null || #tDisplayPlan.prntlPostntlInTx == "")
+																	&& (#tDisplayPlan.prntlPostntlOutTx == null || #tDisplayPlan.prntlPostntlOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr> --%>
+							<tr></tr>
+						</tbody>
+					</table>
+					<%--
+  _____  _____  ______  _____  _____ _____  _____ _____ _______ _____ ____  _   _      _____  _____  _    _  _____  _____
+ |  __ \|  __ \|  ____|/ ____|/ ____|  __ \|_   _|  __ \__   __|_   _/ __ \| \ | |    |  __ \|  __ \| |  | |/ ____|/ ____|
+ | |__) | |__) | |__  | (___ | |    | |__) | | | | |__) | | |    | || |  | |  \| |    | |  | | |__) | |  | | |  __| (___
+ |  ___/|  _  /|  __|  \___ \| |    |  _  /  | | |  ___/  | |    | || |  | | . ` |    | |  | |  _  /| |  | | | |_ |\___ \
+ | |    | | \ \| |____ ____) | |____| | \ \ _| |_| |      | |   _| || |__| | |\  |    | |__| | | \ \| |__| | |__| |____) |
+ |_|    |_|  \_\______|_____/ \_____|_|  \_\_____|_|      |_|  |_____\____/|_| \_|    |_____/|_|  \_\\____/ \_____|_____/
+
+--%>
+					<%-- PRESCRIPTION DRUGS - 1 MONTH --%>
+					<table class="standardtable even-odd-table compare-subsection" style="width: 97%; margin-left: 30px;"
+						summary='<s:text name="The first row shows cost differences between different insurance plans for a 1 Month Supply from a Participating Retail Pharmacy. The second row allows you to search for more information about specific medications." />'>
+						<caption class="">
+							<!-- <img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="prescriptionDrugs1Mo-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="prescriptionDrugs1Mo-expand"
+										style="float:left" alt="Click To Expand"> -->
+							<strong>&nbsp; <s:text name="txt.hix.enrollment.plancompare.label.rowtitle.prescriptionDrugs1Mo" /> <s:text
+									name="txt.hix.enrollment.plancompare.memberpays" />
+							</strong>
+						</caption>
+						<tbody>
+
+
+
+
+							<%-- Prescription Drug Deductible --%>
+							<tr class="costSharingOverview">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.prescriptionDrugDeductible.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 25px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.prescriptionDrugDeductible" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<%-- Individual --%>
+									<u><s:text name="txt.hix.enrollment.plancompare.label.individual" /></u>
+									<br>
+									<s:if
+										test='%{#tDisplayPlan.csrPrescDrgDdbleInTx != null &&
+																	#tDisplayPlan.csrPrescDrgDdbleInTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.csrPrescDrgDdbleInTx" />
+										<br>
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.csrPrescDrgDdbleOutTx != null &&
+																	#tDisplayPlan.csrPrescDrgDdbleOutTx != ""}'>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.csrPrescDrgDdbleOutTx" />
+										<br>
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.csrPrescDrgDdbleInTx == null || #tDisplayPlan.csrPrescDrgDdbleInTx == "")
+																	&& (#tDisplayPlan.csrPrescDrgDdbleOutTx == null || #tDisplayPlan.csrPrescDrgDdbleOutTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+
+									<%-- Family --%>
+									<s:if
+										test='(%{#tDisplayPlan.csrPrescDrgDdbleFmyInTx != null &&
+																	#tDisplayPlan.csrPrescDrgDdbleFmyInTx != ""}) || (%{#tDisplayPlan.csrPrescDrgDdbleFmlyOutTx != null &&
+																	#tDisplayPlan.csrPrescDrgDdbleFmlyOutTx != ""}) || (%{(#tDisplayPlan.csrPrescDrgDdbleFmyInTx == null || #tDisplayPlan.csrPrescDrgDdbleFmyInTx == "")
+																	&& (#tDisplayPlan.csrPrescDrgDdbleFmlyOutTx == null || #tDisplayPlan.csrPrescDrgDdbleFmlyOutTx == "")})'>
+										<br>
+										<br>
+										<u><s:text name="txt.hix.enrollment.plancompare.label.family" /></u>
+										<br>
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.csrPrescDrgDdbleFmyInTx != null &&
+																	#tDisplayPlan.csrPrescDrgDdbleFmyInTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.csrPrescDrgDdbleFmyInTx" />
+										<br>
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.csrPrescDrgDdbleFmlyOutTx != null &&
+																	#tDisplayPlan.csrPrescDrgDdbleFmlyOutTx != ""}'>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.csrPrescDrgDdbleFmlyOutTx" />
+										<br>
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.csrPrescDrgDdbleFmyInTx == null || #tDisplayPlan.csrPrescDrgDdbleFmyInTx == "")
+																	&& (#tDisplayPlan.csrPrescDrgDdbleFmlyOutTx == null || #tDisplayPlan.csrPrescDrgDdbleFmlyOutTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Prescription Drug Maximum --%>
+							<tr class="costSharingOverview">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.prescriptionDrugMaximum.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 45px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.prescriptionDrugMaximum" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<%-- Individual --%>
+									<u><s:text name="txt.hix.enrollment.plancompare.label.individual" /></u>
+									<br>
+									<s:if
+										test='%{#tDisplayPlan.csrPresDrgOutOfPcktInTx != null &&
+																	#tDisplayPlan.csrPresDrgOutOfPcktInTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.csrPresDrgOutOfPcktInTx" />
+										<br>
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.csrPresDrgOutOfPcktOutTx != null &&
+																	#tDisplayPlan.csrPresDrgOutOfPcktOutTx != ""}'>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.csrPresDrgOutOfPcktOutTx" />
+										<br>
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.csrPresDrgOutOfPcktInTx == null || #tDisplayPlan.csrPresDrgOutOfPcktInTx == "")
+																	&& (#tDisplayPlan.csrPresDrgOutOfPcktOutTx == null || #tDisplayPlan.csrPresDrgOutOfPcktOutTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+
+									<%-- Family --%>
+									<s:if
+										test='(%{#tDisplayPlan.csrPresDrgOutOfPcktFmlyInTx != null &&
+																	#tDisplayPlan.csrPresDrgOutOfPcktFmlyInTx != ""}) || (%{#tDisplayPlan.csrPresDrgOutOfPcktFmlyOutTx != null &&
+																	#tDisplayPlan.csrPresDrgOutOfPcktFmlyOutTx != ""} || (%{(#tDisplayPlan.csrPresDrgOutOfPcktFmlyInTx == null || #tDisplayPlan.csrPresDrgOutOfPcktFmlyInTx == "")
+																	&& (#tDisplayPlan.csrPresDrgOutOfPcktFmlyOutTx == null || #tDisplayPlan.csrPresDrgOutOfPcktFmlyOutTx == ""))) '>
+										<br>
+										<br>
+										<u><s:text name="txt.hix.enrollment.plancompare.label.family" /></u>
+										<br>
+
+									</s:if>
+
+									<%-- <br>
+									<br>
+									<u><s:text name="txt.hix.enrollment.plancompare.label.family" /></u>
+									<br> --%>
+									<s:if
+										test='%{#tDisplayPlan.csrPresDrgOutOfPcktFmlyInTx != null &&
+																	#tDisplayPlan.csrPresDrgOutOfPcktFmlyInTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.csrPresDrgOutOfPcktFmlyInTx" />
+										<br>
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.csrPresDrgOutOfPcktFmlyOutTx != null &&
+																	#tDisplayPlan.csrPresDrgOutOfPcktFmlyOutTx != ""}'>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.csrPresDrgOutOfPcktFmlyOutTx" />
+										<br>
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.csrPresDrgOutOfPcktFmlyInTx == null || #tDisplayPlan.csrPresDrgOutOfPcktFmlyInTx == "")
+																	&& (#tDisplayPlan.csrPresDrgOutOfPcktFmlyOutTx == null || #tDisplayPlan.csrPresDrgOutOfPcktFmlyOutTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Retail Drugs --%>
+							<tr class="prescriptionDrugs1Mo">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.retailDrugs.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 45px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.retailDrugs" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<%-- Preferred Generic --%>
+									<s:if
+										test='%{#tDisplayPlan.prfrrdGnrcDrgInTx != null &&
+																	#tDisplayPlan.prfrrdGnrcDrgInTx != ""}'>
+										<div class="tier-fixed-height">
+											<span class="underline"><s:text name="txt.hix.enrollment.plancompare.tier.one" /></span> <br />
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.prfrrdGnrcDrgInTx" />
+											<br>
+											<s:if
+												test='%{#tDisplayPlan.prfrrdGnrcDrgOutTx != null &&
+																		#tDisplayPlan.prfrrdGnrcDrgOutTx != ""}'>
+												<br>
+												<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+												<s:property value="#tDisplayPlan.prfrrdGnrcDrgOutTx" />
+												<br>
+											</s:if>
+											<s:if
+												test='%{#tDisplayPlan.prfrrdGnrcDrgLmtTx != null &&
+																		#tDisplayPlan.prfrrdGnrcDrgLmtTx != ""}'>
+												<br>
+												<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+												<s:property value="#tDisplayPlan.prfrrdGnrcDrgLmtTx" />
+												<br>
+											</s:if>
+											<br> <br>
+										</div>
+									</s:if>
+									<%-- NonPreferred Generic --%>
+									<s:if
+										test='%{#tDisplayPlan.nonPrfrrdGnrcDrgInTx != null &&
+																	#tDisplayPlan.nonPrfrrdGnrcDrgInTx != ""}'>
+										<div class="tier-fixed-height">
+											<span class="underline"><s:text name="txt.hix.enrollment.plancompare.tier.two" /></span> <br>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.nonPrfrrdGnrcDrgInTx" />
+											<br>
+											<s:if
+												test='%{#tDisplayPlan.nonPrfrrdGnrcDrgOutTx != null &&
+																		#tDisplayPlan.nonPrfrrdGnrcDrgOutTx != ""}'>
+												<br>
+												<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+												<s:property value="#tDisplayPlan.nonPrfrrdGnrcDrgOutTx" />
+												<br>
+											</s:if>
+											<s:if
+												test='%{#tDisplayPlan.nonPrfrrdGnrcDrgLmtTx != null &&
+																		#tDisplayPlan.nonPrfrrdGnrcDrgLmtTx != ""}'>
+												<br>
+												<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+												<s:property value="#tDisplayPlan.nonPrfrrdGnrcDrgLmtTx" />
+												<br>
+											</s:if>
+											<br> <br>
+										</div>
+									</s:if>
+									<%-- Preferred Brand --%>
+									<s:if
+										test='%{#tDisplayPlan.prfrrdBrandDrgInTx != null &&
+																	#tDisplayPlan.prfrrdBrandDrgInTx != ""}'>
+										<div class="tier-fixed-height">
+											<s:if
+												test='%{#tDisplayPlan.nonPrfrrdGnrcDrgInTx != null &&
+																	#tDisplayPlan.nonPrfrrdGnrcDrgInTx != ""}'>
+												<span class="underline"><s:text name="txt.hix.enrollment.plancompare.tier.three" /></span>
+												<br>
+											</s:if>
+											<s:else>
+												<span class="underline"><s:text name="txt.hix.enrollment.plancompare.tier.two" /></span>
+												<br>
+											</s:else>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.prfrrdBrandDrgInTx" />
+											<br>
+											<s:if
+												test='%{#tDisplayPlan.prfrrdBrandDrgOutTx != null &&
+																		#tDisplayPlan.prfrrdBrandDrgOutTx !=  ""}'>
+												<br>
+												<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+												<s:property value="#tDisplayPlan.prfrrdBrandDrgOutTx" />
+												<br>
+											</s:if>
+											<s:if
+												test='%{#tDisplayPlan.prfrrdBrandDrgLmtTx != null &&
+																		#tDisplayPlan.prfrrdBrandDrgLmtTx != ""}'>
+												<br>
+												<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+												<s:property value="#tDisplayPlan.prfrrdBrandDrgLmtTx" />
+												<br>
+											</s:if>
+											<br> <br>
+										</div>
+									</s:if>
+									<%-- NonPreferred Brand --%>
+									<s:if
+										test='%{#tDisplayPlan.nonPrfrrdBrandDrgInTx != null &&
+																	#tDisplayPlan.nonPrfrrdBrandDrgInTx != ""}'>
+										<div class="tier-fixed-height">
+											<s:if
+												test='%{#tDisplayPlan.nonPrfrrdGnrcDrgInTx != null &&
+																	#tDisplayPlan.nonPrfrrdGnrcDrgInTx != ""}'>
+												<span class="underline"><s:text name="txt.hix.enrollment.plancompare.tier.four" /></span>
+												<br>
+											</s:if>
+											<s:else>
+												<span class="underline"><s:text name="txt.hix.enrollment.plancompare.tier.three" /></span>
+												<br>
+											</s:else>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.nonPrfrrdBrandDrgInTx" />
+											<br>
+											<s:if
+												test='%{#tDisplayPlan.nonPrfrrdBrandDrgOutTx != null &&
+																		#tDisplayPlan.nonPrfrrdBrandDrgOutTx != ""}'>
+												<br>
+												<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+												<s:property value="#tDisplayPlan.nonPrfrrdBrandDrgOutTx" />
+												<br>
+											</s:if>
+											<s:if
+												test='%{#tDisplayPlan.nonPrfrrdBrandDrgLmtTx != null &&
+																		#tDisplayPlan.nonPrfrrdBrandDrgLmtTx != ""}'>
+												<br>
+												<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+												<s:property value="#tDisplayPlan.nonPrfrrdBrandDrgLmtTx" />
+												<br>
+											</s:if>
+											<br> <br>
+										</div>
+									</s:if>
+									<%-- Specialty --%>
+									<s:if test='%{#tDisplayPlan.spcltyDrgInTx != null &&
+																	#tDisplayPlan.spcltyDrgInTx != ""}'>
+										<div class="tier-fixed-height">
+											<s:if
+												test='%{#tDisplayPlan.nonPrfrrdGnrcDrgInTx != null &&
+																	#tDisplayPlan.nonPrfrrdGnrcDrgInTx != ""}'>
+												<span class="underline"><s:text name="txt.hix.enrollment.plancompare.tier.five" /></span>
+												<br>
+											</s:if>
+											<s:else>
+												<span class="underline"><s:text name="txt.hix.enrollment.plancompare.tier.four" /></span>
+												<br>
+											</s:else>
+											<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+											<s:property value="#tDisplayPlan.spcltyDrgInTx" />
+											<br>
+											<s:if test='%{#tDisplayPlan.spcltyDrgOutTx != null &&
+																		#tDisplayPlan.spcltyDrgOutTx != ""}'>
+												<br>
+												<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+												<s:property value="#tDisplayPlan.spcltyDrgOutTx" />
+												<br>
+											</s:if>
+											<s:if test='%{#tDisplayPlan.spcltyDrgLmtTx != null &&
+																		#tDisplayPlan.spcltyDrgLmtTx != ""}'>
+												<br>
+												<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+												<s:property value="#tDisplayPlan.spcltyDrgLmtTx" />
+												<br>
+											</s:if>
+										</div>
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Search Prescription Drugs --%>
+							<tr class="prescriptionDrugs1Mo">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.prescriptionDrug.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 45px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.prescriptionDrug" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<a id='urlTest2<s:property value="%{#comparePlansListIndex.index}"/>' class="toAppendHTTP"
+										onclick='setWebsite("urlTest2<s:property value="%{#comparePlansListIndex.index}"/>"); return false;'
+										href="<s:property value='#tDisplayPlan.prescDrgFrmlryUrlTx'/>"> <s:text
+											name="txt.hix.enrollment.plancompare.link.panel-2.searchPrescriptionDrugs" />
+									</a>
+									</td>
+								</s:iterator>
+							</tr>
+							<tr></tr>
+						</tbody>
+					</table>
+
+					<%--
+  _    _ _____   _____ ______ _   _ _______       __   ______ __  __ ______ _____   _____ ______ _   _  _______     __     _____          _____  ______
+ | |  | |  __ \ / ____|  ____| \ | |__   __|     / /  |  ____|  \/  |  ____|  __ \ / ____|  ____| \ | |/ ____\ \   / /    / ____|   /\   |  __ \|  ____|
+ | |  | | |__) | |  __| |__  |  \| |  | |       / /   | |__  | \  / | |__  | |__) | |  __| |__  |  \| | |     \ \_/ /    | |       /  \  | |__) | |__
+ | |  | |  _  /| | |_ |  __| | . ` |  | |      / /    |  __| | |\/| |  __| |  _  /| | |_ |  __| | . ` | |      \   /     | |      / /\ \ |  _  /|  __|
+ | |__| | | \ \| |__| | |____| |\  |  | |     / /     | |____| |  | | |____| | \ \| |__| | |____| |\  | |____   | |      | |____ / ____ \| | \ \| |____
+  \____/|_|  \_\\_____|______|_| \_|  |_|    /_/      |______|_|  |_|______|_|  \_\\_____|______|_| \_|\_____|  |_|       \_____/_/    \_\_|  \_\______|
+
+--%>
+					<%-- URGENT AND EMERGENCY CARE --%>
+					<%-- <table class="standardtable even-odd-table compare-subsection" summary='<s:text name="Each row shows cost differences between insurance plans for specific types of urgent or emergency care services." />'>
+							<caption  class="">
+								<!-- <img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="urgentAndEmergencyCare-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="urgentAndEmergencyCare-expand"
+										style="float:left" alt="Click To Expand"> -->
+								<strong>&nbsp;
+									<s:text name="txt.hix.enrollment.plancompare.label.rowtitle.urgentAndEmergencyCare" /><s:text name="txt.hix.enrollment.plancompare.memberpays" />
+								</strong>
+							</caption>
+							<tbody>
+								Urgent Care Centers
+								<tr class="urgentAndEmergencyCare" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.urgentCareCenters.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:25px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.urgentCareCenters" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.urgntCareFacilityInTx != null &&
+																	#tDisplayPlan.urgntCareFacilityInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.urgntCareFacilityInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.urgntCareFacilityOutTx != null &&
+																	#tDisplayPlan.urgntCareFacilityOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.urgntCareFacilityOutTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.urgntCareFacilityLmtTx != null &&
+																		#tDisplayPlan.urgntCareFacilityLmtTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+														<s:property value="#tDisplayPlan.urgntCareFacilityLmtTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.urgntCareFacilityInTx == null || #tDisplayPlan.urgntCareFacilityInTx == "")
+																	&& (#tDisplayPlan.urgntCareFacilityOutTx == null || #tDisplayPlan.urgntCareFacilityOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+
+								Emergency Room Services
+								<tr class="urgentAndEmergencyCare" >
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.emergencyRoomServices.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:20px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.emergencyRoomServices" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.emrgncyRmSrvceInTx != null &&
+																	#tDisplayPlan.emrgncyRmSrvceInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.emrgncyRmSrvceInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.emrgncyRmSrvceOutTx != null &&
+																	#tDisplayPlan.emrgncyRmSrvceOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.emrgncyRmSrvceOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.emrgncyRmSrvceInTx == null || #tDisplayPlan.emrgncyRmSrvceInTx == "")
+																	&& (#tDisplayPlan.emrgncyRmSrvceOutTx == null || #tDisplayPlan.emrgncyRmSrvceOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+
+								Emergency Transportation
+								<tr class="urgentAndEmergencyCare" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.emergencyTransportation.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:20px;margin-left:0px;margin-right:6px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.emergencyTransportation" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.emrgncyTrnsprtInTx != null &&
+																	#tDisplayPlan.emrgncyTrnsprtInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.emrgncyTrnsprtInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.emrgncyTrnsprtOutTx != null &&
+																	#tDisplayPlan.emrgncyTrnsprtOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.emrgncyTrnsprtOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.emrgncyTrnsprtInTx == null || #tDisplayPlan.emrgncyTrnsprtInTx == "")
+																	&& (#tDisplayPlan.emrgncyTrnsprtOutTx == null || #tDisplayPlan.emrgncyTrnsprtOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+                            </tbody>
+                        </table> --%>
+					<%--
+  _    _  ____   _____ _____ _____ _______       _             _____ ______ _______      _______ _____ ______  _____
+ | |  | |/ __ \ / ____|  __ \_   _|__   __|/\   | |           / ____|  ____|  __ \ \    / /_   _/ ____|  ____|/ ____|
+ | |__| | |  | | (___ | |__) || |    | |  /  \  | |          | (___ | |__  | |__) \ \  / /  | || |    | |__  | (___
+ |  __  | |  | |\___ \|  ___/ | |    | | / /\ \ | |           \___ \|  __| |  _  / \ \/ /   | || |    |  __|  \___ \
+ | |  | | |__| |____) | |    _| |_   | |/ ____ \| |____       ____) | |____| | \ \  \  /   _| || |____| |____ ____) |
+ |_|  |_|\____/|_____/|_|   |_____|  |_/_/    \_\______|     |_____/|______|_|  \_\  \/   |_____\_____|______|_____/
+
+--%>
+					<%-- HOSPITAL SERVICES --%>
+
+					<table class="standardtable even-odd-table compare-subsection" style="width: 97%; margin-left: 30px;"
+						summary='<s:text name="Each row shows cost differences between insurance plans for specific types of hospital services." />'>
+						<caption class="">
+							<!-- <img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="hospitalServices-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="hospitalServices-expand"
+										style="float:left" alt="Click To Expand"> -->
+							<strong>&nbsp; <%-- <s:text name="txt.hix.enrollment.plancompare.label.rowtitle.hospitalServices" /> --%>
+								<!-- Emergency Care and Hospital Services --> <s:text
+									name="txt.hix.enrollment.plancompare.label.rowtitle.hospitalServices.new" /> <s:text
+									name="txt.hix.enrollment.plancompare.memberpays" />
+							</strong>
+						</caption>
+						<tbody>
+
+							<%-- Emergency Room Services --%>
+							<tr class="urgentAndEmergencyCare">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.emergencyRoomServices.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 20px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.emergencyRoomServices" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if
+										test='%{#tDisplayPlan.emrgncyRmSrvceInTx != null &&
+																	#tDisplayPlan.emrgncyRmSrvceInTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.emrgncyRmSrvceInTx" />
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.emrgncyRmSrvceOutTx != null &&
+																	#tDisplayPlan.emrgncyRmSrvceOutTx != ""}'>
+										<br>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.emrgncyRmSrvceOutTx" />
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.emrgncyRmSrvceInTx == null || #tDisplayPlan.emrgncyRmSrvceInTx == "")
+																	&& (#tDisplayPlan.emrgncyRmSrvceOutTx == null || #tDisplayPlan.emrgncyRmSrvceOutTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+							<%-- Inpatient Hospital Services --%>
+							<tr class="hospitalServices">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.inpatientHospitalServices.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 25px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.inpatientHospitalServices" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if
+										test='%{#tDisplayPlan.inPntHospSrvcsInTx != null &&
+																	#tDisplayPlan.inPntHospSrvcsInTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.inPntHospSrvcsInTx" />
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.inPntHospSrvcsOutTx != null &&
+																	#tDisplayPlan.inPntHospSrvcsOutTx != ""}'>
+										<br>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.inPntHospSrvcsOutTx" />
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.inPntHospSrvcsInTx == null || #tDisplayPlan.inPntHospSrvcsInTx == "")
+																	&& (#tDisplayPlan.inPntHospSrvcsOutTx == null || #tDisplayPlan.inPntHospSrvcsOutTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Maternity and Newborn Inpatient Care --%>
+							<%-- <tr class="hospitalServices" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.maternityAndNewbornInpatientCare.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left; margin-top:5px;margin-bottom:30px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.maternityAndNewbornInpatientCare" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.mtrntyNewBornSrvcInTx != null &&
+																	#tDisplayPlan.mtrntyNewBornSrvcInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.mtrntyNewBornSrvcInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.mtrntyNewBornSrvcOutTx != null &&
+																	#tDisplayPlan.mtrntyNewBornSrvcOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.mtrntyNewBornSrvcOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.mtrntyNewBornSrvcInTx == null || #tDisplayPlan.mtrntyNewBornSrvcInTx == "")
+																	&& (#tDisplayPlan.mtrntyNewBornSrvcOutTx == null || #tDisplayPlan.mtrntyNewBornSrvcOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr> --%>
+
+							<%-- Skilled Nursing Facility --%>
+							<%-- <tr class="hospitalServices" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.skilledNursingFacility.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:20px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.skilledNursingFacility" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.skilledNrsngSrvcInTx != null &&
+																	#tDisplayPlan.skilledNrsngSrvcInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.skilledNrsngSrvcInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.skilledNrsngSrvcOutTx != null &&
+																	#tDisplayPlan.skilledNrsngSrvcOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.skilledNrsngSrvcOutTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.skilledNrsngSrvcLmtTx != null &&
+																		#tDisplayPlan.skilledNrsngSrvcLmtTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+														<s:property value="#tDisplayPlan.skilledNrsngSrvcLmtTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.skilledNrsngSrvcInTx == null || #tDisplayPlan.skilledNrsngSrvcInTx == "")
+																	&& (#tDisplayPlan.skilledNrsngSrvcOutTx == null || #tDisplayPlan.skilledNrsngSrvcOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr> --%>
+						</tbody>
+					</table>
+
+					<%--
+   ____  _    _ _______ _____     _______ _____ ______ _   _ _______        _____ ______ _______      _______ _____ ______  _____
+  / __ \| |  | |__   __|  __ \ /\|__   __|_   _|  ____| \ | |__   __|      / ____|  ____|  __ \ \    / /_   _/ ____|  ____|/ ____|
+ | |  | | |  | |  | |  | |__) /  \  | |    | | | |__  |  \| |  | |        | (___ | |__  | |__) \ \  / /  | || |    | |__  | (___
+ | |  | | |  | |  | |  |  ___/ /\ \ | |    | | |  __| | . ` |  | |         \___ \|  __| |  _  / \ \/ /   | || |    |  __|  \___ \
+ | |__| | |__| |  | |  | |  / ____ \| |   _| |_| |____| |\  |  | |         ____) | |____| | \ \  \  /   _| || |____| |____ ____) |
+  \____/ \____/   |_|  |_| /_/    \_\_|  |_____|______|_| \_|  |_|        |_____/|______|_|  \_\  \/   |_____\_____|______|_____/
+--%>
+
+					<%-- OUTPATIENT SERVICES --%>
+					<%--  <table class="standardtable even-odd-table compare-subsection" summary='<s:text name="Each row shows cost differences between insurance plans for specific types of outpatient services." />'>
+							<caption onclick="toggle('outpatientServices')" class="">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="outpatientServices-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="outpatientServices-expand"
+										style="float:left" alt="Click To Expand">
+								<strong>&nbsp;
+									<s:text name="txt.hix.enrollment.plancompare.label.rowtitle.outpatientServices" /><s:text name="txt.hix.enrollment.plancompare.memberpays" />
+								</strong>
+							</caption>
+							<tbody>
+								Outpatient Facility
+								<tr class="outpatientServices" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.outpatientFacility.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:10px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.outpatientFacility" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.outPatientSrvcInTx != null &&
+																	#tDisplayPlan.outPatientSrvcInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.outPatientSrvcInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.outPatientSrvcOutTx != null &&
+																	#tDisplayPlan.outPatientSrvcOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.outPatientSrvcOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.outPatientSrvcInTx == null || #tDisplayPlan.outPatientSrvcInTx == "")
+																	&& (#tDisplayPlan.outPatientSrvcOutTx == null || #tDisplayPlan.outPatientSrvcOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+
+								Home Health Care Services
+								<tr class="outpatientServices" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.homeHealthCareServices.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:15px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.homeHealthCareServices" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+
+													<s:if test='%{#tDisplayPlan.homeHlthCareSrvcInTx != null &&
+																	#tDisplayPlan.homeHlthCareSrvcInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.homeHlthCareSrvcInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.homeHlthCareSrvcOutTx != null &&
+																	#tDisplayPlan.homeHlthCareSrvcOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.homeHlthCareSrvcOutTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.homeHlthCareSrvcLmtTx != null &&
+																		#tDisplayPlan.homeHlthCareSrvcLmtTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+														<s:property value="#tDisplayPlan.homeHlthCareSrvcLmtTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.homeHlthCareSrvcInTx == null || #tDisplayPlan.homeHlthCareSrvcInTx == "")
+																	&& (#tDisplayPlan.homeHlthCareSrvcOutTx == null || #tDisplayPlan.homeHlthCareSrvcOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+
+								Advanced Imaging
+								<tr class="outpatientServices" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.advancedImaging.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:10px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.advancedImaging" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.advImagingSrvcInTx != null &&
+																	#tDisplayPlan.advImagingSrvcInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.advImagingSrvcInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.advImagingSrvcOutTx != null &&
+																	#tDisplayPlan.advImagingSrvcOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.advImagingSrvcOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.advImagingSrvcInTx == null || #tDisplayPlan.advImagingSrvcInTx == "")
+																	&& (#tDisplayPlan.advImagingSrvcOutTx == null || #tDisplayPlan.advImagingSrvcOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+
+								Xrays and Diagnostic Imaging
+								<tr class="outpatientServices" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.xraysAndDiagnosticImaging.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:35px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.xraysAndDiagnosticImaging" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.xrayAndImagingSrvcInTx != null &&
+																	#tDisplayPlan.xrayAndImagingSrvcInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.xrayAndImagingSrvcInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.xrayAndImagingSrvcOutTx != null &&
+																	#tDisplayPlan.xrayAndImagingSrvcOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.xrayAndImagingSrvcOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.xrayAndImagingSrvcInTx == null || #tDisplayPlan.xrayAndImagingSrvcInTx == "")
+																	&& (#tDisplayPlan.xrayAndImagingSrvcOutTx == null || #tDisplayPlan.xrayAndImagingSrvcOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+
+								Laboratory Outpatient
+								<tr class="outpatientServices" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.laboratoryOutpatient.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:35px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.laboratoryOutpatient" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.labOutPatientProfSrvcInTx != null &&
+																	#tDisplayPlan.labOutPatientProfSrvcInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.labOutPatientProfSrvcInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.labOutPatientProfSrvcOutTx != null &&
+																	#tDisplayPlan.labOutPatientProfSrvcOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.labOutPatientProfSrvcOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.labOutPatientProfSrvcInTx == null || #tDisplayPlan.labOutPatientProfSrvcInTx == "")
+																	&& (#tDisplayPlan.labOutPatientProfSrvcOutTx == null || #tDisplayPlan.labOutPatientProfSrvcOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+                            </tbody>
+                        </table> --%>
+					<%--
+  __  __ ______ _   _ _______       _                    ____  ______ _    _     __      _______ ____  _____            _          _    _ ______          _   _______ _    _
+ |  \/  |  ____| \ | |__   __|/\   | |         ___      |  _ \|  ____| |  | |   /\ \    / /_   _/ __ \|  __ \     /\   | |        | |  | |  ____|   /\   | | |__   __| |  | |
+ | \  / | |__  |  \| |  | |  /  \  | |        ( _ )     | |_) | |__  | |__| |  /  \ \  / /  | || |  | | |__) |   /  \  | |        | |__| | |__     /  \  | |    | |  | |__| |
+ | |\/| |  __| | . ` |  | | / /\ \ | |        / _ \/\   |  _ <|  __| |  __  | / /\ \ \/ /   | || |  | |  _  /   / /\ \ | |        |  __  |  __|   / /\ \ | |    | |  |  __  |
+ | |  | | |____| |\  |  | |/ ____ \| |____   | (_>  <   | |_) | |____| |  | |/ ____ \  /   _| || |__| | | \ \  / ____ \| |____    | |  | | |____ / ____ \| |____| |  | |  | |
+ |_|  |_|______|_| \_|  |_/_/    \_\______|   \___/\/   |____/|______|_|  |_/_/    \_\/   |_____\____/|_|  \_\/_/    \_\______|   |_|  |_|______/_/    \_\______|_|  |_|  |_|
+--%>
+					<%-- MENTAL HEALTH, SUBSTANCE ABUSE & BEHAVIORAL HEALTH --%>
+					<%--  <table class="standardtable even-odd-table compare-subsection" summary='<s:text name="Each row shows cost differences between insurance plans for specific types of substance abuse, mental & behavioral health services." />'>
+							<caption onclick="toggle('mentalHealth')" class="">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="mentalHealth-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="mentalHealth-expand"
+										style="float:left" alt="Click To Expand">
+								<strong>&nbsp;
+									<s:text name="txt.hix.enrollment.plancompare.label.rowtitle.mentalHealth" /><s:text name="txt.hix.enrollment.plancompare.memberpays" />
+								</strong>
+							</caption>
+							<tbody>
+								Substance Abuse Inpatient
+								<tr class="mentalHealth" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.substanceAbuseDisorderInpatient.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:70px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.substanceAbuseDisorderInpatient" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.mentalHlthInPatientInTx != null &&
+																	#tDisplayPlan.mentalHlthInPatientInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.mentalHlthInPatientInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.mentalHlthInPatientOutTx != null &&
+																	#tDisplayPlan.mentalHlthInPatientOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.mentalHlthInPatientOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.mentalHlthInPatientInTx == null || #tDisplayPlan.mentalHlthInPatientInTx == "")
+																	&& (#tDisplayPlan.mentalHlthInPatientOutTx == null || #tDisplayPlan.mentalHlthInPatientOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+
+								Substance Abuse Outpatient
+								<tr class="mentalHealth" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.substanceAbuseDisorderOutpatient.help" />' src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right" style="float:left;
+													margin-top:5px;margin-bottom:70px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.substanceAbuseDisorderOutpatient" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.mentalHlthOutPatientInTx != null &&
+																	#tDisplayPlan.mentalHlthOutPatientInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.mentalHlthOutPatientInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.mentalHlthOutPatientOutTx != null &&
+																	#tDisplayPlan.mentalHlthOutPatientOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.mentalHlthOutPatientOutTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.mentalHlthOutPatientInTx == null || #tDisplayPlan.mentalHlthOutPatientInTx == "")
+																	&& (#tDisplayPlan.mentalHlthOutPatientOutTx == null || #tDisplayPlan.mentalHlthOutPatientOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+								<tr></tr>
+                            </tbody>
+                        </table> --%>
+					<%--
+  _____  ______ _    _          ____ _____ _      _____ _______    _______ _______      ________        _____ ______ _______      _______ _____ ______  _____
+ |  __ \|  ____| |  | |   /\   |  _ \_   _| |    |_   _|__   __|/\|__   __|_   _\ \    / /  ____|      / ____|  ____|  __ \ \    / /_   _/ ____|  ____|/ ____|
+ | |__) | |__  | |__| |  /  \  | |_) || | | |      | |    | |  /  \  | |    | |  \ \  / /| |__        | (___ | |__  | |__) \ \  / /  | || |    | |__  | (___
+ |  _  /|  __| |  __  | / /\ \ |  _ < | | | |      | |    | | / /\ \ | |    | |   \ \/ / |  __|        \___ \|  __| |  _  / \ \/ /   | || |    |  __|  \___ \
+ | | \ \| |____| |  | |/ ____ \| |_) || |_| |____ _| |_   | |/ ____ \| |   _| |_   \  /  | |____       ____) | |____| | \ \  \  /   _| || |____| |____ ____) |
+ |_|  \_\______|_|  |_/_/    \_\____/_____|______|_____|  |_/_/    \_\_|  |_____|   \/   |______|     |_____/|______|_|  \_\  \/   |_____\_____|______|_____/
+
+--%>
+					<%-- HABILITATIVE AND REHABILITATIVE SERVICES --%>
+					<%--  <table class="standardtable even-odd-table compare-subsection" summary='<s:text name="Each row shows cost differences between insurance plans for specific types of habilitative and rehabilitative services." />'>
+							<caption onclick="toggle('habilitative')" class="">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="habilitative-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="habilitative-expand"
+										style="float:left" alt="Click To Expand">
+								<strong>&nbsp;
+									<s:text name="txt.hix.enrollment.plancompare.label.rowtitle.habilitativeAndRehabilitativeServices" /><s:text name="txt.hix.enrollment.plancompare.memberpays" />
+								</strong>
+							</caption>
+							<tbody>
+								Outpatient Rehabilitation Services
+								<tr class="habilitative" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.outpatientRehabilitationServices.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:160px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.outpatientRehabilitationServices" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.rehabOutPatientSrvcInTx != null &&
+																	#tDisplayPlan.rehabOutPatientSrvcInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.rehabOutPatientSrvcInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.rehabOutPatientSrvcOutTx != null &&
+																	#tDisplayPlan.rehabOutPatientSrvcOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.rehabOutPatientSrvcOutTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.rehabOutPatientSrvcLmtTx != null &&
+																		#tDisplayPlan.rehabOutPatientSrvcLmtTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+														<s:property value="#tDisplayPlan.rehabOutPatientSrvcLmtTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.rehabOutPatientSrvcInTx == null || #tDisplayPlan.rehabOutPatientSrvcInTx == "")
+																	&& (#tDisplayPlan.rehabOutPatientSrvcOutTx == null || #tDisplayPlan.rehabOutPatientSrvcOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+
+								Chiropractic Care
+								<tr class="habilitative" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.chiropracticCare.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:10px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.chiropracticCare" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.chiropracticSrvcInTx != null &&
+																	#tDisplayPlan.chiropracticSrvcInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.chiropracticSrvcInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.chiropracticSrvcOutTx != null &&
+																	#tDisplayPlan.chiropracticSrvcOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.chiropracticSrvcOutTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.chiropracticSrvcLmtTx != null &&
+																		#tDisplayPlan.chiropracticSrvcLmtTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+														<s:property value="#tDisplayPlan.chiropracticSrvcLmtTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.chiropracticSrvcInTx == null || #tDisplayPlan.chiropracticSrvcInTx == "")
+																	&& (#tDisplayPlan.chiropracticSrvcOutTx == null || #tDisplayPlan.chiropracticSrvcOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+								<tr></tr>
+                            </tbody>
+                        </table> --%>
+					<%--
+  _____  ______ _____ _____       _______ _____  _____ _____       _____          _____  ______
+ |  __ \|  ____|  __ \_   _|   /\|__   __|  __ \|_   _/ ____|     / ____|   /\   |  __ \|  ____|
+ | |__) | |__  | |  | || |    /  \  | |  | |__) | | || |         | |       /  \  | |__) | |__
+ |  ___/|  __| | |  | || |   / /\ \ | |  |  _  /  | || |         | |      / /\ \ |  _  /|  __|
+ | |    | |____| |__| || |_ / ____ \| |  | | \ \ _| || |____     | |____ / ____ \| | \ \| |____
+ |_|    |______|_____/_____/_/    \_\_|  |_|  \_\_____\_____|     \_____/_/    \_\_|  \_\______|
+
+--%>
+					<%-- PEDIATRIC CARE --%>
+					<%--  <table class="standardtable even-odd-table compare-subsection" summary='<s:text name="Each row shows cost differences between insurance plans for specific types of pediatric care services." />'>
+							<caption onclick="toggle('pediatricCare')" class="">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="pediatricCare-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="pediatricCare-expand"
+										style="float:left" alt="Click To Expand">
+								<strong>&nbsp;
+									<s:text name="txt.hix.enrollment.plancompare.label.rowtitle.pediatricCare" /><s:text name="txt.hix.enrollment.plancompare.memberpays" />
+								</strong>
+							</caption>
+							<tbody>
+								Routine Eye Exam For Children
+								<tr class="pediatricCare" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.routineEyeExamForChildren.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:25px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.routineEyeExamForChildren" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.eyeExamInTx != null &&
+																	#tDisplayPlan.eyeExamInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.eyeExamInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.eyeExamOutTx != null &&
+																	#tDisplayPlan.eyeExamOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.eyeExamOutTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.eyeExamLmtTx != null &&
+																		#tDisplayPlan.eyeExamLmtTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+														<s:property value="#tDisplayPlan.eyeExamLmtTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.eyeExamInTx == null || #tDisplayPlan.eyeExamInTx == "")
+																	&& (#tDisplayPlan.eyeExamOutTx == null || #tDisplayPlan.eyeExamOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+
+								Eye Glasses For Children
+								<tr class="pediatricCare" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.eyeGlassesForChildren.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:15px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.eyeGlassesForChildren" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:if test='%{#tDisplayPlan.eyeGlassForChildInTx != null &&
+																	#tDisplayPlan.eyeGlassForChildInTx != ""}'>
+														<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+														<s:property value="#tDisplayPlan.eyeGlassForChildInTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.eyeGlassForChildOutTx != null &&
+																	#tDisplayPlan.eyeGlassForChildOutTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+														<s:property value="#tDisplayPlan.eyeGlassForChildOutTx" />
+													</s:if>
+													<s:if test='%{#tDisplayPlan.eyeGlassForChildLmtTx != null &&
+																		#tDisplayPlan.eyeGlassForChildLmtTx != ""}'>
+														<br><br>
+														<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+														<s:property value="#tDisplayPlan.eyeGlassForChildLmtTx" />
+													</s:if>
+													<s:if test='%{(#tDisplayPlan.eyeGlassForChildInTx == null || #tDisplayPlan.eyeGlassForChildInTx == "")
+																	&& (#tDisplayPlan.eyeGlassForChildOutTx == null || #tDisplayPlan.eyeGlassForChildOutTx == "")}'>
+														<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+													</s:if>
+												</td>
+									</s:iterator>
+								</tr>
+								<tr></tr>
+                            </tbody>
+                        </table> --%>
+
+					<%--
+  _____  ______ _____ _____       _______ _____  _____ _____      _____  ______ _   _ _______       _            _____          _____  ______
+ |  __ \|  ____|  __ \_   _|   /\|__   __|  __ \|_   _/ ____|    |  __ \|  ____| \ | |__   __|/\   | |          / ____|   /\   |  __ \|  ____|
+ | |__) | |__  | |  | || |    /  \  | |  | |__) | | || |         | |  | | |__  |  \| |  | |  /  \  | |         | |       /  \  | |__) | |__
+ |  ___/|  __| | |  | || |   / /\ \ | |  |  _  /  | || |         | |  | |  __| | . ` |  | | / /\ \ | |         | |      / /\ \ |  _  /|  __|
+ | |    | |____| |__| || |_ / ____ \| |  | | \ \ _| || |____     | |__| | |____| |\  |  | |/ ____ \| |____     | |____ / ____ \| | \ \| |____
+ |_|    |______|_____/_____/_/    \_\_|  |_|  \_\_____\_____|    |_____/|______|_| \_|  |_/_/    \_\______|     \_____/_/    \_\_|  \_\______|
+
+--%>
+					<%-- PEDIATRIC DENTAL CARE --%>
+					<table class="standardtable even-odd-table compare-subsection" style="width: 97%; margin-left: 30px;"
+						summary='<s:text name="Each row shows cost differences between insurance plans for specific types of pediatric dental care services." />'>
+						<caption class="">
+							<!-- <img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="pediatricDental-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="pediatricDental-expand"
+										style="float:left" alt="Click To Expand"> -->
+							<strong>&nbsp; <s:text name="txt.hix.enrollment.plancompare.label.rowtitle.pediatricDentalCare" /> <s:text
+									name="txt.hix.enrollment.plancompare.memberpays" />
+							</strong>
+						</caption>
+						<tbody>
+							<%-- Diagnostic & Preventive --%>
+							<tr class="pediatricDental">
+								<th scope="row">
+									<div class="tooltip-image">
+										<%-- <img src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="Tooltip" style="float:left;
+													margin-top:5px;margin-bottom:55px;margin-left:0px;margin-right:10px;"> --%>
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.dentalDiagnostic" />
+									</div>
+								</th>
+								<%-- <s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:text name="txt.hix.enrollment.plancompare.coverageIncluded" />
+													<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+												</td>
+									</s:iterator> --%>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if
+										test='%{#tDisplayPlan.childDntlChkupInNetCopCoinsTx != null &&
+																	#tDisplayPlan.childDntlChkupInNetCopCoinsTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.childDntlChkupInNetCopCoinsTx" />
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.childDntlChkupOutNetCopCoinsTx != null &&
+																	#tDisplayPlan.childDntlChkupOutNetCopCoinsTx != ""}'>
+										<br>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.childDntlChkupOutNetCopCoinsTx" />
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.childDntlChkupInNetCopCoinsTx == null || #tDisplayPlan.childDntlChkupInNetCopCoinsTx == "")
+																	&& (#tDisplayPlan.childDntlChkupOutNetCopCoinsTx == null || #tDisplayPlan.childDntlChkupOutNetCopCoinsTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Basic Restorative --%>
+							<tr class="pediatricDental">
+								<th scope="row">
+									<div class="tooltip-image">
+										<%-- <img src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="Tooltip" style="float:left;
+													margin-top:5px;margin-bottom:55px;margin-left:0px;margin-right:10px;"> --%>
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.basicRestorative" />
+									</div>
+								</th>
+								<%-- <s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:text name="txt.hix.enrollment.plancompare.coverageIncluded" />
+													<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+												</td>
+									</s:iterator> --%>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if
+										test='%{#tDisplayPlan.childDntlBasicInNetCopCoinsTx != null &&
+																	#tDisplayPlan.childDntlBasicInNetCopCoinsTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.childDntlBasicInNetCopCoinsTx" />
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.childDntlBasicOutNetCopCoinsTx != null &&
+																	#tDisplayPlan.childDntlBasicOutNetCopCoinsTx != ""}'>
+										<br>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.childDntlBasicOutNetCopCoinsTx" />
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.childDntlBasicInNetCopCoinsTx == null || #tDisplayPlan.childDntlBasicInNetCopCoinsTx == "")
+																	&& (#tDisplayPlan.childDntlBasicOutNetCopCoinsTx == null || #tDisplayPlan.childDntlBasicOutNetCopCoinsTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Major Restorative --%>
+							<tr class="pediatricDental">
+								<th scope="row">
+									<div class="tooltip-image">
+										<%-- <img src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="Tooltip" style="float:left;
+													margin-top:5px;margin-bottom:45px;margin-left:0px;margin-right:10px;"> --%>
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.majorRestorative" />
+									</div>
+								</th>
+								<%-- <s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:text name="txt.hix.enrollment.plancompare.coverageIncluded" />
+													<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+												</td>
+									</s:iterator> --%>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if
+										test='%{#tDisplayPlan.childDntlMajorInNetCopCoinsTx != null &&
+																	#tDisplayPlan.childDntlMajorInNetCopCoinsTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.childDntlMajorInNetCopCoinsTx" />
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.childDntlMajorOutNetCopCoinsTx != null &&
+																	#tDisplayPlan.childDntlMajorOutNetCopCoinsTx != ""}'>
+										<br>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.childDntlMajorOutNetCopCoinsTx" />
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.childDntlMajorInNetCopCoinsTx == null || #tDisplayPlan.childDntlMajorInNetCopCoinsTx == "")
+																	&& (#tDisplayPlan.childDntlMajorOutNetCopCoinsTx == null || #tDisplayPlan.childDntlMajorOutNetCopCoinsTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+
+
+
+							<%-- Orthodontic Services --%>
+							<tr class="pediatricDental">
+								<th scope="row">
+									<div class="tooltip-image"></div>
+									<div class="tooltip-anchor-text">
+										<!-- Orthodontic Services -->
+										<s:text name="txt.hix.enrollment.plancompare.label.orthodonticservices.new" />
+									</div>
+								</th>
+
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if
+										test='%{#tDisplayPlan.orthodonticServsInNetTx != null &&
+																	#tDisplayPlan.orthodonticServsInNetTx != ""}'>
+										<s:text name="txt.hix.enrollment.plancompare.filler.inNetwork" />
+										<s:property value="#tDisplayPlan.orthodonticServsInNetTx" />
+									</s:if>
+									<s:if
+										test='%{#tDisplayPlan.orthodonticServsOutNetTx != null &&
+																	#tDisplayPlan.orthodonticServsOutNetTx != ""}'>
+										<br>
+										<br>
+										<s:text name="txt.hix.enrollment.plancompare.filler.outOfNetwork" />
+										<s:property value="#tDisplayPlan.orthodonticServsOutNetTx" />
+									</s:if>
+									<s:if
+										test='%{(#tDisplayPlan.orthodonticServsInNetTx == null || #tDisplayPlan.orthodonticServsInNetTx == "")
+																	&& (#tDisplayPlan.orthodonticServsOutNetTx == null || #tDisplayPlan.orthodonticServsOutNetTx == "")}'>
+										<s:text name="txt.hix.enrollment.plancompare.seedoc" />
+									</s:if>
+									</td>
+								</s:iterator>
+							</tr>
+						</tbody>
+					</table>
+
+					<%--
+   _____ ______      ________ _____            _____ ______       ________   __          __  __ _____  _      ______  _____
+  / ____/ __ \ \    / /  ____|  __ \     /\   / ____|  ____|     |  ____\ \ / /    /\   |  \/  |  __ \| |    |  ____|/ ____|
+ | |   | |  | \ \  / /| |__  | |__) |   /  \ | |  __| |__        | |__   \ V /    /  \  | \  / | |__) | |    | |__  | (___
+ | |   | |  | |\ \/ / |  __| |  _  /   / /\ \| | |_ |  __|       |  __|   > <    / /\ \ | |\/| |  ___/| |    |  __|  \___ \
+ | |___| |__| | \  /  | |____| | \ \  / ____ \ |__| | |____      | |____ / . \  / ____ \| |  | | |    | |____| |____ ____) |
+  \_____\____/   \/   |______|_|  \_\/_/    \_\_____|______|     |______/_/ \_\/_/    \_\_|  |_|_|    |______|______|_____/
+
+--%>
+					<%-- COVERAGE EXAMPLES --%>
+					<%-- <table class="standardtable even-odd-table compare-subsection" summary='<s:text name="Each row shows cost differences between insurance plans for certain common scenarios such as having a baby or managing type 2 diabetes." />'>
+							<caption onclick="toggle('coverageExamples')" class="">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="coverageExamples-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="coverageExamples-expand"
+										style="float:left" alt="Click To Expand">
+								<strong>&nbsp;
+									<s:text name="txt.hix.enrollment.plancompare.label.rowtitle.coverageExamples" /><s:text name="txt.hix.enrollment.plancompare.memberpays" />
+								</strong>
+							</caption>
+                            <tbody>	 --%>
+					<%-- Having A Baby --%>
+					<%-- <tr class="coverageExamples" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.havingABaby.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text"
+												class="tooltipAnchor" data-placement="right" style="float:left;margin-top:5px;margin-bottom:0px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.havingABaby" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:text name="txt.hix.enrollment.plancompare.filler.deductible" />
+													<s:property value="#tDisplayPlan.havingBabyDdbleTx" /><br>
+													<s:text name="txt.hix.enrollment.plancompare.filler.copayment" />
+													<s:property value="#tDisplayPlan.havingBabyCopayTx" /><br>
+													<s:text name="txt.hix.enrollment.plancompare.filler.coinsurance" />
+													<s:property value="#tDisplayPlan.havingBabyCoInsTx" /><br>
+													<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+													<s:property value="#tDisplayPlan.havingBabyLmtTx" />
+												</td>
+									</s:iterator>
+								</tr> --%>
+
+					<%-- Managing Type 2 Diabetes --%>
+					<%-- <tr class="coverageExamples" style="display:none">
+									<th scope="row">
+										<div class="tooltip-image">
+											<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.managingType2Diabetes.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" data-placement="right"
+												style="float:left;margin-top:5px;margin-bottom:20px;margin-left:0px;margin-right:10px;">
+										</div>
+										<div class="tooltip-anchor-text">
+											<s:text name="txt.hix.enrollment.plancompare.label.managingType2Diabetes" />
+										</div>
+									</th>
+									<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+										<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14thirdhighlight" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14halfhighlight" style="text-align:center">
+											</s:else>
+										</s:if><s:else>
+											<s:if test="%{comparePlansList.size()>2}">
+												<td class="font14third" style="text-align:center">
+											</s:if><s:else>
+												<td class="font14half" style="text-align:center">
+											</s:else>
+										</s:else>
+													<s:text name="txt.hix.enrollment.plancompare.filler.deductible" />
+													<s:property value="#tDisplayPlan.type2DiabitiesDdbleTx" /><br>
+													<s:text name="txt.hix.enrollment.plancompare.filler.copayment" />
+													<s:property value="#tDisplayPlan.type2DiabitiesCopayTx" /><br>
+													<s:text name="txt.hix.enrollment.plancompare.filler.coinsurance" />
+													<s:property value="#tDisplayPlan.type2DiabitiesCoInsTx" /><br>
+													<s:text name="txt.hix.enrollment.plancompare.filler.limit" />
+													<s:property value="#tDisplayPlan.type2DiabitiesLmtTx" />
+												</td>
+									</s:iterator>
+								</tr>
+								<tr></tr>
+                            </tbody>
+                        </table> --%>
+					<%--
+           _____  _____ _____ _______ _____ ____  _   _          _              _____ _   _ ______ ____  _____  __  __       _______ _____ ____  _   _
+     /\   |  __ \|  __ \_   _|__   __|_   _/ __ \| \ | |   /\   | |            |_   _| \ | |  ____/ __ \|  __ \|  \/  |   /\|__   __|_   _/ __ \| \ | |
+    /  \  | |  | | |  | || |    | |    | || |  | |  \| |  /  \  | |              | | |  \| | |__ | |  | | |__) | \  / |  /  \  | |    | || |  | |  \| |
+   / /\ \ | |  | | |  | || |    | |    | || |  | | . ` | / /\ \ | |              | | | . ` |  __|| |  | |  _  /| |\/| | / /\ \ | |    | || |  | | . ` |
+  / ____ \| |__| | |__| || |_   | |   _| || |__| | |\  |/ ____ \| |____         _| |_| |\  | |   | |__| | | \ \| |  | |/ ____ \| |   _| || |__| | |\  |
+ /_/    \_\_____/|_____/_____|  |_|  |_____\____/|_| \_/_/    \_\______|       |_____|_| \_|_|    \____/|_|  \_\_|  |_/_/    \_\_|  |_____\____/|_| \_|
+
+--%>
+					<%-- ADDITIONAL INFORMATION --%>
+					<table class="standardtable even-odd-table compare-subsection" style="width: 97%; margin-left: 30px;"
+						summary='<s:text name="Each row shows links to more information about each insurance plan." />'>
+						<caption class="">
+							<!-- <img src="<s:property value="rootPath"/>static/custom/images/panel_collapse_OFF.png" id="additionalInformation-collapse"
+										style="display:none; float:left" alt="Click To Collapse">
+								<img src="<s:property value="rootPath"/>static/custom/images/panel_expand_OFF.png" id="additionalInformation-expand"
+										style="float:left" alt="Click To Expand"> -->
+							<strong>&nbsp; <s:text name="txt.hix.enrollment.plancompare.label.rowtitle.additionalInformation" />
+							</strong>
+						</caption>
+						<tbody>
+							<%-- Plan Evidence --%>
+							<tr class="additionalInformation">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.planEvidence.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 25px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.planEvidence" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<s:if test='anonymous == true'>
+
+										<s:a id="pdf-anchor-link1%{#status.index}" action="plan-benefits_downloadPDF" namespace="/planmgmt"
+											target="_blank">
+											<s:text name="txt.hix.enrollment.plancompare.link.panel-2.viewEvidence" />
+											<s:param name="planPdfVO.variantHiosId">
+												<s:property value="#tDisplayPlan.planId" />-<s:property value="#tDisplayPlan.csrVarId" />
+											</s:param>
+											<s:param name="planPdfVO.coverageYear" value="coverageYear" />
+											<s:param name="planPdfVO.language" value="locale" />
+											<s:param name="planPdfVO.carrierId" value="#tDisplayPlan.carrierId" />
+										</s:a>
+
+
+									</s:if>
+									<s:else>
+										<s:a id='logged-in-file-download-<s:text name="%{#comparePlansListIndex.index}"/>'
+											cssStyle="background-color:#fffab2;" action="FileDownloadPostShop">
+											<s:text name="txt.hix.enrollment.plancompare.link.panel-2.viewEvidence" />
+											<s:param name="docFileName" value="#tDisplayPlan.planEvidenceCovTx" />
+											<s:param name="carrierNameValue" value="#tDisplayPlan.carrNa" />
+										</s:a>
+									</s:else>
+									</td>
+								</s:iterator>
+							</tr>
+
+							<%-- Plan Summary  --%>
+							<tr class="additionalInformation">
+								<th scope="row">
+									<div class="tooltip-image">
+										<img data-title='<s:text name="txt.hix.enrollment.plancompare.label.planSummary.help" />'
+											src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor"
+											data-placement="right"
+											style="float: left; margin-top: 5px; margin-bottom: 25px; margin-left: 0px; margin-right: 10px;">
+									</div>
+									<div class="tooltip-anchor-text">
+										<s:text name="txt.hix.enrollment.plancompare.label.planSummary" />
+									</div>
+								</th>
+								<s:iterator value="comparePlansList" status="comparePlansListIndex" var="tDisplayPlan">
+									<s:if test='%{#tDisplayPlan.displayPlanId.equals(selected)}'>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14thirdhighlight" style="text-align: center; border-bottom: 3px solid #F6AC40;">
+										</s:if>
+										<s:else>
+											<td class="font14halfhighlight" style="text-align: center; border-bottom: 3px solid #F6AC40;">
+										</s:else>
+									</s:if>
+									<s:else>
+										<s:if test="%{comparePlansList.size()>2}">
+											<td class="font14third" style="text-align: center">
+										</s:if>
+										<s:else>
+											<td class="font14half" style="text-align: center">
+										</s:else>
+									</s:else>
+									<a id='urlTest3<s:property value="%{#comparePlansListIndex.index}"/>' class="toAppendHTTP"
+										onclick='setWebsite("urlTest3<s:property value="%{#comparePlansListIndex.index}"/>"); return false;'
+										href="<s:property value='#tDisplayPlan.planSumOfBnftsTx'/>"> <s:text
+											name="txt.hix.enrollment.plancompare.link.panel-2.viewSummary" />
+									</a>
+									</td>
+								</s:iterator>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+			</div>
+		</div>
+		<%-- Statement / Disclaimer --%>
+		<%-- <div align="left" style="margin-left:20px; margin-top:5px; font-size:14px; line-height:14px;">
+						<p><s:text name="txt.hix.enrollment.plancompare.statement" />
+						</p>
+					</div> --%>
+		<%-- <div style="width:910px; margin-left:20px; margin-top:5px; text-align:justify; font-size:14px; line-height:14px;">
+						<b style="color:red;"><s:text name="txt.hix.enrollment.plancompare.disclaimer1" /></b>
+						<s:text name="txt.hix.enrollment.plancompare.disclaimer2" />
+						<br/>
+					</div> --%>
+		<div class="clearfix"></div>
+	</div>
+	<div class="modal fade" id="id_plan_preview_modal" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div id="id_plan_preview"></div>
+			</div>
+		</div>
+	</div>
+	</div>
+	<!-- </div> -->
+</s:form>
+<script>
+												$(document).ready(function() {
+																	$('.toAppendHTTP').each(function() {
+																						var myLink = $(this).attr('href');
+																						if (typeof myLink === "undefined") {
+
+																						} else {
+																							if (myLink.indexOf('http://') != 0
+																									&& myLink.indexOf('https://') != 0) {
+																								$(this).attr("href","http://"+ myLink);
+																							}
+																						}
+																					});
+											
+																});
+																
+</script>
+<%-- Content End --%>
+<%@include file="/jsp/includes/footer.jsp"%>

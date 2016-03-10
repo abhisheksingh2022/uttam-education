@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.PlanBenefitMstr" table="PLAN_BENEFIT_MSTR" optimistic-lock="version">
+        <id name="planBenefitMstrId" type="java.lang.Long">
+            <column name="PLAN_BENEFIT_MSTR_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_PLAN_BENEFIT_MSTR_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="planMstr" class="com.hixapi.pmp.entity.model.PlanMstr" fetch="select">
+            <column name="PLAN_MSTR_ID" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="languageCd" type="string">
+            <column name="LANGUAGE_CD" length="6" not-null="true" />
+        </property>
+        <property name="planNameTxt" type="string">
+            <column name="PLAN_NAME_TXT" length="200" not-null="true" />
+        </property>
+        <property name="metalLevelTxt" type="string">
+            <column name="METAL_LEVEL_TXT" length="50" not-null="true" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+        <property name="planTypeTxt" type="string">
+            <column name="PLAN_TYPE_TXT" length="30" />
+        </property>
+        <set name="planVariantDtls" table="PLAN_VARIANT_DTL" inverse="true" lazy="true" fetch="select" cascade="delete-orphan">
+            <key>
+                <column name="PLAN_BENEFIT_MSTR_ID" precision="12" scale="0" not-null="true" />
+            </key>
+            <one-to-many class="com.hixapi.pmp.entity.model.PlanVariantDtl" />
+        </set>
+        <set name="planBenefitDetails" table="PLAN_BENEFIT_DETAIL" inverse="true" lazy="true" fetch="select" cascade="delete-orphan">
+            <key>
+                <column name="BENEFIT_MSTR_ID" precision="12" scale="0" not-null="true" />
+            </key>
+            <one-to-many class="com.hixapi.pmp.entity.model.PlanBenefitDetail" />
+        </set>
+    </class>
+</hibernate-mapping>

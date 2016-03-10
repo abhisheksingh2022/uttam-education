@@ -1,0 +1,272 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+/**
+ * Holds the plan's data required on EYO page.
+ * @author ukorada
+ *
+ */
+
+public class EYOPlan implements Serializable{
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7380977501843738182L;
+	private List<String> listAge;//planIndiv
+	private Map<String, BigDecimal> mapAgeAdjPremium;//Premium - adj
+	private BigDecimal sortPremium;
+	private BigDecimal actualPremium;
+	private BigDecimal adjPremium;
+	private BigDecimal unclaimedAptc;
+	private Boolean unclaimedAptcFlag;
+	private List<String> listAptcDisplay;
+	private List<String> listEnrolledAptcDisplay;
+	
+	private String healthPlanId;
+	private String idCSR;
+	private String displayPlanId;
+
+	private String planNa;
+    private String carrNa;
+    private String carrId;
+    private String hlthPrvdrUrl;  
+    private String planType;    
+    private String planLevelNa;
+    private String planLevelSO;//sortOrder
+	private Integer qltyRatingTx;
+
+    private String plnsummAnnualOopocketMaxam;
+    private String plnsummEmrgncyRoomAm;
+    private String plnsummPrmryCareCopayAm;
+    private BigDecimal plnsummAnnualDeductAm;
+    
+    private BigDecimal csrDdbleFmlyInTx;
+    private String csrOutOfPcktMaxFmlyInTx;
+    
+    private BigDecimal selAPTC=BigDecimal.ZERO;//carry selected APTC
+    private Integer planLevelSortOrder;//To Sort
+    private boolean blnAddedToCompare;//Add To Compare - switch
+    
+    private String planEvidenceCovTx;
+    
+    private String purchaseCount;
+    
+    private BigDecimal ehbNb;
+    private BigDecimal ehbMultiplier;
+    
+    public EYOPlan(){
+    	super();
+    }
+    public String getDisplayPlanId() {
+		return displayPlanId;
+	}
+	public void setDisplayPlanId(String displayPlanId) {
+		this.displayPlanId = displayPlanId;
+	}
+
+	public BigDecimal getSelAPTC() {
+		return selAPTC;
+	}
+	public void setSelAPTC(BigDecimal selAPTC) {
+		this.selAPTC = selAPTC;
+	}
+	public String getPlnsummAnnualOopocketMaxam() {
+		return plnsummAnnualOopocketMaxam;
+	}
+	public void setPlnsummAnnualOopocketMaxam(String plnsummAnnualOopocketMaxam) {
+		this.plnsummAnnualOopocketMaxam = plnsummAnnualOopocketMaxam;
+	}
+	public String getPlnsummEmrgncyRoomAm() {
+		return plnsummEmrgncyRoomAm;
+	}
+	public void setPlnsummEmrgncyRoomAm(String plnsummEmrgncyRoomAm) {
+		this.plnsummEmrgncyRoomAm = plnsummEmrgncyRoomAm;
+	}
+	public String getPlnsummPrmryCareCopayAm() {
+		return plnsummPrmryCareCopayAm;
+	}
+	public void setPlnsummPrmryCareCopayAm(String plnsummPrmryCareCopayAm) {
+		this.plnsummPrmryCareCopayAm = plnsummPrmryCareCopayAm;
+	}
+	public BigDecimal getPlnsummAnnualDeductAm() {
+		return plnsummAnnualDeductAm;
+	}
+	public void setPlnsummAnnualDeductAm(BigDecimal plnsummAnnualDeductAm) {
+		this.plnsummAnnualDeductAm = plnsummAnnualDeductAm;
+	}
+	public String getPlanNa() {
+		return planNa;
+	}
+	public void setPlanNa(String planNa) {
+		this.planNa = planNa;
+	}
+	public String getHealthPlanId() {
+		return healthPlanId;
+	}
+	public void setHealthPlanId(String healthPlanId) {
+		this.healthPlanId = healthPlanId;
+	}
+	public String getCarrNa() {
+		return carrNa;
+	}
+	public void setCarrNa(String carrNa) {
+		this.carrNa = carrNa;
+	}
+	public String getCarrId() {
+		return carrId;
+	}
+	public void setCarrId(String carrId) {
+		this.carrId = carrId;
+	}
+
+	public String getPlanLevelNa() {
+		return planLevelNa;
+	}
+	public void setPlanLevelNa(String planLevelNa) {
+		this.planLevelNa = planLevelNa;
+	}
+
+	/**
+	 * @param qltyRatingTx the qltyRatingTx to set
+	 */
+	public void setQltyRatingTx(Integer qltyRatingTx) {
+		this.qltyRatingTx = qltyRatingTx;
+	}
+	/**
+	 * @return the qltyRatingTx
+	 */
+	public Integer getQltyRatingTx() {
+		return qltyRatingTx;
+	}
+	public void setBlnAddedToCompare(boolean blnAddedToCompare) {
+		this.blnAddedToCompare = blnAddedToCompare;
+	}
+	public boolean getBlnAddedToCompare() {
+		return blnAddedToCompare;
+	}
+	public Integer getPlanLevelSortOrder() {
+		return planLevelSortOrder;
+	}
+	public void setPlanLevelSortOrder(Integer planLevelSortOrder) {
+		this.planLevelSortOrder = planLevelSortOrder;
+	}
+	public String getHlthPrvdrUrl() {
+		return hlthPrvdrUrl;
+	}
+	public void setHlthPrvdrUrl(String hlthPrvdrUrl) {
+		this.hlthPrvdrUrl = hlthPrvdrUrl;
+	}
+	public String getPlanType() {
+		return planType;
+	}
+	public void setPlanType(String planType) {
+		this.planType = planType;
+	}
+	public List<String> getListAge() {
+		return listAge;
+	}
+	public void setListAge(List<String> listAge) {
+		this.listAge = listAge;
+	}
+	public Map<String, BigDecimal> getMapAgeAdjPremium() {
+		return mapAgeAdjPremium;
+	}
+	public void setMapAgeAdjPremium(Map<String, BigDecimal> mapAgeAdjPremium) {
+		this.mapAgeAdjPremium = mapAgeAdjPremium;
+	}
+	public BigDecimal getAdjPremium() {
+		return adjPremium;
+	}
+	public void setAdjPremium(BigDecimal adjPremium) {
+		this.adjPremium = adjPremium;
+	}
+	public String getPlanLevelSO() {
+		return planLevelSO;
+	}
+	public void setPlanLevelSO(String planLevelSO) {
+		this.planLevelSO = planLevelSO;
+	}
+	public String getIdCSR() {
+		return idCSR;
+	}
+	public void setIdCSR(String idCSR) {
+		this.idCSR = idCSR;
+	}
+	public BigDecimal getUnclaimedAptc() {
+		return unclaimedAptc;
+	}
+	public void setUnclaimedAptc(BigDecimal unclaimedAptc) {
+		this.unclaimedAptc = unclaimedAptc;
+	}
+	public Boolean getUnclaimedAptcFlag() {
+		return unclaimedAptcFlag;
+	}
+	public void setUnclaimedAptcFlag(Boolean unclaimedAptcFlag) {
+		this.unclaimedAptcFlag = unclaimedAptcFlag;
+	}
+	public List<String> getListAptcDisplay() {
+		return listAptcDisplay;
+	}
+	public void setListAptcDisplay(List<String> listAptcDisplay) {
+		this.listAptcDisplay = listAptcDisplay;
+	}
+	public BigDecimal getActualPremium() {
+		return actualPremium;
+	}
+	public void setActualPremium(BigDecimal actualPremium) {
+		this.actualPremium = actualPremium;
+	}
+	public BigDecimal getSortPremium() {
+		return sortPremium;
+	}
+	public void setSortPremium(BigDecimal sortPremium) {
+		this.sortPremium = sortPremium;
+	}
+	public void setPlanEvidenceCovTx(String planEvidenceCovTx) {
+		this.planEvidenceCovTx = planEvidenceCovTx;
+	}
+	public String getPlanEvidenceCovTx() {
+		return planEvidenceCovTx;
+	}
+	public void setCsrOutOfPcktMaxFmlyInTx(String csrOutOfPcktMaxFmlyInTx) {
+		this.csrOutOfPcktMaxFmlyInTx = csrOutOfPcktMaxFmlyInTx;
+	}
+	public String getCsrOutOfPcktMaxFmlyInTx() {
+		return csrOutOfPcktMaxFmlyInTx;
+	}
+	public void setCsrDdbleFmlyInTx(BigDecimal csrDdbleFmlyInTx) {
+		this.csrDdbleFmlyInTx = csrDdbleFmlyInTx;
+	}
+	public BigDecimal getCsrDdbleFmlyInTx() {
+		return csrDdbleFmlyInTx;
+	}
+	public void setListEnrolledAptcDisplay(List<String> listEnrolledAptcDisplay) {
+		this.listEnrolledAptcDisplay = listEnrolledAptcDisplay;
+	}
+	public List<String> getListEnrolledAptcDisplay() {
+		return listEnrolledAptcDisplay;
+	}
+	public void setPurchaseCount(String purchaseCount) {
+		this.purchaseCount = purchaseCount;
+	}
+	public String getPurchaseCount() {
+		return purchaseCount;
+	}
+	public void setEhbNb(BigDecimal ehbNb) {
+		this.ehbNb = ehbNb;
+	}
+	public BigDecimal getEhbNb() {
+		return ehbNb;
+	}
+	public void setEhbMultiplier(BigDecimal ehbMultiplier) {
+		this.ehbMultiplier = ehbMultiplier;
+	}
+	public BigDecimal getEhbMultiplier() {
+		return ehbMultiplier;
+	}
+    
+}

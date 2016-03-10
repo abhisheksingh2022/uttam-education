@@ -1,0 +1,57 @@
+package com.hixapi.prescreening.api.model.plan;
+
+import java.io.Serializable;
+
+public class PlanOverview implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7131428690238357966L;
+	private Double estimatedMonthlyPremium;
+	private String healthCareProviderLink;
+	private String planType;
+	private String planLevel;
+	private Integer qualityRating;
+
+	public Double getEstimatedMonthlyPremium() {
+		return estimatedMonthlyPremium;
+	}
+
+	public void setEstimatedMonthlyPremium(Double estimatedMonthlyPremium) {
+		this.estimatedMonthlyPremium = estimatedMonthlyPremium;
+	}
+
+	public String getHealthCareProviderLink() {
+		return healthCareProviderLink;
+	}
+
+	public void setHealthCareProviderLink(String healthCareProvider) {
+		this.healthCareProviderLink = healthCareProvider;
+	}
+
+	public String getPlanType() {
+		return planType;
+	}
+
+	public void setPlanType(String planType) {
+		this.planType = planType;
+	}
+
+	public String getPlanLevel() {
+		return planLevel;
+	}
+
+	public void setPlanLevel(String planLevel) {
+		this.planLevel = planLevel;
+	}
+
+	public Integer getQualityRating() {
+		return qualityRating;
+	}
+
+	public void setQualityRating(Integer qualityRating) {
+		this.qualityRating = qualityRating;
+	}
+
+}

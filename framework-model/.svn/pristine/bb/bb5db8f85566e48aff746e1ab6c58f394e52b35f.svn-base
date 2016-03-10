@@ -1,0 +1,22 @@
+package com.hixapi.pmp.api.model;
+
+import java.util.List;
+
+public class NotifAndWorkItemVO {
+	
+	private List<NotificationVO> recentNotifications;
+	private List<WorkItemVO> recentWorkItems;
+	public List<NotificationVO> getRecentNotifications() {
+		return recentNotifications;
+	}
+	public void setRecentNotifications(List<NotificationVO> recentNotifications) {
+		this.recentNotifications = recentNotifications;
+	}
+	public List<WorkItemVO> getRecentWorkItems() {
+		return recentWorkItems;
+	}
+	public void setRecentWorkItems(List<WorkItemVO> recentWorkItems) {
+		this.recentWorkItems = recentWorkItems;
+	}
+
+}

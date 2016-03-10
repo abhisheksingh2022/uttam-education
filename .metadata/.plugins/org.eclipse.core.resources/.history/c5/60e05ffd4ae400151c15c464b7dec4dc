@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+	http://www.springframework.org/schema/jee
+	http://www.springframework.org/schema/jee/spring-jee-4.1.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+
+	<!-- <bean id="fileSystemEnvironmentProvider" class="com.uttam.framework.common.env.FileSystemEnvProvider"> </bean> -->
+
+	<!-- ########################################################################################################## -->
+	<!-- Bean for JTA Transaction manager starts -->
+	<bean id="transactionManager" class="org.springframework.transaction.jta.JtaTransactionManager">
+		<property name="defaultTimeout">
+			<value>100</value>
+		</property>
+		<property name="allowCustomIsolationLevels" value="true" />
+		<!-- <property name="sessionFactory" ref="sessionFactory" /> -->
+	</bean>
+	<!-- Bean for JTA Transaction manager ends -->
+	<aop:config>
+		<aop:advisor pointcut="execution(* com.uttam.education.service..*.*(..))" advice-ref="pmpLocalTxAdvice" />
+	</aop:config>
+	<aop:config>
+		<aop:advisor pointcut="execution(* com.uttam.education.service.user.UserService*.*(..))" advice-ref="userServiceImplRetrieveUserByLoginIdTxnAdvice" />
+	</aop:config>
+	
+	<tx:advice id="pmpLocalTxAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="retrieve*" read-only="true" propagation="REQUIRED" isolation="READ_UNCOMMITTED" />
+			<tx:method name="search*" read-only="true" propagation="REQUIRED" isolation="READ_UNCOMMITTED" />
+			<tx:method name="checkIf*" read-only="true" propagation="REQUIRED" isolation="READ_UNCOMMITTED" />
+			<tx:method name="save*" propagation="REQUIRED" rollback-for="com.uttam.framework.common.exception.BusinessServiceException" />
+			<tx:method name="update*" propagation="REQUIRED" rollback-for="com.uttam.framework.common.exception.BusinessServiceException" />
+			<tx:method name="delete*" propagation="REQUIRED" rollback-for="com.uttam.framework.common.exception.BusinessServiceException" />
+			<tx:method name="upload*" propagation="REQUIRED" rollback-for="com.uttam.framework.common.exception.BusinessServiceException" />
+			<tx:method name="*" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- ########################################################################################################## -->
+	<!-- Services Start -->
+	<bean id="userService" class="com.uttam.education.service.user.UserServiceImpl">
+		<property name="userDAO" ref="userDAO" />
+		<property name="carrierDAO" ref="carrierDAO" />
+		<property name="userModelTranslator" ref="userModelTranslator" />
+		<property name="roleModelTranslator" ref="roleModelTranslator" />
+		<property name="identityManagerService" ref="identityManagerService" />
+	</bean>
+
+	<bean id="systemAdministrationService" class="com.uttam.education.service.admin.SystemAdministrationServiceImpl">
+		<property name="systemAdinistrationDAO" ref="systemAdinistrationDAO" />
+	</bean>
+</beans>

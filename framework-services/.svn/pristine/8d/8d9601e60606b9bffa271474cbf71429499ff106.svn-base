@@ -1,0 +1,200 @@
+package com.hixapi.pmp.service.prescreen;
+
+import java.util.Date;
+
+import com.hixapi.prescreening.api.model.FPLLimitsWithDisregards;
+
+
+
+public class RulesData {
+	
+	private double pregHouseFPL;
+	private double houseFPL;
+	private Date firstDayOfCoverageYear;
+	private String coverageYearStr;
+	private FPLLimitsWithDisregards adultFPLLimit;
+	private FPLLimitsWithDisregards pregWomanFPLLimit;
+	private FPLLimitsWithDisregards childrenFPLLimit;
+	private FPLLimitsWithDisregards parentFPLLimit;
+	private FPLLimitsWithDisregards chipBand1MaxFPLLimit;
+	private FPLLimitsWithDisregards chipBand1MinFPLLimit;
+	
+	private FPLLimitsWithDisregards csrTier1MinFPLLimit;
+	private FPLLimitsWithDisregards csrTier1MaxFPLLimit;
+	private FPLLimitsWithDisregards csrTier2MinFPLLimit;
+	private FPLLimitsWithDisregards csrTier2MaxFPLLImit;
+	private FPLLimitsWithDisregards csrTier3MinFPLLimit;
+	private FPLLimitsWithDisregards csrTier3MaxFPLLimit;
+	
+	private FPLLimitsWithDisregards chipBand2MaxFPLLimit;
+	private FPLLimitsWithDisregards aptcMaxFPLLimit;
+	//based on  AI/AN
+	private String csrVarId;
+	
+	public String getCsrVarId() {
+		return csrVarId;
+	}
+
+	public void setCsrVarId(String csrVarId) {
+		this.csrVarId = csrVarId;
+	}
+
+	public RulesData() {
+		
+	}
+
+	public double getPregHouseFPL() {
+		return pregHouseFPL;
+	}
+
+	public void setPregHouseFPL(double pregHouseFPL) {
+		this.pregHouseFPL = pregHouseFPL;
+	}
+
+	public double getHouseFPL() {
+		return houseFPL;
+	}
+
+	public void setHouseFPL(double houseFPL) {
+		this.houseFPL = houseFPL;
+	}
+
+	
+
+	public FPLLimitsWithDisregards getAdultFPLLimit() {
+		return adultFPLLimit;
+	}
+
+	public void setAdultFPLLimit(FPLLimitsWithDisregards fplLimitsWithDisregards) {
+		this.adultFPLLimit = fplLimitsWithDisregards;
+	}
+
+	public FPLLimitsWithDisregards getPregWomanFPLLimit() {
+		return pregWomanFPLLimit;
+	}
+
+	public void setPregWomanFPLLimit(FPLLimitsWithDisregards pregWomanFPLLimit) {
+		this.pregWomanFPLLimit = pregWomanFPLLimit;
+	}
+
+	public FPLLimitsWithDisregards getChildrenFPLLimit() {
+		return childrenFPLLimit;
+	}
+
+	public void setChildrenFPLLimit(FPLLimitsWithDisregards childrenFPLLimit) {
+		this.childrenFPLLimit = childrenFPLLimit;
+	}
+
+	public FPLLimitsWithDisregards getParentFPLLimit() {
+		return parentFPLLimit;
+	}
+
+	public void setParentFPLLimit(FPLLimitsWithDisregards parentFPLLimit) {
+		this.parentFPLLimit = parentFPLLimit;
+	}
+
+	public FPLLimitsWithDisregards getChipBand1MaxFPLLimit() {
+		return chipBand1MaxFPLLimit;
+	}
+
+	public void setChipBand1MaxFPLLimit(FPLLimitsWithDisregards chipBand1MaxFPLLimit) {
+		this.chipBand1MaxFPLLimit = chipBand1MaxFPLLimit;
+	}
+
+	
+
+	public FPLLimitsWithDisregards getCsrTier2MaxFPLLImit() {
+		return csrTier2MaxFPLLImit;
+	}
+
+	public void setCsrTier2MaxFPLLImit(FPLLimitsWithDisregards csrTier2MaxFPLLImit) {
+		this.csrTier2MaxFPLLImit = csrTier2MaxFPLLImit;
+	}
+
+	public FPLLimitsWithDisregards getCsrTier1MaxFPLLimit() {
+		return csrTier1MaxFPLLimit;
+	}
+
+	public void setCsrTier1MaxFPLLimit(FPLLimitsWithDisregards csrTier1MaxFPLLimit) {
+		this.csrTier1MaxFPLLimit = csrTier1MaxFPLLimit;
+	}
+
+	public FPLLimitsWithDisregards getChipBand2MaxFPLLimit() {
+		return chipBand2MaxFPLLimit;
+	}
+
+	public void setChipBand2MaxFPLLimit(FPLLimitsWithDisregards chipBand2MaxFPLLimit) {
+		this.chipBand2MaxFPLLimit = chipBand2MaxFPLLimit;
+	}
+
+	public FPLLimitsWithDisregards getAptcMaxFPLLimit() {
+		return aptcMaxFPLLimit;
+	}
+
+	public void setAptcMaxFPLLimit(FPLLimitsWithDisregards aptcMaxFPLLimit) {
+		this.aptcMaxFPLLimit = aptcMaxFPLLimit;
+	}
+
+
+	
+
+	
+
+	public FPLLimitsWithDisregards getChipBand1MinFPLLimit() {
+		return chipBand1MinFPLLimit;
+	}
+
+	public void setChipBand1MinFPLLimit(FPLLimitsWithDisregards chipBand1MinFPLLimit) {
+		this.chipBand1MinFPLLimit = chipBand1MinFPLLimit;
+	}
+
+	public FPLLimitsWithDisregards getCsrTier1MinFPLLimit() {
+		return csrTier1MinFPLLimit;
+	}
+
+	public void setCsrTier1MinFPLLimit(FPLLimitsWithDisregards csrTier1MinFPLLimit) {
+		this.csrTier1MinFPLLimit = csrTier1MinFPLLimit;
+	}
+
+	public FPLLimitsWithDisregards getCsrTier2MinFPLLimit() {
+		return csrTier2MinFPLLimit;
+	}
+
+	public void setCsrTier2MinFPLLimit(FPLLimitsWithDisregards csrTier2MinFPLLimit) {
+		this.csrTier2MinFPLLimit = csrTier2MinFPLLimit;
+	}
+
+	public FPLLimitsWithDisregards getCsrTier3MinFPLLimit() {
+		return csrTier3MinFPLLimit;
+	}
+
+	public void setCsrTier3MinFPLLimit(FPLLimitsWithDisregards csrTier3MinFPLLimit) {
+		this.csrTier3MinFPLLimit = csrTier3MinFPLLimit;
+	}
+
+	public FPLLimitsWithDisregards getCsrTier3MaxFPLLimit() {
+		return csrTier3MaxFPLLimit;
+	}
+
+	public void setCsrTier3MaxFPLLimit(FPLLimitsWithDisregards csrTier3MaxFPLLimit) {
+		this.csrTier3MaxFPLLimit = csrTier3MaxFPLLimit;
+	}
+
+	public Date getFirstDayOfCoverageYear() {
+		return firstDayOfCoverageYear;
+	}
+
+	public void setFirstDayOfCoverageYear(Date firstDayOfCoverageYear) {
+		this.firstDayOfCoverageYear = firstDayOfCoverageYear;
+	}
+
+	public String getCoverageYearStr() {
+		return coverageYearStr;
+	}
+
+	public void setCoverageYearStr(String coverageYearStr) {
+		this.coverageYearStr = coverageYearStr;
+	}
+
+
+}

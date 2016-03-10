@@ -1,0 +1,1250 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+
+<%@include file="/includes/container.jsp"%>
+<%-- <script
+	src="<s:property value='rootPath'/>static/custom/js/jquery-ui.js"></script> --%>
+<script
+	src="<s:property value='rootPath'/>static/custom/js/jquery.accordion.source.js"></script>
+<script>
+<%-- Initializing the barHeight and barTotalWidth variables for proper alignment of the BARS that are drawn for each PLAN --%>
+barHeight = 25;
+barTotalWidth = 175; 
+
+<%-- Setting the value of slider to start from sliderMinValue --%>
+sliderMinValue = 0.00;
+
+<%-- 
+	Setting the flag for Monthly and Yearly and the factor to be used when converting from monthly to yearly and vice-versa. 
+	Monthly --> flagMY = 0,
+	Yearly --> flagMY = 1.
+--%>
+flagMY = 0;
+convertToYearlyNumber =12;
+
+
+function closeWindow(){
+	window.close();
+}
+
+<%-- Method used for fetching the Plan Details by using the PLAN DETAILS DISPLAY ID and setting PREMIUM AMOUNT in the pop-up for plan details --%>
+function populateModal(object){
+	detailURL = document.getElementById(object).getAttribute("ModalURL");
+	planID = document.getElementById(object).getAttribute("planID");
+	premiumAmt = document.getElementById(object).getAttribute("premiumAmt"); 
+	
+	<%-- Method from HIXAPI.js to get the plan details from service and displaying the result in the TARGET ID. 
+	--	 RESOURCE is having the URL of the ACTION method that needs to be called,
+	--	 URLPARAMS is having the parameters that needs to be passed in a GET Request.
+	--	 TARGETID is having the id of the element which needs to be populated by the result returned from the ACTION class.
+	--%> 
+	return ajaxGet({
+		resource : detailURL,
+		targetId :'id_div_plan_details',
+		blockId : 'id_div_plangrid',
+		urlparams:'planDetailsDisplayId=' + planID + '&premiumAmt=' + premiumAmt
+	}); 
+}
+
+<%-- Method used for fetching integer part from a value having $ at the starting. Eg. getInteger("$500") --> will return value 500.--%>
+function getInteger(number){
+	if(number.indexOf('$')>-1){
+		return number.substring(1);
+	}else{
+		return number;
+	}
+}
+
+<%-- Method used to set the EXPECTED OUT OF POCKET COST value start with '$' and rounded off upto 2 decimal places. 
+	 eg. setOOPValue(500) --> will return $500.00	--%>
+function setOOPValue(object){
+	var expectedOOP = object.attr('expectedOOP');
+	object.text('$' + parseFloat(Math.round(expectedOOP * 100) / 100).toFixed(2));
+}
+
+<%-- Method used to set the PREMIUM AMOUNT for each plan on page load as well as at the stop of slider.  --%>
+// function setCalculatedAmount(object, newAPTC){
+// 		if(getInteger(object.attr("minAmount")) < (getInteger(object.attr("netPremium")) - newAPTC)){
+// 			amt =parseFloat(Math.round((getInteger(object.attr("netPremium")) - newAPTC)*100)/100).toFixed(2);
+// 			object.text("$"+amt);
+// 		}else{
+// 			amt =parseFloat(Math.round(getInteger(object.attr("minAmount")))).toFixed(2);
+// 			object.text("$"+amt);
+// 		}
+// }
+
+<%-- Method used to set the TOTAL COST for each plan on page load as well as at the stop of slider.  --%>
+function setCalculatedTotal(object, newAPTC){
+	if(getInteger(object.attr("minAmount")) < (getInteger(object.attr("netPremium")) - newAPTC)){
+		amt = getInteger(object.attr("netPremium")) - newAPTC;
+		amt = parseFloat(Math.round((amt + parseFloat(getInteger(object.attr("outOfPocketMax"))))*100)/100).toFixed(2);
+		object.text("$"+amt);
+	}else{
+		amt= parseFloat(getInteger(object.attr("minAmount"))) + parseFloat(getInteger(object.attr("outOfPocketMax")));
+		object.text("$"+amt.toFixed(2));
+	}
+
+}
+
+function setCalculatedAmount(object, newAPTC){
+	  var min = parseFloat(object.attr("minAmount"));
+	  var net = parseFloat(object.attr("netPremium"));
+	  var amt = "";
+	  if( min < (net - newAPTC)){
+	   amt = net - newAPTC;
+	   
+	  }else{
+	   amt = min;
+	   
+	  }
+	  object.text("$"+amt.toFixed(2));
+	}
+
+<%-- Method used to get the TOTAL COST for each plan for creating theCOST BAR for wach plan.  --%>
+function getCalculatedTotal(object, newAPTC){
+	if(parseFloat(getInteger(object.attr("minAmount"))) < parseFloat(getInteger(object.attr("netPremium")) - newAPTC)){
+		amt = getInteger(object.attr("netPremium")) - newAPTC;
+		amt = amt+ parseFloat(getInteger(object.attr("outOfPocketMax")));
+		return amt;
+	}else{
+		amt= parseFloat(getInteger(object.attr("minAmount"))) + parseFloat(getInteger(object.attr("outOfPocketMax")));
+		return amt;
+	}
+
+}
+
+<%-- Method used to get the MINIMUM PREMIUM COST from the list of AMOUNTS.  --%>
+function minFromList(object){
+	var min;
+	var newLoop=0;
+	object.each(function() {
+		if(newLoop==0){
+			newLoop=1;
+			min=getInteger($(this).text());
+		}
+		if(parseFloat(getInteger($(this).text())) < parseFloat(min)){
+			min=getInteger($(this).text());
+		}
+	});
+	return min;
+}
+
+<%-- Method used to get the MAXIMUM PREMIUM COST from the list of AMOUNTS.  --%>
+function maxFromList(object){
+	var max;
+	var newLoop=0;
+	object.each(function() {
+		if(newLoop==0){
+			newLoop=1;
+			max=getInteger($(this).text());
+		}
+		if(parseFloat(getInteger($(this).text()))> parseFloat(max)){
+			max=getInteger($(this).text());
+		}
+	});
+	return max;
+}
+
+<%-- Method for setting the width and height the LEFT BAR(ORANGE BAR) --%>
+function drawImageLeft(total, maxPremium, outOfPocketMax,element){
+	width = barTotalWidth;	// FIXED TO 175 for alignment of BAR and TOTAL COST in one element.
+	outOfPocketMax = getInteger(outOfPocketMax); //Remove '$' from outOfPocketMax
+	<%-- 
+		 1. Get the total width that the specific plan can take. For the plan with 
+			maximum amount this would be equal to the barTotalWidth.
+		 2. Get the Right Cordinate of the specific plan. For the plan with maximum
+	 		amount this would be equal to the barTotalWidth.
+	 	 3. Get premium calculated from TOTAL COST and OUT OF POCKET COST.	
+	 	 4. Get Mid Cordinate by taking the percent of PREMIUM AMOUNT from the TOTAL 
+	 	 	COST and taking that percent from the Right Cordinate. 
+	 	 5. Setting the width of the left bar from 0 to Mid Cordinate.
+	--%>
+	width = width * (total/maxPremium);
+	var rightCordinate = width *(total / maxPremium) ;
+	var premium = total-outOfPocketMax;
+	var midCordinate = rightCordinate * (premium / total);
+	element.width = midCordinate;
+	element.height = barHeight;
+	
+}
+
+<%-- Method for setting the width and height the RIGHT BAR(GREEN BAR) --%>
+function drawImageRight(total, maxPremium, outOfPocketMax,element){
+	width = barTotalWidth;	// FIXED TO 175 for alignment of BAR and TOTAL COST in one element.
+	outOfPocketMax = getInteger(outOfPocketMax);  //Remove '$' from outOfPocketMax
+	<%-- 
+	 1. Get the total width that the specific plan can take. For the plan with 
+		maximum amount this would be equal to the barTotalWidth.
+	 2. Get the Right Cordinate of the specific plan. For the plan with maximum
+		amount this would be equal to the barTotalWidth.
+	 3. Get premium calculated from TOTAL COST and OUT OF POCKET COST.	
+	 4. Get Mid Cordinate by taking the percent of PREMIUM AMOUNT from the TOTAL 
+	 	COST and taking that percent from the Right Cordinate.
+	 5. Setting the element width to start from where the left bar ended. 
+--%>
+	width = width * (total/maxPremium);
+	var rightCordinate = width *(total / maxPremium) ;
+	var premium = total-outOfPocketMax;
+	var midCordinate = rightCordinate * (premium / total);
+	element.width = (rightCordinate-midCordinate);
+	element.height = barHeight;
+}
+
+<%-- 
+	Method for drawing the slider. The VALUE FOR SLIDER variable will have the values according to selection of MONTHLY/YEARLY value.
+	and the SELECTED VALUE attribute will have the value that is to be selected by default.
+--%>
+function drawSlider(valueForSlider, selectedValue){
+	$("#slider-range-min").slider({
+		value :selectedValue ,
+		min : sliderMinValue,
+		max : valueForSlider[valueForSlider.length -1],
+		slide : function(event, ui) {
+				$("#amount").val("$" + parseFloat(valueForSlider[ui.value]).toFixed(2));
+			}
+	});
+}
+
+<%-- Calculations to be done when slider stops.--%>
+$(function() {	
+	$( "#slider-range-min" ).on( "slidestop", function( event, ui ) {
+		<%-- Set the value of APTC amount when slider stops according to the selection of Monthly/Yearly Costs. --%>
+		if(flagMY == 0) {
+			newAPTC = valueForSlider[ $("#slider-range-min").slider("value")];
+		}
+		else if(flagMY == 1){
+			newAPTC = valueForSlider[ Math.floor($("#slider-range-min").slider("value")/12)];
+		}
+		
+		<%-- Set the values of Premium Amt after calculating the values from setCalculatedAmount method when slider stops--%>
+		$(".variableAmount").each(function(){
+			setCalculatedAmount($(this),newAPTC);
+		});
+		
+		<%-- Set the values of Total Costs after calculating the values from setCalculatedTotal method when slider stops--%>
+		$(".variableAmountTotal").each(function(){
+			setCalculatedTotal($(this), newAPTC)
+		});
+		
+		<%-- 
+			Set the values maximum and minimum values in a particular metal level from minFromList and maxFromList method 
+			when slider stops.
+		--%>
+		$("#bronzeMin").text("$"+minFromList($(".bronzeMinMax")));
+		$("#bronzeMax").text("$"+maxFromList($(".bronzeMinMax")));
+		$("#silverMin").text("$"+minFromList($(".silverMinMax")));
+		$("#silverMax").text("$"+maxFromList($(".silverMinMax")));
+		$("#goldMin").text("$"+minFromList($(".goldMinMax")));
+		$("#goldMax").text("$"+maxFromList($(".goldMinMax")));
+		$("#catastrophicMin").text("$"+minFromList($(".catastrophicMinMax")));
+		$("#catastrophicMax").text("$"+maxFromList($(".catastrophicMinMax")));
+		$("#platinumMin").text("$"+minFromList($(".platinumMinMax")));
+		$("#platinumMax").text("$"+maxFromList($(".platinumMinMax"))); 
+
+		<%--
+			Draw the image bars for all the plans by calculating the width of image bar for each plan from drawImageLeft and 
+			drawImageRight method when the slider stops.
+		--%>
+		$(".leftBarBronze").each(function(index,element){
+			var total = getCalculatedTotal($(this), newAPTC);
+			var maxPremium = getInteger($("#bronzeMax").text());
+			var outOfPocketMax = $(this).attr("outOfPocketMax");
+			drawImageLeft(total, maxPremium, outOfPocketMax,element);
+		});
+		$(".rightBarBronze").each(function(index,element){
+			var total = getCalculatedTotal($(this), newAPTC);
+			var maxPremium = getInteger($("#bronzeMax").text());
+			var outOfPocketMax = $(this).attr("outOfPocketMax");
+			drawImageRight(total, maxPremium, outOfPocketMax,element);
+		});
+		$(".leftBarSilver").each(function(index,element){
+			var total = getCalculatedTotal($(this), newAPTC);
+			var maxPremium = getInteger($("#silverMax").text());
+			var outOfPocketMax = $(this).attr("outOfPocketMax");
+			drawImageLeft(total, maxPremium, outOfPocketMax,element);
+		});
+		$(".rightBarSilver").each(function(index,element){
+			var total = getCalculatedTotal($(this), newAPTC);
+			var maxPremium = getInteger($("#silverMax").text());
+			var outOfPocketMax = $(this).attr("outOfPocketMax");
+			drawImageRight(total, maxPremium, outOfPocketMax,element);
+		});
+		$(".leftBarGold").each(function(index,element){
+			var total = getCalculatedTotal($(this), newAPTC);
+			var maxPremium = getInteger($("#goldMax").text());
+			var outOfPocketMax = $(this).attr("outOfPocketMax");
+			drawImageLeft(total, maxPremium, outOfPocketMax,element);
+		});
+		$(".rightBarGold").each(function(index,element){
+			var total = getCalculatedTotal($(this), newAPTC);
+			var maxPremium = getInteger($("#goldMax").text());
+			var outOfPocketMax = $(this).attr("outOfPocketMax");
+			drawImageRight(total, maxPremium, outOfPocketMax,element);
+		});
+		$(".leftBarPlatinum").each(function(index,element){
+			var total = getCalculatedTotal($(this), newAPTC);
+			var maxPremium = getInteger($("#platinumMax").text());
+			var outOfPocketMax = $(this).attr("outOfPocketMax");
+			drawImageLeft(total, maxPremium, outOfPocketMax,element);
+		});
+		$(".rightBarPlatinum").each(function(index,element){
+			var total = getCalculatedTotal($(this), newAPTC);
+			var maxPremium = getInteger($("#platinumMax").text());
+			var outOfPocketMax = $(this).attr("outOfPocketMax");
+			drawImageRight(total, maxPremium, outOfPocketMax,element);
+		});
+		$(".leftBarCatastrophic").each(function(index,element){
+			var total = getCalculatedTotal($(this), newAPTC);
+			var maxPremium = getInteger($("#catastrophicMax").text());
+			var outOfPocketMax = $(this).attr("outOfPocketMax");
+			drawImageLeft(total, maxPremium, outOfPocketMax,element);
+		});
+		$(".rightBarCatastrophic").each(function(index,element){
+			var total = getCalculatedTotal($(this), newAPTC);
+			var maxPremium = getInteger($("#catastrophicMax").text());
+			var outOfPocketMax = $(this).attr("outOfPocketMax");
+			drawImageRight(total, maxPremium, outOfPocketMax,element);
+		});
+		
+		<%-- 
+			
+		--%>
+		if(flagMY==1){
+ 			$(".changeMonthlyYearly").each(function(){
+ 				$(this).text("$" +Math.round(parseFloat(getInteger($(this).text()))*convertToYearlyNumber*100)/100);
+ 			});
+ 			$(".outOfPocketMax").each(function(){
+ 				$(this).text("$" +Math.round(parseFloat(getInteger($(this).text()))/convertToYearlyNumber*100)/100);
+ 			});
+		}
+		
+		<%-- Setting the values upto 2 decimal places if '.' is not present. eg. $100 will be set to $100.00. --%>
+		$(".changeMonthlyYearly").each(function(){
+			if($(this).text().indexOf(".") >= 0){
+			}
+			else{
+				$(this).text($(this).text() + ".00");
+			}
+		});
+	}); 
+}); 
+
+<%-- Calculations to be done on page load. --%>
+$(document).ready(function() {
+	<%-- 
+		 Get the values of slider from the action class. 
+	 	 Monthly Slider Values Array(fetches values from sliderValues array in action class).
+	--%>
+	$(".load-block").fadeOut("slow");
+	$('.load-image').fadeOut("slow");
+	valueForSlider = [<s:iterator value="sliderValues" status="valueIndex" var="valueOf">
+	<s:property value="#valueOf" />
+	<s:if test="#valueIndex.index==sliderValues.size()-1">
+	</s:if>
+	<s:else>,</s:else>
+	</s:iterator>];
+	
+	<%-- Yearly Slider Values Array(fetches values from sliderValuesYearly array in action class). --%>
+	valueForSliderYearly = [<s:iterator value="sliderValuesYearly" status="valueIndexYearly" var="valueOfYearly">
+	<s:property value="#valueOfYearly" />
+	<s:if test="#valueIndexYearly.index==sliderValuesYearly.size()-1">
+	</s:if>
+	<s:else>,</s:else>
+	</s:iterator>];
+
+	<%-- Draw slider with Monthly values on Page Load. --%>
+	drawSlider(valueForSlider,  valueForSlider[valueForSlider.length -1]);
+	
+	<%-- Set the value selected in the slider. --%>
+	$("#amount").val("$" + valueForSlider[ $("#slider-range-min").slider("value")]);
+		
+	<%-- Set the value of APTC amount. --%>
+	var newAPTC = <s:property value="planContainer.maxAPTCAmount"/>;
+	
+	<%-- Set the values of Premium Amt after calculating the values from setCalculatedAmount method.--%>
+	$(".variableAmount").each(function(){
+		setCalculatedAmount($(this),newAPTC);
+	});
+	<%-- Set the values of Total costs after calculating the values from setCalculatedTotal method.--%>
+	$(".variableAmountTotal").each(function(){
+		setCalculatedTotal($(this), newAPTC)
+	});
+	
+	<%-- Set the values maximum and minimum values in a particular metal level from minFromList and maxFromList method. --%>
+	$("#bronzeMin").text("$"+minFromList($(".bronzeMinMax")));
+	$("#bronzeMax").text("$"+maxFromList($(".bronzeMinMax"))); 
+	$("#silverMin").text("$"+minFromList($(".silverMinMax")));
+	$("#silverMax").text("$"+maxFromList($(".silverMinMax")));
+	$("#goldMin").text("$"+minFromList($(".goldMinMax")));
+	$("#goldMax").text("$"+maxFromList($(".goldMinMax")));
+	$("#catastrophicMin").text("$"+minFromList($(".catastrophicMinMax")));
+	$("#catastrophicMax").text("$"+maxFromList($(".catastrophicMinMax")));
+	$("#platinumMin").text("$"+minFromList($(".platinumMinMax")));
+	$("#platinumMax").text("$"+maxFromList($(".platinumMinMax"))); 
+
+	<%--
+		Draw the image bars for all the plans by calculating the width of image bar for each plan from drawImageLeft and 
+		drawImageRight method.
+	--%>
+	$(".leftBarBronze").each(function(index,element){
+		var total = getCalculatedTotal($(this), newAPTC);
+		var maxPremium = getInteger($("#bronzeMax").text());
+		var outOfPocketMax = $(this).attr("outOfPocketMax");
+		drawImageLeft(total, maxPremium, outOfPocketMax,element);
+	});
+	$(".rightBarBronze").each(function(index,element){
+		var total = getCalculatedTotal($(this), newAPTC);
+		var maxPremium = getInteger($("#bronzeMax").text());
+		var outOfPocketMax = $(this).attr("outOfPocketMax");
+		drawImageRight(total, maxPremium, outOfPocketMax,element);
+	});
+	$(".leftBarSilver").each(function(index,element){
+		var total = getCalculatedTotal($(this), newAPTC);
+		var maxPremium = getInteger($("#silverMax").text());
+		var outOfPocketMax = $(this).attr("outOfPocketMax");
+		drawImageLeft(total, maxPremium, outOfPocketMax,element);
+	});
+	$(".rightBarSilver").each(function(index,element){
+		var total = getCalculatedTotal($(this), newAPTC);
+		var maxPremium = getInteger($("#silverMax").text());
+		var outOfPocketMax = $(this).attr("outOfPocketMax");
+		drawImageRight(total, maxPremium, outOfPocketMax,element);
+	});
+	$(".leftBarGold").each(function(index,element){
+		var total = getCalculatedTotal($(this), newAPTC);
+		var maxPremium = getInteger($("#goldMax").text());
+		var outOfPocketMax = $(this).attr("outOfPocketMax");
+		drawImageLeft(total, maxPremium, outOfPocketMax,element);
+	});
+	$(".rightBarGold").each(function(index,element){
+		var total = getCalculatedTotal($(this), newAPTC);
+		var maxPremium = getInteger($("#goldMax").text());
+		var outOfPocketMax = $(this).attr("outOfPocketMax");
+		drawImageRight(total, maxPremium, outOfPocketMax,element);
+	});
+	$(".leftBarPlatinum").each(function(index,element){
+		var total = getCalculatedTotal($(this), newAPTC);
+		var maxPremium = getInteger($("#platinumMax").text());
+		var outOfPocketMax = $(this).attr("outOfPocketMax");
+		drawImageLeft(total, maxPremium, outOfPocketMax,element);
+	});
+	$(".rightBarPlatinum").each(function(index,element){
+		var total = getCalculatedTotal($(this), newAPTC);
+		var maxPremium = getInteger($("#platinumMax").text());
+		var outOfPocketMax = $(this).attr("outOfPocketMax");
+		drawImageRight(total, maxPremium, outOfPocketMax,element);
+	});
+	$(".leftBarCatastrophic").each(function(index,element){
+		var total = getCalculatedTotal($(this), newAPTC);
+		var maxPremium = getInteger($("#catastrophicMax").text());
+		var outOfPocketMax = $(this).attr("outOfPocketMax");
+		drawImageLeft(total, maxPremium, outOfPocketMax,element);
+	});
+	$(".rightBarCatastrophic").each(function(index,element){
+		var total = getCalculatedTotal($(this), newAPTC);
+		var maxPremium = getInteger($("#catastrophicMax").text());
+		var outOfPocketMax = $(this).attr("outOfPocketMax");
+		drawImageRight(total, maxPremium, outOfPocketMax,element);
+	});
+	
+	<%-- 
+		List of the plans to be displayed based on the metal levels. The 'div' is hidden initially, and displayed 
+		when we click on the particular metal level 
+	--%>
+	$("#id_div_bronzePlans").hide();
+	$("#id_div_silverPlans").hide();
+	$("#id_div_goldPlans").hide();
+	$("#id_div_catastrophicPlans").hide();
+	$("#id_div_platinumPlans").hide();
+	flag_1 = 0;
+	flag_2 = 0;
+	flag_3 = 0;
+	flag_4 = 0;
+	flag_5 = 0; 
+		
+	<%--On Click of Bronze Metal Level, the 'div' containing the BRONZE plans details will open/close. --%>
+	$("#id_img_bronzePlans").click(function() {
+		if (flag_1 == 0) {
+			$("#id_div_bronzePlans").show();
+			flag_1 = 1;
+		} else {
+			$("#id_div_bronzePlans").hide();
+			flag_1 = 0;
+		}
+	});
+	
+	<%--On Click of Silver Metal Level, the 'div' containing the SILVER plans details will open/close. --%>
+	$("#id_img_silverPlans").click(function() {
+		if (flag_2 == 0) {
+			$("#id_div_silverPlans").show();
+			flag_2 = 1;
+		} else {
+			$("#id_div_silverPlans").hide();
+			flag_2 = 0;
+		}
+	});
+	
+	<%--On Click of Gold Metal Level, the 'div' containing the GOLD plans details will open/close. --%>
+	$("#id_img_goldPlans").click(function() {
+		if (flag_3 == 0) {
+			$("#id_div_goldPlans").show();
+			flag_3 = 1;
+		} else {
+			$("#id_div_goldPlans").hide();
+			flag_3 = 0;
+		}
+	});
+	
+	<%--On Click of Catastrophic Metal Level, the 'div' containing the CATASTROPHIC plans details will open/close. --%>
+	$("#id_img_catastrophicPlans").click(function() {
+		if (flag_4 == 0) {
+			$("#id_div_catastrophicPlans").show();
+			flag_4 = 1;
+		} else {
+			$("#id_div_catastrophicPlans").hide();
+			flag_4 = 0;
+		}
+	});
+
+	<%--On Click of Platinum Metal Level, the 'div' containing the PLATINUM plans details will open/close. --%>
+	$("#id_img_platinumPlans").click(function() {
+		if (flag_5 == 0) {
+			$("#id_div_platinumPlans").show();
+			flag_5 = 1;
+		} else {
+			$("#id_div_platinumPlans").hide();
+			flag_5 = 0;
+		}	
+	});
+	
+	<%-- Table Sorter API used for sorting the list of plans under a specific metal level. --%>
+	$(function(){
+		  $(".myTableSorted").tablesorter();
+		});
+
+ 	$('.OOPDollar').each(function(){
+ 		setOOPValue($(this));
+ 	}); 
+ 	
+ 	<%-- Set '$' before the estimated amount if it is not present --%>
+ 	$(".estimatedAmountDollar").each(function(){
+		if($(this).text().indexOf("$") >= 0){
+
+		}
+		else{
+			$(this).text("$" + $(this).text());
+		}
+	});
+});
+
+<%-- Toggle the ESTIMATED AMOUNT, TOTAL COST, SLIDER and OUT OF POCKET COSTS according to the MONTHLY/YEARLY value selected. --%>
+function myRadioButton(){
+		if($(".myRadio:checked").val() == "M" && flagMY == 1){
+			$(".changeMonthlyYearly").each(function(){
+				$(this).text("$" + parseFloat(Math.round(parseFloat(getInteger($(this).text()))/convertToYearlyNumber*100)/100).toFixed(2));
+			});
+			$(".changeMonthlyYearlyEstAmt").each(function(){
+				$(this).text("$" + parseFloat(Math.round(parseFloat(getInteger($(this).text()))/convertToYearlyNumber*100)/100).toFixed(2));
+			});
+			$("#amount").val("$" + parseFloat(Math.round(parseFloat(getInteger($("#amount").val()))/12*100)/100).toFixed(2));
+			//alert("M " + Math.floor($("#slider-range-min").slider("value")/12) + " " + Math.round(getInteger($("#amount").val())));
+			drawSlider(valueForSlider, valueForSlider[ Math.round(getInteger($("#amount").val()))]);
+			flagMY=0;
+			
+		}else if($(".myRadio:checked").val() == "Y" && flagMY == 0){
+			$(".changeMonthlyYearly").each(function(){
+				$(this).text("$" + parseFloat(Math.round(parseFloat(getInteger($(this).text()))*convertToYearlyNumber*100)/100).toFixed(2));
+			});
+			$(".changeMonthlyYearlyEstAmt").each(function(){
+				$(this).text("$" + parseFloat(Math.round(parseFloat(getInteger($(this).text()))*convertToYearlyNumber*100)/100).toFixed(2));
+			});
+			$("#amount").val("$" + parseFloat(Math.round(parseFloat(getInteger($("#amount").val()))*12*100)/100).toFixed(2));
+			//alert("Y " + $("#slider-range-min").slider("value")+ " " + Math.round((getInteger($("#amount").val())/12))    );
+			drawSlider(valueForSliderYearly, valueForSliderYearly[ Math.round((getInteger($("#amount").val())/12))]*12);
+			flagMY=1;
+		}
+} 	
+</script>
+
+<section class="col-md-12 margintoppart">
+	<div class="container maincont">
+		<div class="row">
+			<div id="id_div1">
+				<s:form id="id_form_allPlans" action="plan">
+					<s:token />
+					<s:hidden name="ajaxRequest" value="false" />
+					<s:hidden name="formId" />
+					<!-- Page loading-->
+					<div class="load-block" id="load-block">
+ 					<img class="load-image" src='<s:property value='rootPath'/>static/custom/images/loading.gif' />
+					</div>
+					<div class="col-md-12 hd-btm-sec">
+						<div class="bt-header-lft col-md-9">
+							<h2>
+								<s:text name="txt.plandetails.slider_text"></s:text>
+							</h2>
+							<div>
+								<div id="slider-range-min"></div>
+								<div class="chnge row">
+									<br> <span class="col-md-6">$0.00</span> <span
+										class="col-md-6"><input
+										class="changeAPTCMonthlyYearly sliderMaxValue" type="text"
+										id="amount" readonly></span>
+								</div>
+							</div>
+						</div>
+						<div class="bt-header-rht col-md-3">
+							<h2>
+								<s:text name="txt.plandetails.yearlyOrMonthly"></s:text>
+								<sup>
+								<i class="fa fa-question-circle" data-toggle="tooltip"
+									title="<s:text name="txt.plan.hovertext.yearlyOrMonthly"></s:text>"></i>
+									</sup>
+							</h2>
+							<s:radio list="lookups.YearlyorMonthly" id="id_sel_lookupId1"
+								name="yearlyOrMonthly" listKey="value" listValue="label"
+								onclick="myRadioButton();" class="myRadio"></s:radio>
+						</div>
+
+						<div class="clearfix"></div>
+					</div>
+					<div class="col-md-12 heading">
+						<h2>
+							<s:text name="txt.plandetails.header1"></s:text>
+						</h2>
+					</div>
+					<div class="col-lg-12h subscribe">
+						<p>
+							<s:text name="txt.plandetails.estimatedCosts"></s:text>
+							<b><span
+								class="changeMonthlyYearlyEstAmt estimatedAmountDollar"><s:property
+										value="planContainer.estimatedAmount" /></span></b>
+										<sup>
+							<i class="fa fa-question-circle" data-toggle="tooltip"
+									title="<s:text name="txt.plan.hovertext.estimatedCosts"></s:text>"></i>
+									</sup>
+							<s:text name="txt.plandetails.estimatedCostsFullStop"></s:text>		
+						</p>
+						<p>
+							<s:text name="txt.plandetails.disclaimermsg"></s:text>
+							<br />
+							<s:text name="txt.plandetails.disclaimermsg1"></s:text>
+							<br />
+							<br />
+							<s:text name="txt.plandetails.clickMetalLevel"></s:text>
+						</p>
+					</div>
+					<div id="content">
+						<div class="ac-Hdng">
+							<h2>
+								<s:text name="txt.plandetails.metalLevelText"></s:text>
+								<sup>
+								<i class="fa fa-question-circle" data-toggle="tooltip"
+									title="<s:text name="txt.plan.hovertext.metalLevelText"></s:text>"></i>
+									</sup>
+							</h2>
+							<h2>
+								<s:text name="txt.plandetails.totalCostRangeText"></s:text>
+								<sup>
+								<i class="fa fa-question-circle" data-toggle="tooltip"
+									title="<s:text name="txt.plan.hovertext.totalcostrange"></s:text>"></i>
+									</sup>
+							</h2>
+
+						</div>
+
+						<div class="ac-Content">
+
+							<s:if test="bronzePlans != null && bronzePlans.size() > 0">
+								<div class="page_collapsible collapse-close" id="body-section1">
+
+									<div class="row">
+										<div class="col-lg-7 metalLevel">
+											<img alt="Bronze Plans" id="id_img_bronzePlans"
+												class="pointer-toggle"
+												src="<s:property value='rootPath'/>static/custom/images/bronze.png">
+										</div>
+										<div class="col-lg-5 min-max padding_min-max_all-plans">
+
+											<div class="changeMonthlyYearly padding_min-max col-lg-2"
+												id="bronzeMin">
+												$
+												<s:property value="bronzeMin"></s:property>
+											</div>
+											<div class="col-lg-1 hyphen">-</div>
+											<div class="changeMonthlyYearly col-lg-2 width-auto"
+												id="bronzeMax">
+												$
+												<s:property value="bronzeMax" />
+
+											</div>
+
+										</div>
+									</div>
+								</div>
+
+							</s:if>
+							<div class="ac-dis-con display-block">
+								<div class="content">
+									<div id="id_div_bronzePlans">
+										<jsp:include page="/includes/plan-grid_table-header.jsp"></jsp:include>
+										<s:iterator value="bronzePlans" status="bronzeIndex"
+											var="bronzePlan">
+											<tr class="ac-trCon">
+												<td class="td-name planname"><s:url
+														action="plandetails_input" var="detailUrl">
+													</s:url> <img class="logo-img"
+													alt="<s:property value="#bronzePlan.carrierName"/>"
+													src="<s:property value='rootPath'/>static/custom/images/<s:property value="#bronzePlan.carrierId"/>.jpg" />
+													<a href="#"
+													id="id_a_bronze_<s:property value='#bronzeIndex.index'/>"
+													data-toggle="modal" data-target="#myModal"
+													onclick="populateModal(this.id);" class="BronzeModalClass"
+													modalURL="<s:property value='detailUrl'/>"
+													planID="<s:property value='#bronzePlan.planDetailsDisplayId'/>"
+													premiumAmt="<s:property value='#bronzePlan.premiumAmt'/>">
+														<s:property value="#bronzePlan.planName" />
+												</a></td>
+												<td
+													class="ac-net amtToDecimal variableAmount td-netPremium changeMonthlyYearly"
+													minAmount="<s:property value="#bronzePlan.minPremium"></s:property>"
+													netPremium="<s:property value="#bronzePlan.premiumAmt"></s:property>">$<s:property
+														value="#bronzePlan.premiumAmt" /></td>
+												<td
+													class="changeMonthlyYearly outOfPocketMax amtToDecimal ac-co OOPDollar"
+													expectedOOP="<s:property
+													value="#bronzePlan.expectedOOP" />"><s:property
+														value="#bronzePlan.expectedOOP" /></td>
+												<td>
+													<div class="row">
+														<div class="col-lg-9 text-align-left">
+															<img class="leftBarBronze"
+																outOfPocketMax="<s:property value="#bronzePlan.expectedOOP"/>"
+																minAmount="<s:property value="#bronzePlan.minPremium"></s:property>"
+																netPremium="<s:property value="#bronzePlan.premiumAmt"></s:property>"
+																src="<s:property value='rootPath'/>static/custom/images/med.png"
+																alt="Med.png"><img class="rightBarBronze"
+																outOfPocketMax="<s:property value="#bronzePlan.expectedOOP"/>"
+																minAmount="<s:property value="#bronzePlan.minPremium"></s:property>"
+																netPremium="<s:property value="#bronzePlan.premiumAmt"></s:property>"
+																src="<s:property value='rootPath'/>static/custom/images/bar.png"
+																alt="bar.png">
+														</div>
+														<div
+															class="variableAmountTotal col-lg-3 amtToDecimal bronzeMinMax td-total changeMonthlyYearly"
+															minAmount="<s:property value="#bronzePlan.minPremium"></s:property>"
+															netPremium="<s:property value="#bronzePlan.premiumAmt"></s:property>"
+															outOfPocketMax="<s:property value="#bronzePlan.expectedOOP"/>"></div>
+													</div>
+
+												</td>
+												<%-- <td
+													class="variableAmountTotal col-md-2 amtToDecimal bronzeMinMax td-total changeMonthlyYearly"
+													minAmount="<s:property value="#bronzePlan.minPremium"></s:property>"
+													netPremium="<s:property value="#bronzePlan.premiumAmt"></s:property>"
+													outOfPocketMax="<s:property value="#bronzePlan.expectedOOP"/>">
+
+
+												</td> --%>
+											</tr>
+										</s:iterator>
+										<jsp:include page="/includes/plan-grid_table-footer.jsp"></jsp:include>
+
+									</div>
+								</div>
+
+
+							</div>
+
+
+							<s:if test="silverPlans != null && silverPlans.size() > 0">
+								<div class="page_collapsible collapse-close" id="body-section2">
+
+									<div class="row">
+										<div class="col-lg-7 metalLevel">
+											<img alt="Silver Plans" id="id_img_silverPlans"
+												class="pointer-toggle"
+												src="<s:property value='rootPath'/>static/custom/images/silver.png">
+										</div>
+
+										<div class="col-lg-5 min-max padding_min-max_all-plans">
+											<div id="silverMin"
+												class="col-lg-2 changeMonthlyYearly padding_min-max">
+												$
+												<s:property value="silverMin"></s:property>
+											</div>
+											<div class="col-lg-1 hyphen">-</div>
+											<div id="silverMax"
+												class="col-lg-2 changeMonthlyYearly width-auto">
+												$
+												<s:property value="silverMax"></s:property>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							</s:if>
+
+							<div class="ac-dis-con display-block">
+
+								<div class="content">
+
+									<div id="id_div_silverPlans">
+										<jsp:include page="/includes/plan-grid_table-header.jsp"></jsp:include>
+										<s:iterator value="silverPlans" status="silverIndex"
+											var="silverPlan">
+											<tr class="ac-trCon">
+												<td class="planname"><s:url action="plandetails_input"
+														var="detailUrl">
+													</s:url> <img class="logo-img"
+													alt="<s:property value="#silverPlan.carrierName"/>"
+													src="<s:property value='rootPath'/>static/custom/images/<s:property value="#silverPlan.carrierId"/>.jpg" />
+
+													<a href="#"
+													id="id_a_silver_<s:property value="#silverIndex.index"/>"
+													data-toggle="modal" data-target="#myModal"
+													onclick="populateModal(this.id);"
+													modalURL="<s:property value="detailUrl"/>"
+													planID="<s:property value="#silverPlan.planDetailsDisplayId"/>"
+													premiumAmt="<s:property value="#silverPlan.premiumAmt"/>">
+														<s:property value="#silverPlan.planName" />
+												</a></td>
+												<td class="variableAmount changeMonthlyYearly ac-net"
+													minAmount="<s:property value="#silverPlan.minPremium"></s:property>"
+													netPremium="<s:property value="#silverPlan.premiumAmt"></s:property>"><s:property
+														value="#silverPlan.premiumAmt" /></td>
+												<td
+													class="changeMonthlyYearly outOfPocketMax ac-co OOPDollar"
+													expectedOOP="<s:property
+													value="#silverPlan.expectedOOP" />"><s:property
+														value="#silverPlan.expectedOOP" /></td>
+												<td>
+													<div class="row">
+														<div class="col-lg-9 text-align-left">
+
+															<img class="leftBarSilver"
+																outOfPocketMax="<s:property value="#silverPlan.expectedOOP"/>"
+																minAmount="<s:property value="#silverPlan.minPremium"></s:property>"
+																netPremium="<s:property value="#silverPlan.premiumAmt"></s:property>"
+																src="<s:property value='rootPath'/>static/custom/images/med.png"
+																alt="Med.png" /><img class="rightBarSilver"
+																outOfPocketMax="<s:property value="#silverPlan.expectedOOP"/>"
+																minAmount="<s:property value="#silverPlan.minPremium"></s:property>"
+																netPremium="<s:property value="#silverPlan.premiumAmt"></s:property>"
+																src="<s:property value='rootPath'/>static/custom/images/bar.png"
+																alt="bar.png">
+														</div>
+														<div
+															class="variableAmountTotal col-lg-3 silverMinMax changeMonthlyYearly"
+															minAmount="<s:property value="#silverPlan.minPremium"></s:property>"
+															netPremium="<s:property value="#silverPlan.premiumAmt"></s:property>"
+															outOfPocketMax="<s:property value="#silverPlan.expectedOOP"/>"></div>
+
+													</div>
+												</td>
+												<%-- <td
+													class="variableAmountTotal silverMinMax changeMonthlyYearly"
+													minAmount="<s:property value="#silverPlan.minPremium"></s:property>"
+													netPremium="<s:property value="#silverPlan.premiumAmt"></s:property>"
+													outOfPocketMax="<s:property value="#silverPlan.expectedOOP"/>"></td> --%>
+
+											</tr>
+										</s:iterator>
+										<jsp:include page="/includes/plan-grid_table-footer.jsp"></jsp:include>
+
+									</div>
+
+
+
+
+								</div>
+							</div>
+
+
+							<s:if test="goldPlans != null && goldPlans.size() > 0">
+								<div class="page_collapsible collapse-close" id="body-section1">
+
+									<div class="row">
+										<div class="col-lg-7 metalLevel">
+											<img alt="Gold Plans" id="id_img_goldPlans"
+												class="pointer-toggle"
+												src="<s:property value='rootPath'/>static/custom/images/gold.png">
+										</div>
+
+
+										<div class="col-lg-5 min-max padding_min-max_all-plans">
+											<div id="goldMin"
+												class="col-lg-2 changeMonthlyYearly padding_min-max">
+												$
+												<s:property value="goldMin"></s:property>
+											</div>
+											<div class="col-lg-1 hyphen">-</div>
+											<div id="goldMax"
+												class="col-lg-2 changeMonthlyYearly width-auto">
+												$
+												<s:property value="goldMax"></s:property>
+											</div>
+										</div>
+									</div>
+								</div>
+							</s:if>
+
+
+
+
+
+							<div class="ac-dis-con display-block">
+								<div class="content">
+									<div id="id_div_goldPlans">
+										<jsp:include page="/includes/plan-grid_table-header.jsp"></jsp:include>
+										<s:iterator value="goldPlans" status="goldIndex"
+											var="goldPlan">
+											<tr class="ac-trCon">
+												<td class="planname"><s:url action="plandetails_input"
+														var="detailUrl">
+
+													</s:url> <img class="logo-img"
+													alt="<s:property value="#goldPlan.carrierName"/>"
+													src="<s:property value='rootPath'/>static/custom/images/<s:property value="#goldPlan.carrierId"/>.jpg" />
+
+													<a href="#"
+													id="id_a_gold_<s:property value="#goldIndex.index"/>"
+													data-toggle="modal" data-target="#myModal"
+													onclick="populateModal(this.id);"
+													modalURL="<s:property value="detailUrl"/>"
+													planID="<s:property value="#goldPlan.planDetailsDisplayId"/>"
+													premiumAmt="<s:property value="#goldPlan.premiumAmt"/>">
+														<s:property value="#goldPlan.planName" />
+												</a></td>
+												<td class="variableAmount changeMonthlyYearly ac-net"
+													minAmount="<s:property value="#goldPlan.minPremium"></s:property>"
+													netPremium="<s:property value="#goldPlan.premiumAmt"></s:property>"><s:property
+														value="#goldPlan.premiumAmt" /></td>
+												<td
+													class="changeMonthlyYearly outOfPocketMax ac-co OOPDollar"
+													expectedOOP="<s:property
+													value="#goldPlan.expectedOOP" />"><s:property
+														value="#goldPlan.expectedOOP" /></td>
+												<td>
+
+													<div class="row">
+														<div class="col-lg-9 text-align-left">
+															<img class="leftBarGold"
+																outOfPocketMax="<s:property value="#goldPlan.expectedOOP"/>"
+																minAmount="<s:property value="#goldPlan.minPremium"></s:property>"
+																netPremium="<s:property value="#goldPlan.premiumAmt"></s:property>"
+																src="<s:property value='rootPath'/>static/custom/images/med.png"
+																alt="Med.png" /><img class="rightBarGold"
+																outOfPocketMax="<s:property value="#goldPlan.expectedOOP"/>"
+																minAmount="<s:property value="#goldPlan.minPremium"></s:property>"
+																netPremium="<s:property value="#goldPlan.premiumAmt"></s:property>"
+																src="<s:property value='rootPath'/>static/custom/images/bar.png"
+																alt="bar.png">
+														</div>
+
+														<div
+															class="variableAmountTotal col-lg-3 goldMinMax changeMonthlyYearly"
+															minAmount="<s:property value="#goldPlan.minPremium"></s:property>"
+															netPremium="<s:property value="#goldPlan.premiumAmt"></s:property>"
+															outOfPocketMax="<s:property value="#goldPlan.expectedOOP"/>"></div>
+													</div>
+												</td>
+												<%-- <td
+													class="variableAmountTotal goldMinMax changeMonthlyYearly"
+													minAmount="<s:property value="#goldPlan.minPremium"></s:property>"
+													netPremium="<s:property value="#goldPlan.premiumAmt"></s:property>"
+													outOfPocketMax="<s:property value="#goldPlan.expectedOOP"/>"></td> --%>
+
+											</tr>
+										</s:iterator>
+										<jsp:include page="/includes/plan-grid_table-footer.jsp"></jsp:include>
+
+									</div>
+
+
+
+
+
+								</div>
+							</div>
+							<s:if
+								test="catastrophicPlans != null && catastrophicPlans.size() > 0">
+								<div class="page_collapsible collapse-close" id="body-section1">
+
+									<div class="row">
+										<div class="col-lg-7 metalLevel">
+											<img alt="Catastrophic Plans" id="id_img_catastrophicPlans"
+												class="pointer-toggle"
+												src="<s:property value='rootPath'/>static/custom/images/cata.png">
+										</div>
+
+
+										<div class="col-lg-5 min-max padding_min-max_all-plans">
+											<div id="catastrophicMin"
+												class="col-lg-2 changeMonthlyYearly padding_min-max">
+												$
+												<s:property value="catastrophicMin"></s:property>
+											</div>
+											<div class="col-lg-1 hyphen">-</div>
+											<div id="catastrophicMax"
+												class="col-lg-2 changeMonthlyYearly width-auto">
+												$
+												<s:property value="catastrophicMax"></s:property>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							</s:if>
+
+							<div class="ac-dis-con display-block">
+								<div class="content">
+									<div id="id_div_catastrophicPlans">
+										<jsp:include page="/includes/plan-grid_table-header.jsp"></jsp:include>
+										<s:iterator value="catastrophicPlans"
+											status="catastrophicIndex" var="catastrophicPlan">
+											<tr class="ac-trCon">
+												<td class="planname"><s:url action="plandetails_input"
+														var="detailUrl">
+
+													</s:url> <img class="logo-img"
+													alt="<s:property value="#catastrophicPlan.carrierName"/>"
+													src="<s:property value='rootPath'/>static/custom/images/<s:property value="#catastrophicPlan.carrierId"/>.jpg" />
+
+													<a href="#"
+													id="id_a_catastrophic_<s:property value="#catastrophicIndex.index"/>"
+													data-toggle="modal" data-target="#myModal"
+													onclick="populateModal(this.id);"
+													modalURL="<s:property value="detailUrl"/>"
+													planID="<s:property value="#catastrophicPlan.planDetailsDisplayId"/>"
+													premiumAmt="<s:property value="#catastrophicPlan.premiumAmt"/>">
+														<s:property value="#catastrophicPlan.planName" />
+												</a></td>
+												<td class="variableAmount changeMonthlyYearly ac-net"
+													minAmount="<s:property value="#catastrophicPlan.minPremium"></s:property>"
+													netPremium="<s:property value="#catastrophicPlan.premiumAmt"></s:property>"><s:property
+														value="#catastrophicPlan.premiumAmt" /></td>
+												<td
+													class="changeMonthlyYearly outOfPocketMax ac-co OOPDollar"
+													expectedOOP="<s:property
+													value="#catastrophicPlan.expectedOOP" />"><s:property
+														value="#catastrophicPlan.expectedOOP" /></td>
+												<td>
+													<div class="row">
+														<div class="col-lg-9 text-align-left">
+
+															<img class="leftBarCatastrophic"
+																outOfPocketMax="<s:property value="#catastrophicPlan.expectedOOP"/>"
+																minAmount="<s:property value="#catastrophicPlan.minPremium"></s:property>"
+																netPremium="<s:property value="#catastrophicPlan.premiumAmt"></s:property>"
+																src="<s:property value='rootPath'/>static/custom/images/med.png"
+																alt="Med.png" /><img class="rightBarCatastrophic"
+																outOfPocketMax="<s:property value="#catastrophicPlan.expectedOOP"/>"
+																minAmount="<s:property value="#catastrophicPlan.minPremium"></s:property>"
+																netPremium="<s:property value="#catastrophicPlan.premiumAmt"></s:property>"
+																src="<s:property value='rootPath'/>static/custom/images/bar.png"
+																alt="bar.png">
+														</div>
+														<div
+															class="variableAmountTotal col-lg-3 catastrophicMinMax changeMonthlyYearly"
+															minAmount="<s:property value="#catastrophicPlan.minPremium"></s:property>"
+															netPremium="<s:property value="#catastrophicPlan.premiumAmt"></s:property>"
+															outOfPocketMax="<s:property value="#catastrophicPlan.expectedOOP"/>"></div>
+													</div>
+												</td>
+												<%-- <td
+													class="variableAmountTotal catastrophicMinMax changeMonthlyYearly"
+													minAmount="<s:property value="#catastrophicPlan.minPremium"></s:property>"
+													netPremium="<s:property value="#catastrophicPlan.premiumAmt"></s:property>"
+													outOfPocketMax="<s:property value="#catastrophicPlan.expectedOOP"/>"></td> --%>
+
+											</tr>
+										</s:iterator>
+										<jsp:include page="/includes/plan-grid_table-footer.jsp"></jsp:include>
+
+									</div>
+
+								</div>
+							</div>
+
+
+							<s:if test="platinumPlans != null && platinumPlans.size() > 0">
+								<div class="page_collapsible collapse-close" id="body-section1">
+
+									<div class="row">
+										<div class="col-lg-7 metalLevel">
+											<img alt="Platinum Plans" id="id_img_platinumPlans"
+												class="pointer-toggle"
+												src="<s:property value='rootPath'/>static/custom/images/platinum.png">
+										</div>
+										<div class="col-lg-5 min-max padding_min-max_all-plans">
+											<div id="platinumMin"
+												class="col-lg-2 changeMonthlyYearly padding_min-max">
+												$
+												<s:property value="platinumMin"></s:property>
+											</div>
+											<div class="col-lg-1 hyphen">-</div>
+											<div id="platinumMax"
+												class="col-lg-2 changeMonthlyYearly width-auto">
+												$
+												<s:property value="platinumMax"></s:property>
+											</div>
+										</div>
+									</div>
+								</div>
+
+							</s:if>
+
+							<div class="ac-dis-con display-block">
+								<div class="content">
+
+									<div id="id_div_platinumPlans">
+										<jsp:include page="/includes/plan-grid_table-header.jsp"></jsp:include>
+										<s:iterator value="platinumPlans" status="platinumIndex"
+											var="platinumPlan">
+											<tr class="ac-trCon">
+												<td class="planname"><s:url action="plandetails_input"
+														var="detailUrl" escapeAmp="false">
+														<%-- <s:param name="planDetailsDisplayId"
+														value="#platinumPlan.planDetailsDisplayId" />
+													<s:param name="premiumAmt" value="#platinumPlan.premiumAmt"></s:param> --%>
+
+													</s:url> <img class="logo-img"
+													alt="<s:property value="#platinumPlan.carrierName"/>"
+													src="<s:property value='rootPath'/>static/custom/images/<s:property value="#platinumPlan.carrierId"/>.jpg" />
+
+													<%-- <a href="<s:property value="detailUrl"/>" target="_blank">
+													<s:property value="#platinumPlan.planName" />
+											</a>  --%> <a href="#"
+													id="id_a_platinum_<s:property value="#platinumIndex.index"/>"
+													data-toggle="modal" data-target="#myModal"
+													onclick="populateModal(this.id);"
+													modalURL="<s:property value="detailUrl"/>"
+													planID="<s:property value="#platinumPlan.planDetailsDisplayId"/>"
+													premiumAmt="<s:property value="#platinumPlan.premiumAmt"/>">
+														<s:property value="#platinumPlan.planName" />
+												</a></td>
+												<td class="variableAmount changeMonthlyYearly ac-net"
+													minAmount="<s:property value="#platinumPlan.minPremium"></s:property>"
+													netPremium="<s:property value="#platinumPlan.premiumAmt"></s:property>"><s:property
+														value="#platinumPlan.premiumAmt" /></td>
+												<td
+													class="changeMonthlyYearly outOfPocketMax ac-co OOPDollar"
+													expectedOOP="<s:property
+													value="#platinumPlan.expectedOOP" />"><s:property
+														value="#platinumPlan.expectedOOP" /></td>
+
+												<td><div class="row">
+														<div class="col-lg-9 text-align-left">
+															<img class="leftBarPlatinum"
+																outOfPocketMax="<s:property value="#platinumPlan.expectedOOP"/>"
+																minAmount="<s:property value="#platinumPlan.minPremium"></s:property>"
+																netPremium="<s:property value="#platinumPlan.premiumAmt"></s:property>"
+																src="<s:property value='rootPath'/>static/custom/images/med.png"
+																alt="Med.png" /><img class="rightBarPlatinum"
+																outOfPocketMax="<s:property value="#platinumPlan.expectedOOP"/>"
+																minAmount="<s:property value="#platinumPlan.minPremium"></s:property>"
+																netPremium="<s:property value="#platinumPlan.premiumAmt"></s:property>"
+																src="<s:property value='rootPath'/>static/custom/images/bar.png"
+																alt="bar.png">
+														</div>
+														<div
+															class="variableAmountTotal platinumMinMax changeMonthlyYearly"
+															minAmount="<s:property value="#platinumPlan.minPremium"></s:property>"
+															netPremium="<s:property value="#platinumPlan.premiumAmt"></s:property>"
+															outOfPocketMax="<s:property value="#platinumPlan.expectedOOP"/>"></div>
+													</div></td>
+
+												<%-- <td
+													class="variableAmountTotal platinumMinMax changeMonthlyYearly"
+													minAmount="<s:property value="#platinumPlan.minPremium"></s:property>"
+													netPremium="<s:property value="#platinumPlan.premiumAmt"></s:property>"
+													outOfPocketMax="<s:property value="#platinumPlan.expectedOOP"/>"></td> --%>
+
+											</tr>
+										</s:iterator>
+										<jsp:include page="/includes/plan-grid_table-footer.jsp"></jsp:include>
+
+									</div>
+
+
+
+									<div class="popuptotalbodypart modal fade" id="myModal"
+										role="dialog">
+										<div class="modal-dialog modal-lg">
+											<div class="modal-content">
+												<div class="modal-body">
+													<div id="id_div_plan_details"></div>
+												</div>
+
+												<div class="clearfix"></div>
+												<%-- 	<div class="modal-footer">
+													<button type="button" class="btn btn-default"
+														data-dismiss="modal">
+														<s:text name="txt.button.close" />
+													</button>
+												</div> --%>
+											</div>
+
+										</div>
+									</div>
+
+								</div>
+							</div>
+
+
+						</div>
+
+						<div>
+							<br>
+							<s:text name="txt.plandetails.pleaseVisit"></s:text>
+							<a href="http://www.accesshealthct.com" target="_blank"><s:text
+									name="txt.plandetails.ahct"></s:text></a>
+							<s:text name="txt.plandetails.buyPlan"></s:text>
+						</div>
+
+
+						<div id="id_div_disclaimerMessage" >
+						<br />
+							<div class="col-md-12 heading">
+								<h2>
+								<s:text name="txt.plandetails.disclaimer"></s:text>
+								</h2>
+							</div>
+							<br />
+							<br />
+							<br />
+							<s:text name="txt.plandetails.disclaimer1"></s:text>
+							<hr>
+							<s:text name="txt.plandetails.disclaimer7"></s:text>
+							<ul>
+							<li><s:text name="txt.plandetails.disclaimer2"></s:text></li>
+							<li><s:text name="txt.plandetails.disclaimer3"></s:text></li>
+							<li><s:text name="txt.plandetails.disclaimer4"></s:text></li>
+							<li><s:text name="txt.plandetails.disclaimer5"></s:text></li>
+							<li><s:text name="txt.plandetails.disclaimer6"></s:text></li>
+							</ul>
+						</div>
+						<div class="row">
+							<div class="chkbackBt">
+								<input class="back" type="button"
+									value="< <s:text name="txt.global.button2"></s:text>"
+									onclick="window.history.back();" />
+							</div>
+
+							<div class="chknextBt">
+								<input type="button"
+									value="<s:text name="txt.global.close"></s:text>"
+									onclick="closeWindow()" />
+							</div>
+						</div>
+						
+					</div>
+
+				</s:form>
+			</div>
+		</div>
+	</div>
+	<div class="clearfix"></div>
+</section>
+<%@include file="/includes/footer.jsp"%>

@@ -1,0 +1,49 @@
+package com.hixapi.pmp.service.prescreen;
+
+public class ScreeningConstants {
+
+	public static final String METAL_CATASTROPHIC = "Catastrophic";
+	public static final String METAL_SILVER = "Silver";
+	public static final String AGEGROUP_65_AND_OVER = "65 and over";
+	public static final String AGEGROUP_0_20 = "0-20";
+	public static final String PGM_MEDICAID = "MA";
+	public static final String PGM_COST_SHARING_REDUCTION = "CS";
+	public static final String PGM_CHILD_HLTH_INS = "CH";
+	public static final String PGM_APTC = "AP";
+	public static final String PGM_SUB_CSR_TIER1 = "06";
+	public static final String PGM_SUB_CSR_TIER2 = "05";
+	public static final String PGM_SUB_CSR_TIER3 = "04";
+	public static final String AI_AN_02 = "02";
+	public static final String AI_AN_03 = "03";
+	public static final String PGM_SUB_MA_PARENT_CARETAKER = "PC";
+	public static final String PGM_SUB_MA_PREGNANT_WOMAN = "PW";
+	public static final String PGM_SUB_MA_CHILDREN = "CH";
+	public static final String PGM_SUB_MA_ADULT = "AD";
+	public static final String PGM_SUB_CHIP_BAND1 = "B1";
+	public static final String PGM_SUB_CHIP_BAND2 = "B2";
+	public static final int MAX_HOUSE_SIZE = 8;
+	public static final String PGM_SUB_CSR_01 = "01";
+	public static final String PGM_SUB_CSR_02 = "02";
+	public static final String PGM_SUB_CSR_03 = "03";
+	public static final String APTC_DESC = "2";
+	public static final String IND_Y = "Y";
+	public static final String IND_N = "N";
+	public static final String SHOP_TAX_CREDIT = "SHOPTC";
+	public static final String SHOP_EXCHANGE = "SHOPEX";
+	public static final String USER_TYPE_STANDARD = "Standard";
+	public static final String MEDICAID = "Medicaid";
+	public static final String LOW_INCOME_ADULT = "Low Income Adult";
+	public static final String MAX = "max";
+	public static final String MIN = "min";
+	public static final String PREG_WOMAN = "Pregnant Woman";
+	public static final String CHILDREN = "Children";
+	public static final String PARENT_CARE_TAKER = "Parent/Caretaker";
+	public static final String CHIP = "CHIP";
+	public static final String CSR = "CSR";
+	public static final String APTC = "APTC";
+	public static final String BAND1 = "BAND 1";
+	public static final String BAND2 = "BAND 2";
+	public static final String TIER1 = "Tier 1";
+	public static final String TIER2 = "Tier 2";
+	public static final String TIER3 = "Tier 3";
+}

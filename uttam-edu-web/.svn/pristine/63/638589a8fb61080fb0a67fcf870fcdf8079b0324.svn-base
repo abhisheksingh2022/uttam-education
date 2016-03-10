@@ -1,0 +1,102 @@
+package com.hixapi.pmp.struts.reports;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.CarrierVO;
+import com.hixapi.pmp.api.model.PlanHistoryVO;
+import com.hixapi.pmp.api.model.criteria.PlanHistorySearchCriteria;
+import com.hixapi.pmp.common.util.PMPUtil;
+import com.hixapi.pmp.service.carrier.CarrierService;
+import com.hixapi.pmp.service.plan.PlanManagerService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+
+public class PlanHistoryAction extends BaseSecureAction {
+ 
+	private static final Logger LOG = LogManager.getLogger(PlanHistoryAction.class);
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -926426082717804296L;
+	private List<PlanHistoryVO> planHistoryList;
+	private PlanHistorySearchCriteria criteria; 
+	private Boolean planHistoryStatus;
+	private PlanHistoryVO planHistoryVo = new PlanHistoryVO();
+	
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		LOG.entry();
+		LOG.exit();
+		
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		return null;
+	}
+	
+	public void validate_createReport(){
+		if(StringUtils.isEmpty(criteria.getSearchYear())){
+			addValidationError("msg.planhistory.selectyear", "'criteria.searchYear'");
+		}
+		if(StringUtils.isEmpty(criteria.getSearchPlanId()) && StringUtils.isEmpty(criteria.getSearchCarrierNbr())){
+			addValidationError("msg.planhistory.carrierorplan", "criteria.searchPlanId", "criteria.searchCarrierNbr");
+		}
+	}
+	
+	public String createReport()
+	{
+		LOG.entry();
+		setPlanHistoryStatus(true);
+		setPlanHistoryList(ServiceLocator.getInstance().getService(PlanManagerService.class).retrievePlanHistory(criteria));
+		return LOG.exit(FLASH);
+	}
+
+	public PlanHistorySearchCriteria getCriteria() {
+		return criteria;
+	}
+
+	public void setCriteria(PlanHistorySearchCriteria criteria) {
+		this.criteria = criteria;
+	}
+	
+	public List<CarrierVO>  getCarrierList(){
+		List<CarrierVO> carrierList  = ServiceLocator.getInstance().getService(CarrierService.class).searchCarriers(null);
+		return carrierList;
+	}
+	public List<Integer>  getYears(){
+		List<Integer> years= new ArrayList<Integer> ();
+		years = PMPUtil.getCoverageYearList();
+		return years;
+	}
+
+	public Boolean getPlanHistoryStatus() {
+		return planHistoryStatus;
+	}
+
+	public void setPlanHistoryStatus(Boolean planHistoryStatus) {
+		this.planHistoryStatus = planHistoryStatus;
+	}
+
+	public PlanHistoryVO getPlanHistoryVo() {
+		return planHistoryVo;
+	}
+
+	public void setPlanHistoryVo(PlanHistoryVO planHistoryVo) {
+		this.planHistoryVo = planHistoryVo;
+	}
+
+	public List<PlanHistoryVO> getPlanHistoryList() {
+		return planHistoryList;
+	}
+
+	public void setPlanHistoryList(List<PlanHistoryVO> planHistoryList) {
+		this.planHistoryList = planHistoryList;
+	}
+
+}

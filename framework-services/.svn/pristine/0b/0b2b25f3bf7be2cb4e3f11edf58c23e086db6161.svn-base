@@ -1,0 +1,1322 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.prescreen;
+
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.net.URLEncoder;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import org.apache.commons.beanutils.BeanComparator;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.context.ContextKeyEnum;
+import com.hixapi.framework.common.context.ContextProvider;
+import com.hixapi.framework.common.env.IEnvironmentProvider;
+import com.hixapi.framework.dao.LookupManager;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanVariant;
+import com.hixapi.pmp.api.model.APICodeConstants.YesNo;
+import com.hixapi.pmp.dao.prescreen.EligibilityDAO;
+import com.hixapi.prescreening.api.model.AptcDeterminant;
+import com.hixapi.prescreening.api.model.DocumentView;
+import com.hixapi.prescreening.api.model.EligLkupApplicablePercentageRange;
+import com.hixapi.prescreening.api.model.EligLkupFplAmounts;
+import com.hixapi.prescreening.api.model.Eligibility;
+import com.hixapi.prescreening.api.model.HealthPlan;
+import com.hixapi.prescreening.api.model.Household;
+import com.hixapi.prescreening.api.model.Individual;
+import com.hixapi.prescreening.api.model.IndividualEligibilityResults;
+import com.hixapi.prescreening.api.model.plan.HealthPlanDeterminant;
+import com.hixapi.prescreening.api.model.plan.Plan;
+
+/**
+ * @author spoorthi
+ *
+ */
+public class EligibilityServiceImpl implements EligibilityService {
+
+	private static final Logger log = LogManager.getLogger(EligibilityServiceImpl.class);
+	private EligibilityDAO eligibilityDAO;
+
+	@Override
+	public Eligibility calculateEligibility(Household household) throws Exception {
+		Boolean blankIncomeFlag = false;
+		Double aptcAmount = 0d;
+		log.entry();
+		AptcDeterminant aptcFactors = null;
+		// example
+		Eligibility eligibility = new Eligibility();
+		final RulesData dataSet = new RulesData();
+		List<Individual> householdMembers = household.getHouseholdMembers();
+		if(household.getHouseholdIncome().equalsIgnoreCase(""))
+		{
+			blankIncomeFlag = true;	
+		}
+		
+		final int houseHoldSize = householdMembers.size();
+		int pregHouseHoldSize = houseHoldSize + 1;
+		String coverageYearStr = household.getCoverageYearStr();
+		if (StringUtils.isBlank(coverageYearStr)) {
+			coverageYearStr = getCurrentCoverageYear();
+			household.setCoverageYearStr(coverageYearStr);
+			eligibility.setCoverageYearStr(coverageYearStr);
+		}
+		dataSet.setCoverageYearStr(coverageYearStr);
+
+		boolean pregHouse = false;
+
+		for (Individual member : householdMembers) {
+			if (checkifPregnant(member)) {
+				pregHouse = true;
+				//pregHouseHoldSize = pregHouseHoldSize + 1;
+			}
+
+			if (member.getAge() > 120) {
+				member.setAge(120);
+			}
+
+		}
+		Date firstDayOfCoverageYear = APIUtil.getFirstDayOfYear(Integer.parseInt(coverageYearStr));
+		Date todayDate = getDateForCalculation();
+		dataSet.setFirstDayOfCoverageYear(firstDayOfCoverageYear);
+		List<Individual> coveredMembers = eliminateUnCoveredMemebers(householdMembers);
+		household.setCoveredMembers(coveredMembers);
+		if(blankIncomeFlag !=true)
+		{
+		Long annualIncome = getAnnualIncome(household.getHouseholdIncome(), household.getHouseholdIncomeTypeCode());
+		household.setAnnualIncome(annualIncome);
+		final double houseFPL = calculateHouseHoldFPL(annualIncome, houseHoldSize, todayDate);
+		log.debug("Household FPL value : {}", houseFPL);
+		dataSet.setHouseFPL(houseFPL);
+		eligibility.setHouseholdFPL(houseFPL);
+
+		if (pregHouse) {
+			final double pregHouseFPL = calculatePregHouseHoldFPL(annualIncome, pregHouseHoldSize, todayDate);
+			log.debug("Pregnant Household FPL value : {}", pregHouseFPL);
+			dataSet.setPregHouseFPL(pregHouseFPL);
+		}
+
+		setFPLLimitsForHousehold(todayDate, dataSet);
+	
+		identifyProgramEligibilty(household.getHouseholdLegalStatusTypeIndicator(),household.getHouseholdMembers().get(0), coveredMembers, dataSet);
+		
+
+		eligibility = setEligibilityResults(coveredMembers);
+		eligibility.setHouseholdFPL(houseFPL);
+		}
+		eligibility.setCoverageYearStr(coverageYearStr);
+		final String ratingAreaText = getEligibilityDAO().getRatingAreaText(household.getCounty());
+		log.debug("Rating Area Text: {}", ratingAreaText);
+		
+		final String countyName = getEligibilityDAO().getCounty(household.getCounty());
+		  StringBuilder ratingAreaAndCounty = new StringBuilder();
+		  ratingAreaAndCounty.append(ratingAreaText);
+		  ratingAreaAndCounty.append(": ");
+		  ratingAreaAndCounty.append(countyName);
+		  log.debug("Rating Area Text: {}", ratingAreaText);
+		  final String lkRatingAreaId = LookupManager.getLookupKey(APIConstants.LOCALE_EN, "RatingArea", ratingAreaAndCounty.toString());
+		
+		//final String lkRatingAreaId = LookupManager.getLookupKey(APIConstants.LOCALE_EN, "RatingArea", ratingAreaText);
+		Locale locale = ContextProvider.getContextField(ContextKeyEnum.CURRENT_LOCALE, Locale.class);
+		if (locale == null) {
+			locale = APIUtil.getLocale("en_US");
+		}
+		String language = APIUtil.getTwoLetterLanguageCode(locale.toString());
+		if (eligibility.isCreditEligibility() == true) {
+			aptcFactors = determineAptcFactors(household, dataSet);
+			aptcFactors.setRatingAreaId(lkRatingAreaId);
+			aptcFactors.setLanguage(language);
+			aptcAmount = determineAptcEligibilityAmount(aptcFactors);
+			eligibility.setAptcFactors(aptcFactors);
+			eligibility.setAptcAmount(aptcAmount);
+		}
+		Individual applicant = householdMembers.get(0);
+		String csrVarId = null;
+		if (YesNo.NO.getCode().equalsIgnoreCase(applicant.getQualifiedAlienIndicator()) && blankIncomeFlag !=true) {
+			csrVarId = checkCsrVarIdForFamily(coveredMembers, dataSet);
+		} else {
+			//csrVarId = determineCsrvarId(applicant, houseFPL);
+			csrVarId = dataSet.getCsrVarId();
+		}
+		log.debug("csr Var Id for family :" + csrVarId);
+		eligibility.setCsrVarIdForPlansFetch(csrVarId);
+		List<Plan> allPlans = null;
+		// need to set emplyList of mediciaid household
+
+		HealthPlanDeterminant hpDeterminant = new HealthPlanDeterminant();
+		hpDeterminant.setRatingAreaId(lkRatingAreaId);
+		hpDeterminant.setCsrVarIdForPlansFetch(csrVarId);
+		hpDeterminant.setCoverageYear(Integer.parseInt(coverageYearStr));
+		hpDeterminant.setPregnantPersonPresent(pregHouse);
+		hpDeterminant.setLanguage(language);
+		if (eligibility.isCreditEligibility()) {
+			hpDeterminant.setMemberList(aptcFactors.getAptcMembers());
+			hpDeterminant.setAgeCategories(aptcFactors.getHshlSubsidyAgeCategories());
+		} else {
+			hpDeterminant.setMemberList(coveredMembers);
+			hpDeterminant.setAgeCategories(determineAgeCategories(coveredMembers));
+		}
+		hpDeterminant.setCatastrophicElig(checkCatastrophicEligible(coveredMembers));
+		hpDeterminant.setAptcAmount(aptcAmount);
+		if(blankIncomeFlag == true)
+		{
+			hpDeterminant.setAgeCategories(determineAgeCategories(coveredMembers));
+			hpDeterminant.setCsrVarIdForPlansFetch("01");
+			hpDeterminant.setRatingAreaId(lkRatingAreaId);
+			hpDeterminant.setMemberList(coveredMembers);
+		}
+		int coveredMemberCount = household.getCoveredMembers().size();
+		int count = 0;
+		//to find if mediciaid family
+		if(blankIncomeFlag !=true)
+		{
+		for(IndividualEligibilityResults result:eligibility.getResultList())
+		{
+			if(result.getMedicaidEligibility() == true || result.getChipEligibility() == true)
+			{
+				count = count + 1;
+			}
+		}
+		}
+		if(count != coveredMemberCount)
+		{
+		allPlans = getAllPlansForHouseHold(hpDeterminant);
+		}
+		//if mediciaid family no need to fetch plans.
+		else
+		{
+			allPlans = new ArrayList<Plan>(0);
+		}
+		
+		
+		
+		//allPlans = getAllPlansForHouseHold(hpDeterminant);
+		// Collections.sort(allPlans, new
+		// BeanComparator<HealthPlan>("premiumDouble"));
+		eligibility.setAllPlans(allPlans);
+		//		for(Plan pl:allPlans)
+		//		{
+		//			log.debug("plan Name : "+pl.getPlanName()+" csr VarId "+ pl.getCsrVarId()+" metal level "+pl.getMetalLevelCode());
+		//		}
+		return log.exit(eligibility);
+	}
+
+	private List<Plan> getAllPlansForHouseHold(HealthPlanDeterminant hpDeterminant) {
+		Map<Integer, List<HealthPlan>> planMap = getHealthPlansForFamily(hpDeterminant);
+		List<Plan> allPlans = calculateEachHealthPlanRateForFamily(hpDeterminant, planMap);
+		return allPlans;
+
+	}
+
+	private Map<Integer, List<HealthPlan>> getHealthPlansForFamily(HealthPlanDeterminant hpDeterminant) {
+		String csrVarId = hpDeterminant.getCsrVarIdForPlansFetch();
+		Map<Integer, List<HealthPlan>> planMap = new LinkedHashMap<Integer, List<HealthPlan>>();
+		planMap.putAll(getEligibilityDAO().getAllHealthPlansForFamily(hpDeterminant.getCoverageYear(),
+				hpDeterminant.getRatingAreaId(), hpDeterminant.getAgeCategories(), csrVarId,
+				hpDeterminant.getCatastrophicElig(), hpDeterminant.getLanguage(), hpDeterminant.getMemberList().size() > 1));
+		return planMap;
+	}
+
+	private List<Plan> calculateEachHealthPlanRateForFamily(HealthPlanDeterminant hpDeterminant,
+			Map<Integer, List<HealthPlan>> planMap) {
+		Plan plan = null;
+		List<Plan> finalPlanList = new ArrayList<Plan>();
+		// Map<String, Boolean> eligres = checkAddable(dataSet);
+		Double totalCost = 0d;
+		//Double aptcAmount = hpDeterminant.getAptcAmount() == null ? 0d : hpDeterminant.getAptcAmount();
+		Map<String, Integer> ageCounterMap = new HashMap<String, Integer>();
+		for (Integer id : planMap.keySet()) {
+			final List<HealthPlan> planList = planMap.get(id);
+			for (Individual member : hpDeterminant.getMemberList()) {
+
+				String ageCategory = String.valueOf(member.getAgeCategory());
+				if (ageCounterMap.containsKey(ageCategory)) {
+					final int countVal = ageCounterMap.get(ageCategory).intValue();
+					if (isChildAgeCategory(ageCategory) && countVal == 3) {
+						log.debug("Ignoring more than 3 children");
+						continue;
+					} else {
+						ageCounterMap.put(ageCategory, countVal + 1);
+					}
+				} else {
+					ageCounterMap.put(ageCategory, 1);
+				}
+
+				HealthPlan planEntry = findHealthPlanForMember(member, planList, false);
+				Double planRate = planEntry.getPlanRate();
+				totalCost = totalCost + planRate;
+
+			}
+
+			plan = new Plan();
+
+			BigDecimal premium = null;
+			final HealthPlan aPlan = planList.get(0);
+			premium = new BigDecimal(totalCost).setScale(2, RoundingMode.HALF_UP);
+			if (premium.doubleValue() < 0) {
+				premium = new BigDecimal(0.00);
+			}
+			premium.setScale(2, RoundingMode.HALF_UP);
+			plan.setPremiumAmt(premium);
+
+			plan.setCarrierId(aPlan.getCarrierId());
+			plan.setInNetworkDoctorsLink(aPlan.getCheckDocLink());
+			// plan.setCsrText(null);
+			plan.setEmergencyRoom(StringUtils.defaultIfEmpty(aPlan.getEmergencyRoom(), "$0"));
+			plan.setMetalLevelCode(aPlan.getMetalLevel());
+			plan.setPlanDetailsDisplayId(aPlan.getPlanDetailsDisplayId());
+			plan.setPlanId(aPlan.getPlanId());
+			// plan.setPlanId(plan.getPlanDetailsDisplayId());
+			plan.setPlanName(aPlan.getPlanName());
+			plan.setPrimCareCoPay(StringUtils.defaultIfEmpty(aPlan.getPrimCareCoPay(), "$0"));
+			plan.setRatingCode(String.valueOf(aPlan.getQualityRating()));
+			plan.setCsrVarId(aPlan.getCsrVarId());
+			plan.setDeductibleAmt(StringUtils.defaultIfEmpty(aPlan.getAnnualDeductible(), "$0"));
+			plan.setOutOfPocketMaxAmt(StringUtils.defaultIfEmpty(aPlan.getAnnualOutOfPocMax(), "$0"));
+			plan.setCarrierName(aPlan.getCarrierName());
+			Double ehb = aPlan.getEhb() == null ? 100d : aPlan.getEhb();
+			Double difference = 100 - ehb;
+			Double ehbPremium = totalCost * difference / 100;
+			double ehbRoundOff = (double) Math.round(ehbPremium.doubleValue() * 100) / 100;
+			plan.setMinPremium(String.valueOf(ehbRoundOff));
+			plan.setEhbLevel(String.valueOf(aPlan.getEhb()));
+			plan.setActualPremium(plan.getPremiumAmt().toString());
+			plan.setCarrierImageName(plan.getCarrierId() + ".jpg");
+			finalPlanList.add(plan);
+			ageCounterMap.clear();
+			totalCost = 0d;
+			String viewUrl;
+			try {
+				viewUrl = "docFileName=" + aPlan.getPlanEvidCov() + "&carrierNameValue="
+						+ URLEncoder.encode(plan.getCarrierName(), "utf-8");
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
+			DocumentView docView = new DocumentView();
+			docView.setViewUrl(viewUrl);
+			// plan.set(docView);
+		}
+		Collections.sort(finalPlanList, new BeanComparator<Plan>("premiumAmt"));
+//		for(Plan pl: finalPlanList)
+//		{
+//			System.out.println("plan Name : "+pl.getPlanName()+" planID: "+pl.getPlanId()+" planDeductible "+pl.getDeductibleAmt()+" planOOPMax "+pl.getOutOfPocketMaxAmt());
+//		}
+		return finalPlanList;
+	}
+
+	private boolean checkCatastrophicEligible(List<Individual> members) {
+		boolean flag = true;
+		for (Individual member : members) {
+			if (member.getAge() > 29) {
+				flag = false;
+				break;
+			}
+		}
+		return flag;
+
+	}
+
+	private String getCurrentCoverageYear() throws ParseException {
+		Date currentDate = APIUtil.getCurrentDate();
+		String oeStartStr = ServiceLocator.getInstance().getService(IEnvironmentProvider.class)
+				.getProperty(APIConstants.PROP_KEY_OESTART_DATE, String.class, "");
+		DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		// yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+		Date oeStartDate = null;
+		oeStartDate = sdf.parse(oeStartStr);
+
+		Calendar cal = Calendar.getInstance();
+		cal.setLenient(false);
+		cal.setTime(currentDate);
+		int year = cal.get(Calendar.YEAR);
+		//int month = cal.get(Calendar.MONTH);
+		//int day = cal.get(Calendar.DATE);
+		if (currentDate.after(oeStartDate) || currentDate.equals(oeStartDate)) {
+			year = year + 1;
+		}
+		return String.valueOf(year);
+
+	}
+
+	private Date getDateForCalculation() throws ParseException {
+		Date currentDate = APIUtil.getCurrentDate();
+		String oeStartStr = ServiceLocator.getInstance().getService(IEnvironmentProvider.class)
+				.getProperty(APIConstants.PROP_KEY_OESTART_DATE, String.class, "");
+		DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		// yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+		Date oeStartDate = null;
+		oeStartDate = sdf.parse(oeStartStr);
+		if (currentDate.after(oeStartDate) || currentDate.equals(oeStartDate)) {
+			return oeStartDate;
+		} else
+			return currentDate;
+	}
+
+	private List<Individual> eliminateUnCoveredMemebers(List<Individual> householdMembers) {
+		List<Individual> members = new ArrayList<Individual>(0);
+		for (Individual individual : householdMembers) {
+			if ("Y".equalsIgnoreCase(individual.getCoveredIndicator())) {
+				members.add(individual);
+			}
+		}
+		return members;
+	}
+
+	//determineCsrVarId method moved to identifyCsrEligibility
+
+	/**
+	 * When household is not AI/AN , csr variant
+	 * 
+	 * @param members
+	 * @param dataSet
+	 * @return
+	 */
+	private String checkCsrVarIdForFamily(List<Individual> members, RulesData dataSet) {
+
+		String csrVarId = "01";
+		for (Individual pre : members) {
+			String subPrgm = pre.getEligibilityResult().getSubProgram1();
+			if (ScreeningConstants.PGM_SUB_CSR_TIER1.equals(subPrgm) || ScreeningConstants.PGM_SUB_CSR_TIER2.equals(subPrgm)
+					|| ScreeningConstants.PGM_SUB_CSR_TIER3.equals(subPrgm)) {
+				csrVarId = subPrgm;
+			}
+		}
+		return csrVarId;
+	}
+
+	private Long getAnnualIncome(String getAnnualIncome, String householdIncomeTypeCode) {
+		Long houseIncome = Long.parseLong(getAnnualIncome);
+		Long annualIncome = 0l;
+		if ("A".equalsIgnoreCase(householdIncomeTypeCode)) {
+			
+			annualIncome = houseIncome;
+		}
+		if ("M".equalsIgnoreCase(householdIncomeTypeCode)) {
+			
+			annualIncome = houseIncome * 12;
+		}
+		if ("W".equalsIgnoreCase(householdIncomeTypeCode)) {
+			annualIncome = houseIncome * 52;
+		}
+		log.debug("annual Income of household: " + annualIncome);
+		return annualIncome;
+	}
+
+	private AptcDeterminant determineAptcFactors(Household household, RulesData dataSet) {
+		AptcDeterminant aptcFactors = new AptcDeterminant();
+
+		final List<Individual> aptcEligibleMembers = getAptcEligibileMembersList(household.getCoveredMembers());
+		final List<String> hshlSubsidyAgeCategories = determineAgeCategories(aptcEligibleMembers);
+
+		if (CollectionUtils.isNotEmpty(aptcEligibleMembers)) {
+			log.debug("Household eligible for APTC/CSR");
+			final double applicationPercentage = calculateApplicationPercentage(dataSet.getFirstDayOfCoverageYear(),
+					dataSet.getHouseFPL());
+			log.debug("Application Percentage: {}", applicationPercentage);
+
+			aptcFactors.setAnnualIncome(household.getAnnualIncome());
+
+			aptcFactors.setApplicablePercentage(applicationPercentage);
+			aptcFactors.setAptcMembers(aptcEligibleMembers);
+			aptcFactors.setHshlSubsidyAgeCategories(hshlSubsidyAgeCategories);
+			aptcFactors.setCoverageYear(Integer.parseInt(dataSet.getCoverageYearStr()));
+
+		}
+		return aptcFactors;
+
+	}
+
+	/**
+	 * Method to get the range minimum and range maximum.Also calculates the application percentage.
+	 * 
+	 * @param date
+	 * @param houseFPL
+	 * @param dataSet
+	 * @throws Exception
+	 */
+	private double calculateApplicationPercentage(Date date, double houseFPL) {
+		double applicationPerc = 0d;
+		double percDiff = 0d;
+
+		EligLkupApplicablePercentageRange rangeObj = new EligLkupApplicablePercentageRange();
+		List<EligLkupApplicablePercentageRange> ranges = (getEligibilityDAO().getMinAndMaxRangeValues(date));
+
+		for (EligLkupApplicablePercentageRange rangeValue : ranges) {
+			if ((houseFPL > rangeValue.getRangeMin() * 100) && (houseFPL <= rangeValue.getRangeMax() * 100)) {
+				rangeObj.setRangeMax(rangeValue.getRangeMax() * 100);
+				log.debug("range max : {}", rangeObj.getRangeMax());
+				break;
+			}
+		}
+
+		for (EligLkupApplicablePercentageRange rangeValue : ranges) {
+			if ((houseFPL > rangeValue.getRangeMin() * 100) && (houseFPL <= rangeValue.getRangeMax() * 100)) {
+				rangeObj.setRangeMin(rangeValue.getRangeMin() * 100);
+				rangeObj.setInitialPerc(rangeValue.getInitialPerc());
+				rangeObj.setFinalPerc(rangeValue.getFinalPerc());
+				log.debug("range min :{}", rangeObj.getRangeMin());
+				break;
+			}
+		}
+
+		if (rangeObj.getRangeMax() != rangeObj.getRangeMin()) {
+			double rangePerc = 0d;
+
+			rangePerc = (houseFPL - (rangeObj.getRangeMin())) / ((rangeObj.getRangeMax()) - (rangeObj.getRangeMin()));
+			percDiff = rangeObj.getFinalPerc() - rangeObj.getInitialPerc();
+			applicationPerc = (rangePerc * percDiff) + rangeObj.getInitialPerc();
+			log.debug("Application Percentage : {}", applicationPerc);
+			return new BigDecimal(applicationPerc).setScale(2, RoundingMode.HALF_UP).doubleValue();
+		} else {
+			return 0d;
+		}
+
+	}
+
+	/**
+	 * This method returns the members list from the household who are eligible for a aptc and csr
+	 * 
+	 * @param members
+	 * @param eligibilityResults
+	 * @return
+	 */
+	private List<Individual> getAptcEligibileMembersList(List<Individual> members) {
+		List<Individual> membersList = new ArrayList<Individual>();
+		for (Individual member : members) {
+			// condition to say that the person is aptc ,csr eligibile
+			if (member.getEligibilityResult().getCsrEligibilty() == true
+					|| member.getEligibilityResult().getAptcEligibility() == true) {
+				membersList.add(member);
+			}
+		}
+		return membersList;
+	}
+
+	/**
+	 * Changed this logic below to match the lk_age_cd in planrate detail table
+	 * 
+	 * @param member
+	 * @return
+	 */
+	public String findAgeCategory(Individual member) {
+
+		String ageCategory = null;
+
+		 if (member.getAge() <= 20) {
+			 
+		 ageCategory = ScreeningConstants.AGEGROUP_0_20;
+		 member.setAgeCategory(ageCategory);
+		// return (ScreeningConstants.AGEGROUP_0_20);
+		 } else if ((member.getAge() > 20) && (member.getAge() <= 64)) {
+			
+			 ageCategory = String.valueOf(member.getAge());
+			 member.setAgeCategory(String.valueOf(ageCategory));
+		// return (String.valueOf(member.getAge()));
+		 } else {
+			 
+			 ageCategory = ScreeningConstants.AGEGROUP_65_AND_OVER;
+			 member.setAgeCategory(ageCategory);
+		// return (ScreeningConstants.AGEGROUP_65_AND_OVER);
+		 }
+		 
+		 return LookupManager.getLookupKey(APIConstants.LOCALE_EN, "Age", ageCategory);
+
+	}
+
+	/**
+	 * This method prepares a list of ageCategory which the persons belong to.
+	 * 
+	 * @param membersList
+	 * @param dataSet
+	 */
+	public List<String> determineAgeCategories(List<Individual> membersList) {
+		List<String> ageCategory = new ArrayList<String>();
+
+		for (Individual member : membersList) {
+			final String category = findAgeCategory(member);
+			if (!ageCategory.contains(category)) {
+				ageCategory.add(category);
+			}
+		}
+
+		return log.exit(ageCategory);
+
+	}
+
+	/**
+	 * This method is the is used to determine the household members who are aptc and csr eligible and proceed on next steps
+	 * to calculate aptcamount for those members only
+	 * 
+	 * @param members
+	 * @param eligibilityResults
+	 * @param dataSet
+	 * @throws UnsupportedEncodingException
+	 * @throws FileNotFoundException
+	 */
+	private Double determineAptcEligibilityAmount(AptcDeterminant aptcFactors) throws FileNotFoundException,
+			UnsupportedEncodingException {
+
+		// get eligible members List
+
+		// below check to ensure execution to calculate aptc amount continues
+		// only if eligible members available
+		log.entry();
+		Double aptcAmount = 0d;
+		if (CollectionUtils.isNotEmpty(aptcFactors.getHshlSubsidyAgeCategories())) {
+			Double secLowestSilverCost = getSecondLowestSilverPlanCost(aptcFactors.getHshlSubsidyAgeCategories(),
+					aptcFactors.getRatingAreaId(), aptcFactors.getCoverageYear(), aptcFactors.getAptcMembers(),
+					aptcFactors.getLanguage());
+			log.debug("Second Lowest Cost Silver : {}", secLowestSilverCost);
+			// method to calculate aptcAmount
+			aptcAmount = calculateAptcAmount(secLowestSilverCost, aptcFactors.getApplicablePercentage(),
+					aptcFactors.getAnnualIncome());
+		}
+		return log.exit(aptcAmount);
+
+	}
+
+	private Double calculateAptcAmount(Double secLowestSilverCost, Double applicablePercentage, Long annualTotal) {
+		log.entry();
+		double aptcAmount = 0d;
+		double appPercentage = applicablePercentage / 100;
+		if (appPercentage > 0) {
+			Double secLowSPcost = secLowestSilverCost * 12;
+			double result = (secLowSPcost - (appPercentage * annualTotal)) / 12;
+			if (result < 0) {
+				aptcAmount = 0d;
+			} else {
+				aptcAmount = result;
+
+			}
+			aptcAmount = new BigDecimal(aptcAmount).setScale(2, RoundingMode.HALF_UP).doubleValue();
+			log.debug("aptc amount : {}", aptcAmount);
+		}
+
+		return log.exit(aptcAmount);
+	}
+
+	private Double getSecondLowestSilverPlanCost(List<String> ageCategories, String ratingAreaId, Integer coverageYear,
+			List<Individual> members, String language) throws FileNotFoundException, UnsupportedEncodingException {
+		// below call will get the list of healthplans with healthplanId,
+		// planrate of this heathplan for each ageCategory
+		log.entry();
+		// Double slcSilverCost =
+		// getPreScreeningRulesDAO().retrieveSecondLowestCostInSilverPlans(coverageYear,
+		// ratingAreaId,
+		// ageCategories);
+		Map<Integer, List<HealthPlan>> healthPlanMap = getEligibilityDAO().getSilverPlans(coverageYear, ratingAreaId,
+				ageCategories, ScreeningConstants.PGM_SUB_CSR_01, language);
+
+		List<Double> slcSilverCost = getListOfTotalCostForEachHealthPlan(members, healthPlanMap);
+		if(slcSilverCost != null && slcSilverCost.size() > 1){
+			return log.exit(slcSilverCost.get(1));
+		}
+		
+		else if(slcSilverCost != null && slcSilverCost.size() == 1){
+			log.warn("Only one silver plan available for household");
+			return log.exit(slcSilverCost.get(0));
+		}
+		return 0d;
+	}
+
+	/**
+	 * Method to set the results for each member into Eligibility Model
+	 * 
+	 * @param householdMembers
+	 * @return
+	 */
+	private Eligibility setEligibilityResults(List<Individual> householdMembers) {
+		List<IndividualEligibilityResults> resultsList = new ArrayList<IndividualEligibilityResults>();
+		Eligibility eligibility = new Eligibility();
+		for (Individual member : householdMembers) {
+			IndividualEligibilityResults result = member.getEligibilityResult();
+			result.setIndividualSequenceNumber(member.getIndividualSequenceNumber());
+			result.setAge(String.valueOf(member.getAge()));
+			result.setName(member.getName());
+			resultsList.add(result);
+			if (result.getCsrEligibilty() == true || result.getAptcEligibility() == true) {
+				eligibility.setCreditEligibility(true);
+			}
+			if(!result.getAptcEligibility() && result.getCsrEligibilty()){
+				eligibility.setCsrWithoutAptc(true);
+			}
+		}
+		// eligibility.setCsrVarIdForPlansFetch(csrVarIdForPlansFetch);
+
+		eligibility.setResultList(resultsList);
+		return eligibility;
+	}
+
+	private List<Double> getListOfTotalCostForEachHealthPlan(List<Individual> members,
+			Map<Integer, List<HealthPlan>> healthPlanMap) {
+		log.entry();
+		double totalCost = 0d;
+		List<Double> listOfPlantotalCost = new ArrayList<Double>();
+		Map<String, Integer> ageCounterMap = new HashMap<String, Integer>();
+
+		for (Integer id : healthPlanMap.keySet()) {
+			List<HealthPlan> planList = healthPlanMap.get(id);
+
+			for (Individual member : members) {
+				String ageCategory = String.valueOf(member.getAge());
+				if (ageCounterMap.containsKey(ageCategory)) {
+					final int countVal = ageCounterMap.get(ageCategory).intValue();
+					if (isChildAgeCategory(ageCategory) && countVal == 3) {
+						log.debug("Ignoring more than 3 children");
+						continue;
+					} else {
+						ageCounterMap.put(ageCategory, countVal + 1);
+					}
+				} else {
+					ageCounterMap.put(ageCategory, 1);
+				}
+
+				HealthPlan planEntry = findHealthPlanForMember(member, planList, false);
+
+				// HealthPlan planEntry = planList.get(member.)
+				Double planRate = planEntry.getPlanRate();
+				Double ehb = planEntry.getEhb() / 100;
+				totalCost = totalCost + (ehb * planRate);
+
+				totalCost = new BigDecimal(totalCost).setScale(2, RoundingMode.HALF_UP).doubleValue();
+			}
+			log.debug("Cost for Silver Plan '{}' for Household : {}", id, totalCost);
+			listOfPlantotalCost.add(totalCost);
+			totalCost = 0d;
+			ageCounterMap.clear();
+		}
+		Collections.sort(listOfPlantotalCost);
+		return log.exit(listOfPlantotalCost);
+	}
+
+	private HealthPlan findHealthPlanForMember(Individual member, List<HealthPlan> planList, boolean ignoreIfNotFound) {
+		StringBuilder stAge = new StringBuilder();
+		if(member.getAge() <= 20)
+		{
+			stAge.append("020");
+		}
+		if(member.getAge() >= 65)
+		{
+			stAge.append("065");
+		}
+	//	StringBuilder stAge = new StringBuilder();
+		else if(member.getAge() >= 21 && member.getAge() <= 64)
+		{
+		stAge.append("0");
+		stAge.append(member.getAge());
+		}
+		for (HealthPlan plan : planList) {
+			if (stAge.toString().equals(plan.getAge())) {
+				return plan;
+			}
+		}
+		if (!ignoreIfNotFound) {
+			throw new RuntimeException("No plan found for member matching age and tobacco user type " + member.getAge());
+		}
+		return null;
+	}
+
+	public boolean isChildAgeCategory(String category) {
+		if (ScreeningConstants.AGEGROUP_0_20.equals(category)) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean checkifPregnant(Individual member) {
+		if ("Y".equalsIgnoreCase(member.getPregnantIndicator())) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean checkIfPersonChild(Individual member) {
+		if (member.getAge() < 19) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean checkIfPersonAdult(Individual member) {
+		if ((member.getAge() >= 19) && (member.getAge() <= 64)) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean checkIfPersonOldAge(Individual member) {
+		if (member.getAge() > 64) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Method to calculate the House Hold FPL value
+	 * 
+	 * @param totalAnnualIncome
+	 * @param houseHoldSize
+	 * @param state
+	 * @param date
+	 * @param dataSet
+	 * @throws Exception
+	 */
+	public double calculateHouseHoldFPL(Long totalAnnualIncome, int houseHoldSize, Date date) {
+		EligLkupFplAmounts fplValue = getEligibilityDAO().getFPLValue(houseHoldSize, date);
+		double fplAmount = fplValue.getFplAmount();
+		fplAmount = new BigDecimal((totalAnnualIncome / fplAmount) * 100).setScale(0, RoundingMode.HALF_UP).doubleValue();
+		return fplAmount;
+	}
+
+	/**
+	 * Method to calculate the Pregnant House Hold FPL value
+	 * 
+	 * @param totalAnnualIncome
+	 * @param pregHouseHoldSize
+	 * @param state
+	 * @param date
+	 * @param dataSet
+	 * @throws Exception
+	 */
+	private double calculatePregHouseHoldFPL(Long totalAnnualIncome, int pregHouseHoldSize, Date date) throws Exception {
+		EligLkupFplAmounts fplValue = getEligibilityDAO().getFPLValue(pregHouseHoldSize, date);
+		double fplAmount = fplValue.getFplAmount();
+		fplAmount = new BigDecimal((totalAnnualIncome / fplAmount) * 100).setScale(0, RoundingMode.HALF_UP).doubleValue();
+		return fplAmount;
+	}
+
+	public EligibilityDAO getEligibilityDAO() {
+		return eligibilityDAO;
+	}
+
+	public void setEligibilityDAO(EligibilityDAO eligibilityDao) {
+		this.eligibilityDAO = eligibilityDao;
+	}
+
+	/**
+	 * Method to get the maximum and minimum Fpl Limits plus disregards for all categories
+	 * 
+	 * @param date
+	 * @param dataSet
+	 * @throws Exception
+	 */
+	private void setFPLLimitsForHousehold(Date date, RulesData dataSet) throws Exception {
+		dataSet.setAdultFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.MEDICAID,
+				ScreeningConstants.LOW_INCOME_ADULT, date, ScreeningConstants.MAX));
+		dataSet.setPregWomanFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.MEDICAID,
+				ScreeningConstants.PREG_WOMAN, date, ScreeningConstants.MAX));
+		dataSet.setChildrenFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.MEDICAID,
+				ScreeningConstants.CHILDREN, date, ScreeningConstants.MAX));
+		dataSet.setParentFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.MEDICAID,
+				ScreeningConstants.PARENT_CARE_TAKER, date, ScreeningConstants.MAX));
+
+		dataSet.setChipBand1MinFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.CHIP,
+				ScreeningConstants.BAND1, date, ScreeningConstants.MIN));
+		dataSet.setChipBand1MaxFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.CHIP,
+				ScreeningConstants.BAND1, date, ScreeningConstants.MAX));
+		dataSet.setChipBand2MaxFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.CHIP,
+				ScreeningConstants.BAND2, date, ScreeningConstants.MAX));
+
+		dataSet.setCsrTier1MinFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.CSR,
+				ScreeningConstants.TIER1, date, ScreeningConstants.MIN));
+		dataSet.setCsrTier1MaxFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.CSR,
+				ScreeningConstants.TIER1, date, ScreeningConstants.MAX));
+		dataSet.setCsrTier2MinFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.CSR,
+				ScreeningConstants.TIER2, date, ScreeningConstants.MIN));
+		dataSet.setCsrTier2MaxFPLLImit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.CSR,
+				ScreeningConstants.TIER2, date, ScreeningConstants.MAX));
+		dataSet.setCsrTier3MinFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.CSR,
+				ScreeningConstants.TIER3, date, ScreeningConstants.MIN));
+		dataSet.setCsrTier3MaxFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.CSR,
+				ScreeningConstants.TIER3, date, ScreeningConstants.MAX));
+
+		dataSet.setAptcMaxFPLLimit(getEligibilityDAO().getFplLimitsPlusDisregards(ScreeningConstants.APTC, null, date,
+				ScreeningConstants.MAX));
+
+	}
+
+	private void identifyProgramEligibilty(String legalStatus, Individual applicant, List<Individual> members, RulesData rulesData) {
+
+		identifyMedicaidEligibilty(legalStatus, members, rulesData);
+
+		identifyCHIPEligibility(members, rulesData);
+
+		identifyCSREligibility(members,applicant, rulesData);
+
+		identifyAPTCEligibility(members, rulesData);
+		identifyQHPEligibility(members, rulesData);
+
+	}
+
+	private void identifyQHPEligibility(List<Individual> members, RulesData rulesData) {
+		IndividualEligibilityResults result = null;
+		for (Individual member : members) {
+			// medicaid,chip, APTC and CSR Filter check
+			if (member.getEligibilityResult().getMedicaidEligibility() == false
+					&& member.getEligibilityResult().getChipEligibility() == false
+					&& member.getEligibilityResult().getCsrEligibilty() == false
+					&& member.getEligibilityResult().getAptcEligibility() == false) {
+
+				if (rulesData.getHouseFPL() > 400) {
+					result = member.getEligibilityResult();
+					result.setQhpEligibility(true);
+					;
+					// result.setEligible(true);
+					/*result.setProgram1(ScreeningConstants.PGM_APTC);
+					result.setSubProgram1("");*/
+					addOrUpdateEligibilityResult(member, result);
+
+				}
+			}
+		}
+
+	}
+
+	private void identifyMedicaidEligibilty(String legalStatus, List<Individual> members, RulesData rulesData) {
+		if ("N".equalsIgnoreCase(legalStatus)) {
+			members = identifyExemptMedicaid(members, rulesData);
+		}
+		identifyOldAgeMedicaid(members);
+		if (householdHasChild(members)) {
+			identifyChildMedicaid(members, rulesData);
+		} else {
+			identifyAdultMedicaid(members, rulesData);
+		}
+
+		//determineCsrVarId(members, rulesData);
+	}
+
+	private List<Individual> identifyExemptMedicaid(List<Individual> members, RulesData rulesData) {
+		for (Individual ind : members) {
+			if (!StringUtils.isEmpty(ind.getLegalStatusTypeIndicator())
+					&& ind.getLegalStatusTypeIndicator().equalsIgnoreCase("true")
+					&& StringUtils.equalsIgnoreCase(ind.getLegalStatusTypeCode(), "13")) {
+				ind.setMedicaidExemptIndicator(false);
+			} else if (!StringUtils.isEmpty(ind.getLegalStatusTypeIndicator())
+					&& ind.getLegalStatusTypeIndicator().equalsIgnoreCase("true")
+					&& !StringUtils.equalsIgnoreCase(ind.getLegalStatusTypeCode(), "13")) {
+				ind.setMedicaidExemptIndicator(true);
+			}
+		}
+		return members;
+	}
+
+	/**
+	 * IndividualEligibilityResults result = null; for (Individual member : members) {
+	 * if(!StringUtils.isEmpty(member.getLegalStatusTypeIndicator()) &&
+	 * member.getLegalStatusTypeIndicator().equalsIgnoreCase( "false")) {
+	 * 
+	 * } else if (!StringUtils.isEmpty(member.getLegalStatusTypeIndicator()) &&
+	 * member.getLegalStatusTypeIndicator().equalsIgnoreCase( "true") && StringUtils.equalsIgnoreCase(
+	 * member.getLegalStatusTypeCode(), "13")) { // result = new IndividualEligibilityResults(); //
+	 * result.setMedicaidExemptIndicator(false); // addOrUpdateEligibilityResult(member, result);
+	 * member.setMedicaidExemptIndicator(false);
+	 * 
+	 * } else if (!StringUtils.isEmpty(member.getLegalStatusTypeIndicator()) &&
+	 * member.getLegalStatusTypeIndicator().equalsIgnoreCase( "true") && !StringUtils.equalsIgnoreCase(
+	 * member.getLegalStatusTypeCode(), "13")) { // result = new IndividualEligibilityResults(); //
+	 * result.setMedicaidExemptIndicator(true); // addOrUpdateEligibilityResult(member, result);
+	 * member.setMedicaidExemptIndicator(false);
+	 * 
+	 * } }
+	 **/
+	// return members;
+	//
+	// }
+
+	private void determineCsrVarId(List<Individual> members, RulesData rulesData) {
+		String csrVarId = null;
+		if ("N".equalsIgnoreCase(members.get(0).getQualifiedAlienIndicator())) {
+			csrVarId = "01";
+		} else if ("Y".equalsIgnoreCase(members.get(0).getQualifiedAlienIndicator()) && (rulesData.getHouseFPL() <= 300)) {
+			csrVarId = "02";
+		} else if ("Y".equalsIgnoreCase(members.get(0).getQualifiedAlienIndicator()) && (rulesData.getHouseFPL() > 300)) {
+			csrVarId = "03";
+		}
+		rulesData.setCsrVarId(csrVarId);
+
+	}
+
+	// private void identifyExemptMedicaid(List<Individual> members,
+	// PreScreeningRulesData rulesData) {
+	//
+	//
+	// }
+
+	private void identifyOldAgeMedicaid(List<Individual> members) {
+
+		for (Individual member : members) {
+			if (checkIfPersonOldAge(member)) {
+				IndividualEligibilityResults result = new IndividualEligibilityResults();
+				// All are by default false
+				addOrUpdateEligibilityResult(member, result);
+			} else {
+				IndividualEligibilityResults result = new IndividualEligibilityResults();
+				addOrUpdateEligibilityResult(member, result);
+			}
+		}
+
+	}
+
+	private void identifyAdultMedicaid(List<Individual> members, RulesData dataSet) {
+		IndividualEligibilityResults result = null;
+		for (Individual member : members) {
+			if (checkIfPersonAdult(member) && member.getMedicaidExemptIndicator() == true) {
+				if (dataSet.getHouseFPL() <= dataSet.getAdultFPLLimit().getAdjustedMaxFPLLimit()) {
+					if (checkifPregnant(member)) {
+						result = new IndividualEligibilityResults();
+						result.setProgram1(ScreeningConstants.PGM_MEDICAID);
+						result.setSubProgram1(ScreeningConstants.PGM_SUB_MA_PREGNANT_WOMAN);
+						result.setMedicaidEligibility(true);
+						result.setEligible(true);
+						addOrUpdateEligibilityResult(member, result);
+					} else {
+						result = new IndividualEligibilityResults();
+						result.setProgram1(ScreeningConstants.PGM_MEDICAID);
+						result.setSubProgram1(ScreeningConstants.PGM_SUB_MA_ADULT);
+						result.setMedicaidEligibility(true);
+						result.setEligible(true);
+						addOrUpdateEligibilityResult(member, result);
+					}
+				}
+
+				if (checkifPregnant(member)) {
+					if (dataSet.getPregHouseFPL() <= dataSet.getPregWomanFPLLimit().getAdjustedMaxFPLLimit()) {
+						result = new IndividualEligibilityResults();
+						result.setProgram1(ScreeningConstants.PGM_MEDICAID);
+						result.setSubProgram1(ScreeningConstants.PGM_SUB_MA_PREGNANT_WOMAN);
+						result.setMedicaidEligibility(true);
+						result.setEligible(true);
+						addOrUpdateEligibilityResult(member, result);
+					}
+				}
+			}
+		}
+	}
+
+	private void identifyChildMedicaid(List<Individual> members, RulesData dataSet) {
+		IndividualEligibilityResults result = null;
+		for (Individual member : members) {
+			if (!(checkIfPersonOldAge(member))) {
+				if (member.getMedicaidExemptIndicator() == true) {
+
+					// corticon 1,2,3 in 100_110_3
+					if (dataSet.getHouseFPL() <= dataSet.getParentFPLLimit().getAdjustedMaxFPLLimit()) {
+						if (checkifPregnant(member)) {
+
+							result = new IndividualEligibilityResults();
+							result.setProgram1(ScreeningConstants.PGM_MEDICAID);
+							result.setSubProgram1(ScreeningConstants.PGM_SUB_MA_PREGNANT_WOMAN);
+							result.setMedicaidEligibility(true);
+							result.setEligible(true);
+							addOrUpdateEligibilityResult(member, result);
+							result = null;
+						} else {
+							if (checkIfPersonChild(member)) {
+								result = new IndividualEligibilityResults();
+								result.setProgram1(ScreeningConstants.PGM_MEDICAID);
+								result.setSubProgram1(ScreeningConstants.PGM_SUB_MA_CHILDREN);
+								result.setMedicaidEligibility(true);
+								result.setEligible(true);
+								addOrUpdateEligibilityResult(member, result);
+								result = null;
+							} else {
+								result = new IndividualEligibilityResults();
+								result.setProgram1(ScreeningConstants.PGM_MEDICAID);
+								result.setSubProgram1(ScreeningConstants.PGM_SUB_MA_PARENT_CARETAKER);
+								result.setMedicaidEligibility(true);
+								result.setEligible(true);
+								addOrUpdateEligibilityResult(member, result);
+								result = null;
+							}
+						}
+					}
+
+					// corticon 5,6,7,8 in 1000_110_3
+
+					if ((dataSet.getHouseFPL() <= dataSet.getChildrenFPLLimit().getAdjustedMaxFPLLimit())) {
+						if (checkIfPersonChild(member)) {
+							if (checkifPregnant(member)) {
+
+								result = new IndividualEligibilityResults();
+								result.setProgram1(ScreeningConstants.PGM_MEDICAID);
+								result.setSubProgram1(ScreeningConstants.PGM_SUB_MA_PREGNANT_WOMAN);
+								result.setMedicaidEligibility(true);
+								result.setEligible(true);
+								addOrUpdateEligibilityResult(member, result);
+								result = null;
+							} else {
+								result = new IndividualEligibilityResults();
+								result.setProgram1(ScreeningConstants.PGM_MEDICAID);
+								result.setSubProgram1(ScreeningConstants.PGM_SUB_MA_CHILDREN);
+								result.setMedicaidEligibility(true);
+								result.setEligible(true);
+								addOrUpdateEligibilityResult(member, result);
+								result = null;
+							}
+
+						} else {
+							if (checkifPregnant(member)) {
+
+								result = new IndividualEligibilityResults();
+								result.setProgram1(ScreeningConstants.PGM_MEDICAID);
+								result.setSubProgram1(ScreeningConstants.PGM_SUB_MA_PREGNANT_WOMAN);
+								result.setMedicaidEligibility(true);
+								result.setEligible(true);
+								addOrUpdateEligibilityResult(member, result);
+								result = null;
+							}
+						}
+					}
+					// corticon 9 and 10 in 1000_110_3
+					if (dataSet.getPregHouseFPL() <= dataSet.getPregWomanFPLLimit().getAdjustedMaxFPLLimit()) {
+						if (checkifPregnant(member)) {
+							result = new IndividualEligibilityResults();
+							result.setProgram1(ScreeningConstants.PGM_MEDICAID);
+							result.setSubProgram1(ScreeningConstants.PGM_SUB_MA_PREGNANT_WOMAN);
+							result.setMedicaidEligibility(true);
+							result.setEligible(true);
+							addOrUpdateEligibilityResult(member, result);
+							result = null;
+						}
+					}
+				} else {
+					result = new IndividualEligibilityResults();
+					result.setMedicaidEligibility(false);
+					result.setEligible(false);
+					addOrUpdateEligibilityResult(member, result);
+					result = null;
+				}
+			}
+		}
+	}
+
+	private void addOrUpdateEligibilityResult(Individual member, IndividualEligibilityResults individualResult) {
+
+		// if we need to do a update it gets the current result whats present
+		// and then update to new value
+		if (member.getEligibilityResult() != null) {
+			IndividualEligibilityResults result = member.getEligibilityResult();
+			result.setProgram1(individualResult.getProgram1());
+			result.setSubProgram1(individualResult.getSubProgram1());
+
+			// below check ensure when a person is CSR and APTC both eligible
+			// both programs are included for same individualResult
+			// for medicaid,chip,csr person will be eligible only for 1 program
+			// so program2 will be empty
+			if (StringUtils.isNotBlank(individualResult.getProgram2())) {
+				result.setProgram2(individualResult.getProgram2());
+				result.setSubProgram2(individualResult.getSubProgram2());
+			}
+			result.setMedicaidEligibility(individualResult.getMedicaidEligibility());
+			result.setChipEligibility(individualResult.getChipEligibility());
+			result.setCsrEligibilty(individualResult.getCsrEligibilty());
+			result.setAptcEligibility(individualResult.getAptcEligibility());
+			result.setEligible(individualResult.getEligible());
+
+		} else {
+			// new entry add
+			member.setEligibilityResult(individualResult);
+		}
+	}
+
+	/**
+	 * Method to check if household has children
+	 * 
+	 * @param members
+	 * @return
+	 */
+	private boolean householdHasChild(List<Individual> members) {
+		for (Individual member : members) {
+			if (checkIfPersonChild(member)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void identifyCHIPEligibility(List<Individual> members, RulesData rulesData) {
+		IndividualEligibilityResults result = null;
+
+		for (Individual member : members) {
+			if (checkIfPersonChild(member)) {
+				// filter condition for CHIP
+				if (member.getEligibilityResult() != null && member.getEligibilityResult().getMedicaidEligibility() == false) {
+					// corticon 1000_120 column 2
+					if ((rulesData.getChipBand1MinFPLLimit().getAdjustedMinFPLLimit() < rulesData.getHouseFPL())
+							&& (rulesData.getHouseFPL() <= rulesData.getChipBand1MaxFPLLimit().getAdjustedMaxFPLLimit())) {
+						// set CHIP BAND1
+						result = new IndividualEligibilityResults();
+						result.setChipEligibility(true);
+						result.setEligible(true);
+						result.setProgram1(ScreeningConstants.PGM_CHILD_HLTH_INS);
+						result.setSubProgram1(ScreeningConstants.PGM_SUB_CHIP_BAND1);
+						addOrUpdateEligibilityResult(member, result);
+					}
+					// corticon 1000_120 column 3
+					if ((rulesData.getChipBand1MaxFPLLimit().getAdjustedMaxFPLLimit() < rulesData.getHouseFPL())
+							&& (rulesData.getHouseFPL() <= rulesData.getChipBand2MaxFPLLimit().getAdjustedMaxFPLLimit())) { // set
+						// CHIP BAND2
+						result = new IndividualEligibilityResults();
+						result.setChipEligibility(true);
+						result.setEligible(true);
+						result.setProgram1(ScreeningConstants.PGM_CHILD_HLTH_INS);
+						result.setSubProgram1(ScreeningConstants.PGM_SUB_CHIP_BAND2);
+						addOrUpdateEligibilityResult(member, result);
+					}
+
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * Business Rule implementation of APTC
+	 * 
+	 * @param members
+	 * @param dataSet
+	 */
+	private void identifyAPTCEligibility(List<Individual> members, RulesData rulesData) {
+		IndividualEligibilityResults result = null;
+		for (Individual member : members) {
+			// APTC and CSR Filter check
+			if (member.getEligibilityResult().getMedicaidEligibility() == false
+					&& member.getEligibilityResult().getChipEligibility() == false) {
+				// corticon 1000_140, condition a and True
+				if (rulesData.getHouseFPL() <= rulesData.getAptcMaxFPLLimit().getAdjustedMaxFPLLimit()) {
+					// corticon 1000_140, column 1, rule statement 1
+					if (member.getEligibilityResult().getCsrEligibilty() == true) {
+						result = member.getEligibilityResult();
+						result.setAptcEligibility(true);
+						result.setEligible(true);
+						result.setProgram2(ScreeningConstants.PGM_APTC);
+						result.setSubProgram2("");
+						addOrUpdateEligibilityResult(member, result);
+
+					} else
+					// corticon 1000_140, column 3, rule statement 3
+					{
+						result = new IndividualEligibilityResults();
+						result.setAptcEligibility(true);
+						result.setEligible(true);
+						result.setProgram1(ScreeningConstants.PGM_APTC);
+						result.setSubProgram1("");
+						addOrUpdateEligibilityResult(member, result);
+					}
+				}
+				// corticon 1000_140, condition a and False
+				else {
+					// dataSet.getEligibilityResults().get(i).setAptcEligibility(false);
+					// dataSet.getIndividualEligibiltyResult().setEligible(false);
+					// addOrUpdateEligibilityResult(i,
+					// dataSet.getIndividualEligibiltyResult(), dataSet);
+					member.getEligibilityResult().setAptcEligibility(false);
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * Business rule implementation of Cost Sharing Reductions
+	 * 
+	 * @param members
+	 * @param applicant 
+	 * @param dataSet
+	 */
+	private void identifyCSREligibility(List<Individual> members, Individual applicant, RulesData rulesData) {
+		IndividualEligibilityResults result = null;
+		for (Individual member : members) {
+			if (member.getEligibilityResult().getMedicaidEligibility() == false && member.getEligibilityResult().getChipEligibility() == false) {
+				if (YesNo.YES.getCode().equalsIgnoreCase(applicant.getQualifiedAlienIndicator())
+						&& (rulesData.getHouseFPL() <= 300)) {
+					rulesData.setCsrVarId(PlanVariant.VAR_02.getCode());
+					result = new IndividualEligibilityResults();
+					result.setProgram1(ScreeningConstants.PGM_COST_SHARING_REDUCTION);
+					result.setSubProgram1(ScreeningConstants.AI_AN_02);
+					result.setCsrEligibilty(true);
+					result.setEligible(true);
+					addOrUpdateEligibilityResult(member, result);
+				} else if (YesNo.YES.getCode().equalsIgnoreCase(applicant.getQualifiedAlienIndicator())
+						&& (rulesData.getHouseFPL() > 300) && (rulesData.getHouseFPL() <= 400)) {
+					rulesData.setCsrVarId(PlanVariant.VAR_03.getCode());
+					result = new IndividualEligibilityResults();
+					result.setProgram1(ScreeningConstants.PGM_COST_SHARING_REDUCTION);
+					result.setSubProgram1(ScreeningConstants.AI_AN_03);
+					result.setCsrEligibilty(true);
+					result.setEligible(true);
+					addOrUpdateEligibilityResult(member, result);
+				}
+				else if (rulesData.getHouseFPL() > 400)
+				{
+					rulesData.setCsrVarId("01");
+				}
+			}
+
+			if (rulesData.getHouseFPL() <= rulesData.getAptcMaxFPLLimit().getAdjustedMaxFPLLimit()) {
+				// eligibilty check for CSR
+				if (member.getEligibilityResult().getMedicaidEligibility() == false
+						&& member.getEligibilityResult().getChipEligibility() == false) {
+					// CSR Tier 1 check
+					if ((rulesData.getHouseFPL() > rulesData.getCsrTier1MinFPLLimit().getAdjustedMinFPLLimit())
+							&& (rulesData.getHouseFPL() <= rulesData.getCsrTier1MaxFPLLimit().getAdjustedMaxFPLLimit())) {
+						result = new IndividualEligibilityResults();
+						result.setProgram1(ScreeningConstants.PGM_COST_SHARING_REDUCTION);
+						result.setSubProgram1(ScreeningConstants.PGM_SUB_CSR_TIER1);
+						result.setCsrEligibilty(true);
+						result.setEligible(true);
+						addOrUpdateEligibilityResult(member, result);
+					}
+					// CSR Tier2 check
+					else if ((rulesData.getHouseFPL() > rulesData.getCsrTier2MinFPLLimit().getAdjustedMinFPLLimit())
+							&& (rulesData.getHouseFPL() <= rulesData.getCsrTier2MaxFPLLImit().getAdjustedMaxFPLLimit())) {
+						result = new IndividualEligibilityResults();
+						result.setProgram1(ScreeningConstants.PGM_COST_SHARING_REDUCTION);
+						result.setSubProgram1(ScreeningConstants.PGM_SUB_CSR_TIER2);
+						result.setCsrEligibilty(true);
+						result.setEligible(true);
+						addOrUpdateEligibilityResult(member, result);
+					}
+					// CSR Tier 3 check
+					else if ((rulesData.getHouseFPL() > rulesData.getCsrTier3MinFPLLimit().getAdjustedMinFPLLimit())
+							&& (rulesData.getHouseFPL() <= rulesData.getCsrTier3MaxFPLLimit().getAdjustedMaxFPLLimit())) {
+						result = new IndividualEligibilityResults();
+						result.setProgram1(ScreeningConstants.PGM_COST_SHARING_REDUCTION);
+						result.setSubProgram1(ScreeningConstants.PGM_SUB_CSR_TIER3);
+						result.setCsrEligibilty(true);
+						result.setEligible(true);
+						addOrUpdateEligibilityResult(member, result);
+					}
+				} else {
+					if (member.getEligibilityResult() == null) {
+						member.setEligibilityResult(new IndividualEligibilityResults());
+					}
+					member.getEligibilityResult().setCsrEligibilty(false);
+				}
+			}
+		}
+
+	}
+
+}

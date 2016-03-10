@@ -1,0 +1,98 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+
+public class PlanBenefitsDetailVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String benefitDetailId;
+	private String ehbYesNo;
+	private String coveredFlag;
+	private String quantitativeLimitFlag;
+	private String limitQuantityTxt;
+	private String limitUnitTxt;
+	private String minStayTxt;
+	private String excelTxt;
+	private String benefitExplanationTxt;
+	private String lookupEhbVariantReasonCd;
+	private String excelInNetworkMoopFlag;
+	private String excelOutNetworkMoopFlag;
+	public String getBenefitDetailId() {
+		return benefitDetailId;
+	}
+	public void setBenefitDetailId(String benefitDetailId) {
+		this.benefitDetailId = benefitDetailId;
+	}
+	public String getEhbYesNo() {
+		return ehbYesNo;
+	}
+	public void setEhbYesNo(String ehbYesNo) {
+		this.ehbYesNo = ehbYesNo;
+	}
+	public String getCoveredFlag() {
+		return coveredFlag;
+	}
+	public void setCoveredFlag(String coveredFlag) {
+		this.coveredFlag = coveredFlag;
+	}
+	public String getQuantitativeLimitFlag() {
+		return quantitativeLimitFlag;
+	}
+	public void setQuantitativeLimitFlag(String quantitativeLimitFlag) {
+		this.quantitativeLimitFlag = quantitativeLimitFlag;
+	}
+	public String getLimitQuantityTxt() {
+		return limitQuantityTxt;
+	}
+	public void setLimitQuantityTxt(String limitQuantityTxt) {
+		this.limitQuantityTxt = limitQuantityTxt;
+	}
+	public String getLimitUnitTxt() {
+		return limitUnitTxt;
+	}
+	public void setLimitUnitTxt(String limitUnitTxt) {
+		this.limitUnitTxt = limitUnitTxt;
+	}
+	public String getMinStayTxt() {
+		return minStayTxt;
+	}
+	public void setMinStayTxt(String minStayTxt) {
+		this.minStayTxt = minStayTxt;
+	}
+	public String getExcelTxt() {
+		return excelTxt;
+	}
+	public void setExcelTxt(String excelTxt) {
+		this.excelTxt = excelTxt;
+	}
+	public String getBenefitExplanationTxt() {
+		return benefitExplanationTxt;
+	}
+	public void setBenefitExplanationTxt(String benefitExplanationTxt) {
+		this.benefitExplanationTxt = benefitExplanationTxt;
+	}
+	public String getLookupEhbVariantReasonCd() {
+		return lookupEhbVariantReasonCd;
+	}
+	public void setLookupEhbVariantReasonCd(String lookupEhbVariantReasonCd) {
+		this.lookupEhbVariantReasonCd = lookupEhbVariantReasonCd;
+	}
+	public String getExcelInNetworkMoopFlag() {
+		return excelInNetworkMoopFlag;
+	}
+	public void setExcelInNetworkMoopFlag(String excelInNetworkMoopFlag) {
+		this.excelInNetworkMoopFlag = excelInNetworkMoopFlag;
+	}
+	public String getExcelOutNetworkMoopFlag() {
+		return excelOutNetworkMoopFlag;
+	}
+	public void setExcelOutNetworkMoopFlag(String excelOutNetworkMoopFlag) {
+		this.excelOutNetworkMoopFlag = excelOutNetworkMoopFlag;
+	}
+	
+	
+	
+}

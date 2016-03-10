@@ -1,0 +1,46 @@
+package com.hixapi.pmp.dao.plan;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import com.hixapi.pmp.entity.model.CarrierAdminInfo;
+import com.hixapi.pmp.entity.model.CarrierDrugCoverage;
+import com.hixapi.pmp.entity.model.CarrierFormularyInfo;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+import com.hixapi.pmp.entity.model.CarrierNetwork;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanRateDetail;
+import com.hixapi.pmp.entity.model.PlanUploadHist;
+
+public interface PlanUploadSupportDAO {
+
+	CarrierAdminInfo retrieveCarrierAdminInfo(Long carrierIdNbr, String coverageYear);
+
+	CarrierMstr retrieveCarrierById(String carrierId);
+
+	void synchCarrierAdminInfo(CarrierAdminInfo entity);
+
+	void saveUploadHistory(PlanUploadHist history);
+
+	void deleteNetworkRecords(Long carrierAdminInfoIdNbr);
+
+	void saveNetworkRecords(List<CarrierNetwork> networkList);
+
+	Set<PlanMstr> retrievePlanMstrListForBenefits(long carrierIdNbr, short year);
+
+	void synchPlanBenefitsInfo(Collection<PlanMstr> masterList);
+
+	void saveFormularyInfo(List<CarrierFormularyInfo> formularyInfo, Long carrierAdminIdNbr);
+
+	void saveDrugListInfo(List<CarrierDrugCoverage> drugCoverage, Long carrierAdminIdNbr);
+
+	List<PlanMstr> retrievePlanMstrRecords(Long carrierAdminInfoIdNbr);
+
+	void synchPlanRatesInfo(List<PlanRateDetail> rates, Long carrierAdminIdNbr);
+	
+	boolean hasCarrierNetworkRecords(Long carrierAdminIdNbr);
+	boolean hasCarrierFormularyRecords(Long carrierAdminIdNbr);
+
+	void synchPlanLifecycles(PlanMstr mstr);
+}

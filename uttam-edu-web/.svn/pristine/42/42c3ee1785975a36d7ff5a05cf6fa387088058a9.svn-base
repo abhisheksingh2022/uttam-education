@@ -1,0 +1,612 @@
+<%@page import="com.opensymphony.xwork2.ActionContext"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+
+<%@include file="/jsp/includes/container.jsp"%>
+<%@include file="/jsp/prescreen/plan-listing-datatable.jsp"%>
+<link href="<s:property value='rootPath'/>static/custom/css/plan-listing-cp.css?v=<s:property value="buildId"/>"
+	rel="stylesheet" type="text/css">
+<%-- Content Start --%>
+
+
+
+<script>
+	function initToggle() {
+		$("[class*=addPlanId]").each(function() {
+			$(this).css('display', 'inline-block');
+		});
+		$("[class*=removePlanId]").each(function() {
+			$(this).css('display', 'none');
+		});
+	}
+
+	function toggleDisplayButton(hiosId) {
+
+		$('.addPlanId' + hiosId).each(function() {
+			$(this).css('display', 'none');
+		});
+		$('.removePlanId' + hiosId).each(function() {
+			$(this).css('display', 'inline-block');
+		});
+
+	}
+
+	function fnRemoveFromCompare(hiosId) {
+		initToggle();
+		return ajaxGet({
+			resource : 'plan-listing_ajaxRemoveFromComparePlans',
+			targetId : 'id_div_compare_plans',
+			blockId : 'id_div_compare_plans',
+			urlparams : {
+				"planVariantHiosId" : hiosId
+			}
+		});
+
+	}
+
+	function fnAddToCompare(hiosId, name) {
+		var varNumOfPlansToCompare = document
+				.getElementById("idNumOfPlansToCompare").value;
+		if (varNumOfPlansToCompare < 3) {
+			initToggle();
+			return ajaxGet({
+				resource : 'plan-listing_ajaxAddToComparePlans',
+				targetId : 'id_div_compare_plans',
+				blockId : 'id_div_compare_plans',
+				urlparams : {
+					"planVariantHiosId" : hiosId,
+					"planName" : name
+				}
+			});
+		}
+	}
+
+	//	resource : '<s:property value="rootPath"/>planmgmt/plan-preview_input',
+	function openPlanPreview(variant, planId) {
+
+		return ajaxGet({
+			resource : '<s:property value="rootPath"/>planmgmt/plan-preview_input',
+			targetId : 'id_plan_preview',
+			blockId : 'id_plan_preview',
+			urlparams : {
+				"language" : '<s:property value="locale"/>',
+				"variantIndex" : variant,
+				"coverageYear" : <s:property value="household.coverageYearStr"/>,
+				"planId" : planId
+			}
+
+		});
+
+	}
+
+	function setHouseholdIncome(){
+		//value = <s:property value="household.householdIncome" />;
+		<s:if test="household.householdIncome != ''">
+		value = <s:property value="household.householdIncome" />;
+		$('.household-income').text('$' + value.toLocaleString() + ' ' + '<s:text name="txt.enrollment.exploreyouroption.household.income.peryear" />');
+		</s:if>
+		//value = 40000;
+		
+	}
+
+	$(document).ready(function() {
+		$(".load-block").fadeOut("slow");
+		$('.load-image').fadeOut("slow");
+		initDetailRows();
+		setHouseholdIncome();
+		$('td').each(function() {
+			if ($(this).attr('colspan') == 6) {
+				$(this).css('border-bottom', '1px solid black');
+			}
+		});
+	});
+	 function initDetailRows() {
+		if (oTable) {
+			$('#datatable tbody').on('click', 'td.details-control', function() {
+				var tr = $(this).closest('tr');
+				var row = oTable.row(tr);
+
+				if (row.child.isShown()) {
+					// This row is already open - close it
+					//  row.child.hide();
+					//  tr.removeClass('shown');
+				} else {
+					// Open this row
+					row.child($(tr).find(".detailDiv").html()).show();
+					tr.addClass('shown');
+				}
+			});
+
+			$('#datatable .details-control').trigger('click');
+		}
+	} 
+</script>
+<style>
+.no-border {
+	border: none !important;
+}
+</style>
+<s:form action="plan-listing" namespace="/prescreen" id="id_form_plan-listing">
+	<s:token />
+	<s:hidden name="ajaxRequest" value="false" />
+	<s:hidden name="formId" />
+	<div class="load-block" id="load-block">
+		<img class="load-image" src='<s:property value='rootPath'/>static/custom/images/big_loader.gif' />
+	</div>
+	<div class="row">
+
+		<div class="body-bg" style="overflow: hidden;">
+			<div class="hedingsec">
+				<%-- <h2 class="inner-heading">
+					<s:text name="txt.planlisting.heading" />
+				</h2> --%>
+			</div>
+			<div id="plncnt" class="span8" style="float: right; width: 100%;">
+				<div class="head2" style="text-align: center; padding-right: 50px;">
+
+					<div id="planCountsDiv" style="margin-left: 0px; margin-top: -4px; margin-bottom: 5px;">
+						<h2>
+							<i style="padding-left: 100px;"><s:text name="txt.planlisting.title.count_text">
+									<s:param name="value">
+										<s:property value="planContainer.plans.size()" />
+									</s:param>
+								</s:text></i>
+						</h2>
+					</div>
+				</div>
+			</div>
+			<div class="clearfix"></div>
+			<div class="carrier-data" style="overflow: auto;">
+				<s:a id="flow-back-button" cssClass="btn btn-active back-btn-css" action="prescreening_input?onEdit=wholehousehold" namespace="/prescreen"
+					style="float:right;margin-right:15px;">
+					<em class="fa fa-chevron-left"></em>
+					<s:text name="txt.hix.enrollment.plancompare.link.back-2-prescreening"></s:text>
+				</s:a>
+				<div id="left-content-pane" style="float: left; margin-left: 2%;">
+
+					<%-- Shopping For Persons --%>
+					<fieldset class="info first solid-border" style="margin-bottom: -25px;">
+						<%-- Primary --%>
+						<div class="legend info" style="font-size: 20px;">
+							<h4>
+								<s:text name="txt.enrollment.exploreyouroption.household.title" />
+							</h4>
+						</div>
+						<s:iterator value="household.coveredMembers" status="status" var="person">
+							<s:if test="#person.individualSequenceNumber == 1">
+
+								<div class="span" style="margin-left: 0px;">
+									<div class="span0">
+										<div class="pull-left">
+											<em class="fa fa-user"></em>
+										</div>
+									</div>
+									<div class="span4">
+										<div class="pull-left">
+											<b><s:text name="txt.enrollment.exploreyouroption.household.applicant" /></b>
+											<s:if test="#person.coveredIndicator == 'N'">
+												<br>
+												<s:text name="txt.enrollment.exploreyouroption.household.applicant.inactive" />
+											</s:if>
+										</div>
+										<div class="pull-right">
+											<s:a class="btn btn-link" style="font-size: 0.9em; margin-top: -2px;" namespace="/prescreen"
+												action="prescreening_input?onEdit=household">
+												<em class="fa fa-pencil-square-o fa-black">&nbsp;<s:text
+														name="txt.enrollment.exploreyouroption.household.edit" /></em>
+											</s:a>
+										</div>
+									</div>
+								</div>
+								<div class="span">
+									<div class="span4 indent7">
+										<s:if test='#person.age!=null'>
+											<div class="pull-left">
+												<s:text name="txt.enrollment.exploreyouroption.household.member.age" />
+												&nbsp;
+												<s:property value="#person.age" />
+											</div>
+										</s:if>
+										<s:else>
+											<div class="pull-left">
+												<s:text name="txt.enrollment.exploreyouroption.household.member.age" />
+											</div>
+										</s:else>
+									</div>
+								</div>
+								<div class="span">
+									<div class="span4 indent7">
+										<div class="pull-left">
+											<s:text name="txt.enrollment.exploreyouroption.household.county" />
+											&nbsp;
+											<s:property value="household.countyName" />
+										</div>
+										<div class="pull-right">&nbsp;</div>
+									</div>
+								</div>								<br><hr style="clear: both;">
+								
+							</s:if>
+						</s:iterator>
+						<%-- Non-Primary --%>
+						<s:iterator value="household.coveredMembers" status="status" var="person">
+						<script>//alert('');</script>
+							<s:if test="#person.individualSequenceNumber != 1">
+								<!-- <hr style="clear: both;"> -->
+								<div class="span no-indent">
+									<div>
+										<div class="indent1">
+											<div class="pull-left">
+												<img src="<s:property value="rootPath"/>static/custom/images/browse_member_OFF.png" alt="" />
+											</div>
+										</div>
+										<div class="span4">
+											<div class="pull-left">
+												<b><s:property value="#person.name" /></b>
+											</div>
+											<div class="pull-right">
+												<s:a class="btn btn-link" style="font-size: 0.9em; margin-top: -2px;" namespace="/prescreen"
+													action="prescreening_input?onEdit=household">
+													<em class="fa fa-pencil-square-o fa-black">&nbsp;<s:text
+															name="txt.enrollment.exploreyouroption.household.edit" /></em>
+												</s:a>
+											</div>
+										</div>
+									</div>
+									<div class="span indent7">
+										<div class="span4">
+											<div class="pull-left">
+												<s:text name="txt.enrollment.exploreyouroption.household.member.age" />
+												&nbsp;
+												<s:property value="#person.age" />
+											</div>
+											<div class="pull-right">&nbsp;</div>
+										</div>
+									</div>
+									<div class="span indent7">
+										<div class="span4">
+											<div class="pull-left">
+												<s:text name="txt.enrollment.exploreyouroption.household.member.relationship" />
+												<s:if test='#person.relationToApplicantCode.equals("S")'>
+													<s:text name="txt.enrollment.exploreyouroption.household.member.relationship.spouse" />
+												</s:if>
+												<s:else>
+													<s:text name="txt.enrollment.exploreyouroption.household.member.relationship.dependent" />
+												</s:else>
+											</div>
+											<div class="pull-right">&nbsp;</div>
+										</div>
+									</div>
+								</div>
+								<s:if test="#status.index==household.coveredMembers.size()-1">
+								</s:if>
+								<s:else>
+								<br><hr style="clear: both;"></s:else>
+							</s:if>
+						</s:iterator>
+					</fieldset>
+
+					<%-- Household Income --%>
+					<s:if test="household.householdIncome != ''">
+					<fieldset class="info solid-border" style="margin-top: 25px;">
+						<div class="legend info">
+							<h4>
+								<s:text name="txt.enrollment.exploreyouroption.household.income" />
+							</h4>
+						</div>
+						<div class="span" style="margin-left: 0px;">
+							<div class="span0">
+								<div class="pull-left">
+									<em class="fa fa-home"></em>
+								</div>
+							</div>
+							<div class="span4">
+								<div class="pull-left household-income" style="margin-left: -15px;">
+									<b>&nbsp;$<s:property value="household.householdIncome" />&nbsp;<s:text
+											name="txt.enrollment.exploreyouroption.household.income.peryear" /></b>
+								</div>
+								<div class="pull-right">
+									<s:a class="btn btn-link" style="font-size: 0.9em; margin-top: -2px;" namespace="/prescreen"
+										action="prescreening_input?onEdit=income">
+										<em class="fa fa-pencil-square-o fa-black">&nbsp;<s:text
+												name="txt.enrollment.exploreyouroption.household.edit" /></em>
+									</s:a>
+								</div>
+							</div>
+
+						</div>
+					</fieldset></s:if><s:else>
+					<div style="margin-bottom:25px;"></div>
+					</s:else>
+					
+
+
+					<%-- Compare Plans --%>
+					<fieldset id="id_div_compare_plans" class="info solid-border" style="background-color: #ffffff;">
+						<%@ include file="/jsp/prescreen/plan-listing-compare.jsp"%>
+					</fieldset>
+					<br />
+
+
+				</div>
+
+				<%-- ****************************************************************************************************************************************************************************************************************** --%>
+				<%-- Rest of Eligible Plans   --%>
+				<div id="right-content-pane">
+					<div id="plansData">
+
+						<table width="100%" border="0" cellpadding="0" cellspacing="0" id="datatable" class="pretty searchtabel">
+							<thead>
+								<tr class="ac-trHd serchtr">
+									<th class="plan-table-input padng10"><s:text name="txt.planlisting.carrier" /></th>
+									<th class="padng10"><s:text name="txt.planlisting.plan" /></th>
+									<th class="padng10"><s:text name='txt.planlisting.metal.level' /></th>
+									<th class="padng10"><s:text name='txt.planlisting.quality.rating' /></th>
+									<th class="padng10"><s:text name='txt.planlisting.estimated.monthly.premium' /></th>
+									<th class="padng10"><s:text name='txt.planlisting.details' /></th>
+
+								</tr>
+							</thead>
+							<s:iterator value="planContainer.plans" var="plan" status="status">
+
+								<%-- Plan Info --%>
+								<tr>
+									<td class="padding-gav padng10 details-control"><img
+										src="<s:url namespace="/public" action='carrier-image?carrierId=%{#plan.carrierId}' />"
+										style="height: 30px; margin-left: auto; margin-right: auto; display: block;" alt="Carrier Logo" /><span
+										style="display: none;"><s:property value="#plan.carrierName" /></span></td>
+									<td class="padding-gav padng10"><s:property value="#plan.planName" /></td>
+									<td class="padding-gav padng10" style="white-space: nowrap;"><s:if
+											test="%{#plan.metalLevelCode.toUpperCase().equalsIgnoreCase('Catastrophic')}">
+											<img
+												src="<s:property value="rootPath"/>static/custom/images/metal_tier_<s:property value='#plan.metalLevelCode.toUpperCase()'/>.png"
+												alt="Metal">
+											<s:property value="#plan.metalLevelCode" />
+											<img data-title='<s:text name="txt.enrollment.exploreyouroption.filter1.title.catastrophic.help" />'
+												src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text" class="tooltipAnchor" />
+										</s:if> <s:else>
+											<img
+												src="<s:property value="rootPath"/>static/custom/images/metal_tier_<s:property value='#plan.metalLevelCode.toUpperCase()'/>.png"
+												alt="Metal">
+											<s:property value="#plan.metalLevelCode" />
+										</s:else></td>
+									<td class="padding-gav padng10" style="white-space: nowrap;"><span style="display: none;"><s:property
+												value="#plan.ratingCode" /></span> <s:if test="%{#plan.ratingCode < 1}">
+											<i><s:text name="txt.enrollment.exploreyouroption.plans.rating" /></i>
+										</s:if> <s:else>
+											<s:iterator var="qualityRating" status="qualityRatingIndex" begin="1" end="4">
+												<s:if test="%{#qualityRatingIndex.index < #plan.ratingCode}">
+													<img src="<s:property value="rootPath"/>static/custom/images/star.png" style="margin-left: -3px;"
+														alt='quality star rating'>
+												</s:if>
+												<s:else>
+													<img src="<s:property value="rootPath"/>static/custom/images/star_empty.png" style="margin-left: -3px;"
+														alt='empty star rating'>
+												</s:else>
+											</s:iterator>
+										</s:else></td>
+									<td class="padding-gav padng10"><b>$<s:property
+												value="calculateCurrentPremium(#plan.actualPremium, #plan.minPremium)" /></b> <s:if
+											test="eligibility.aptcEligible">
+											<br />
+											<span style="font-size: 0.7em">(<s:text name='txt.planlisting.after.estimated' /> <s:property
+													value="eligibility.aptcAmountStr" />)
+											</span>
+										</s:if></td>
+									<td class="padding-gav padng10"><a href="" data-toggle="modal" data-target="#planPreviewModal"
+										data-dismiss="modal" id="PlanDetails"
+										onclick='openPlanPreview("<s:property value='#plan.variantHiosId'/>","<s:property value='#plan.planId'/>");'>
+											<img
+											src='<s:property value="rootPath"/>static/custom/images/<s:text name="txt.enrollment.exploreyouroption.detail.button"/>'
+											style="margin-top: 10px; margin-left: 6px; margin-bottom: 10px; margin-right: 4px;" alt="Details">
+									</a>
+										<div class="detailDiv" style="display: none; border-bottom: 1px solid black">
+											<div
+												style="width: 95%; background-color: white; overflow: hidden; margin-left: 20px; margin-right: 20px; margin-bottom: 20px; box-shadow: 0 0 4px 2px #d6d6d6;">
+												<table class="coverage-values-table" id="Detail_report_coverage_values2_<s:property value='#status.index'/>"
+													summary="Estimated Monthly Premium, Annual Out Of Pocket Max, ER, Primary Care Co-Pay, Annual Deductible">
+													<caption class="hide">
+														<s:text name="Listing of Copays and Deductibles" />
+													</caption>
+													<%-- Headers --%>
+													<tr>
+														<td scope="col"><span><b><s:text
+																		name="txt.enrollment.exploreyouroption.plans.col.header.oopm" /></b></span></td>
+														<td scope="col"><span><b><s:text
+																		name="txt.enrollment.exploreyouroption.plans.col.header.eroom" /></b></span></td>
+														<td scope="col"><span><b><s:text
+																		name="txt.enrollment.exploreyouroption.plans.col.header.pcare.text1" />&nbsp;<s:text
+																		name="txt.enrollment.exploreyouroption.plans.col.header.pcare.text2" /></b></span></td>
+														<td scope="col"><span><b><s:text
+																		name="txt.enrollment.exploreyouroption.plans.col.header.deductible" /></b></span></td>
+													</tr>
+													<%-- Values --%>
+													<tr>
+
+														<td><span><div class="head3">
+																	<s:property value="formatAsDollar(#plan.outOfPocketMaxAmt)" />
+																</div></span></td>
+														<td><span><div class="head3">
+																	<s:property value="formatAsDollar(#plan.emergencyRoom)" />
+																</div></span></td>
+														<td><span><div class="head3">
+																	<s:property value="formatAsDollar(#plan.primCareCoPay)" />
+																</div></span></td>
+														<td><span><div class="head3">
+																	<s:if test="#plan.deductibleAmt != null">
+																		<s:property value="#plan.deductibleAmt" />
+																	</s:if>
+																</div></span></td>
+													</tr>
+													<%-- APTC --%>
+
+												</table>
+
+												<div class="plan-pdf-link">
+													<s:a id="pdf-anchor-link1%{#status.index}" action="plan-benefits_downloadPDF" namespace="/planmgmt"
+														target="_blank">
+														<u><s:text name="txt.enrollment.exploreyouroption.viewEvidence" /></u>
+														<s:param name="planPdfVO.variantHiosId">
+															<s:property value="%{#plan.variantHiosId}" />
+														</s:param>
+														<s:param name="planPdfVO.coverageYear" value="household.coverageYearStr" />
+														<s:param name="planPdfVO.language" value="locale" />
+														<s:param name="planPdfVO.carrierId" value="#plan.carrierId" />
+													</s:a>
+
+												</div>
+												<%-- Buttons --%>
+												<div class="span10 listed-plan-buttons">
+													<div class="row button-bar">
+														<%-- Check If Doctor Is In-Network --%>
+														<div class="doctor-in-network-block plan-listing-a">
+															<a id="" target="_blank" class="btn btn-active extlink toAppendHTTP"
+																href="<s:property value='#plan.inNetworkDoctorsLink'/>" onclick="return setWebsite(this.id);"> <s:text
+																	name="txt.enrollment.exploreyouroption.plans.checkdoctor" />
+															</a> <img data-title='<s:text name="txt.enrollment.exploreyouroption.filter1.title.network.help" />'
+																src="<s:property value="rootPath"/>static/custom/images/helpicon.png" alt="help text"
+																class="tooltipAnchor" />
+														</div>
+														<%-- Add To Compare --%>
+														<div class="add-to-compare-block plan-listing-a">
+															<s:if test='!isPresentInComparisonList(#plan.variantHiosId)'>
+																<a
+																	onclick='(function(evt){stopEvent(evt);fnAddToCompare("<s:property value='#plan.variantHiosId'/>","<s:property value='#plan.planName'/>");})(event)'
+																	class="btn btn-active nowrap addPlanId<s:property value='#plan.variantHiosId'/>" href="#"><img
+																	class="middle" src="<s:property value="rootPath"/>static/custom/images/plandetail_addcompare_OFF.png"
+																	alt='<s:text name="txt.enrollment.exploreyouroption.plans.addtocompare"/>Add to Compare'>&nbsp;<s:text
+																		name="txt.enrollment.exploreyouroption.plans.addtocompare" /></a>
+																<a
+																	onclick='(function(evt){stopEvent(evt);fnRemoveFromCompare("<s:property value='#plan.variantHiosId'/>");})(event)'
+																	class="btn btn-active removePlanId<s:property value='#plan.variantHiosId'/>" style="display: none"
+																	href="#"><img class="middle"
+																	src="<s:property value="rootPath"/>static/custom/images/icon_removeCompare.png" alt="Remove">&nbsp;<s:text
+																		name="txt.enrollment.exploreyouroption.plans.removefromcompare" /></a>
+															</s:if>
+															<s:else>
+																<a
+																	onclick='(function(evt){stopEvent(evt);fnAddToCompare("<s:property value='#plan.variantHiosId'/>","<s:property value='#plan.planName'/>");})(event)'
+																	class="btn btn-active nowrap addPlanId<s:property value='#plan.variantHiosId'/>" style="display: none"
+																	href="#"><img class="middle"
+																	src="<s:property value="rootPath"/>static/custom/images/plandetail_addcompare_OFF.png"
+																	alt="Add to Compare">&nbsp;<s:text name="txt.enrollment.exploreyouroption.plans.addtocompare" /></a>
+																<a
+																	onclick='(function(evt){stopEvent(evt);fnRemoveFromCompare("<s:property value='#plan.variantHiosId'/>");})(event)'
+																	class="btn btn-active removePlanId<s:property value='#plan.variantHiosId'/>" href="#"><img
+																	class="middle" src="<s:property value="rootPath"/>static/custom/images/icon_removeCompare.png"
+																	alt="Remove">&nbsp;<s:text name="txt.enrollment.exploreyouroption.plans.removefromcompare" /></a>
+															</s:else>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div></td>
+
+
+								</tr>
+							</s:iterator>
+
+						</table>
+					</div>
+					<div class="clearfix"></div>
+
+					<s:a id="flow-back-button" cssClass="btn btn-active back-btn-css" action="prescreening_input?onEdit=wholehousehold"
+						namespace="/prescreen" style="float:right;margin-right:15px;">
+						<em class="fa fa-chevron-left"></em>
+						<s:text name="txt.hix.enrollment.plancompare.link.back-2-prescreening"></s:text>
+					</s:a>
+				</div>
+
+			</div>
+			<div class="clearfix"></div>
+		</div>
+		<div class="modal fade" id="planPreviewModal" role="dialog">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div id="id_plan_preview"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- </div> -->
+</s:form>
+<script>
+	$(document)
+			.ready(
+					function() {
+						$('.toAppendHTTP')
+								.each(
+										function() {
+											var myLink = $(this).attr('href');
+											if (typeof myLink === "undefined") {
+
+												$(document)
+														.ready(
+																function() {
+																	$(
+																			'.toAppendHTTP')
+																			.each(
+																					function() {
+																						var myLink = $(
+																								this)
+																								.attr(
+																										'href');
+																						if (typeof myLink === "undefined") {
+
+																						} else {
+																							if (myLink
+																									.indexOf('http://') != 0
+																									&& myLink
+																											.indexOf('https://') != 0) {
+																								$(
+																										this)
+																										.attr(
+																												"href",
+																												"http://"
+																														+ myLink);
+																							}
+																						}
+																					});
+																	var myExternalLinkElements = document
+																			.querySelectorAll('.toAppendHTTP');
+																	for (var i = 0; i < myExternalLinkElements.length; i++)
+																		myExternalLinkElements[i].id = 'myExternalLinkId-'
+																				+ i;
+
+																});
+												$('#planPreviewModal')
+														.on(
+																'shown.bs.modal',
+																function() {
+																	//alert('hello');
+																	$(
+																			'.modal-content')
+																			.css(
+																					'overflow-y',
+																					'auto');
+																	$(
+																			'.modal-content')
+																			.css(
+																					'max-height',
+																					$(
+																							window)
+																							.height() * 0.9);
+																});
+
+											} else {
+												if (myLink.indexOf('http://') != 0
+														&& myLink
+																.indexOf('https://') != 0) {
+													$(this).attr("href",
+															"http://" + myLink);
+												}
+											}
+										});
+						var myExternalLinkElements = document
+								.querySelectorAll('.toAppendHTTP');
+						for (var i = 0; i < myExternalLinkElements.length; i++)
+							myExternalLinkElements[i].id = 'myExternalLinkId-'
+									+ i;
+
+					});
+</script>
+<%-- Content End --%>
+<%@include file="/jsp/includes/footer.jsp"%>

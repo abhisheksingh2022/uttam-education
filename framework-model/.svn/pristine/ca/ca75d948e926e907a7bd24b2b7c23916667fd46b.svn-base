@@ -1,0 +1,278 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
+
+
+public class HealthPlan implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String planName;
+	private String carrierId;
+	
+	private String metalLevel;
+	private Integer qualityRating;
+	private String checkDocLink;
+	private Integer healthPlanId;
+	private String age;
+	private Double planRate;
+	private Double totalCostPlan;
+	private String annualDeductible;
+	private String primCareCoPay;
+	private String annualOutOfPocMax;
+	private String viewUrl;
+	private String emergencyRoom;
+	private String csrVarId;
+	private String carrierName;
+	private String planEvidCov;
+	private Double ehb;
+	//each plan rate for a family
+	private BigDecimal totalPlanRate;
+	private String tobaccoUserType;
+	private Date rateStartDate;
+	private Date rateEndDate;
+	private String childCopay;
+	private String adultCopay;
+	private String dsplPlanIn;
+	private String langTx;
+	private String planDetailsDisplayId;
+	private String year;
+	private String hlthProvUrl;
+	
+	//planId
+	private String planId;
+	
+	
+	
+	public String getHlthProvUrl() {
+		return hlthProvUrl;
+	}
+	public void setHlthProvUrl(String hlthProvUrl) {
+		this.hlthProvUrl = hlthProvUrl;
+	}
+	public String getYear() {
+		return year;
+	}
+	public void setYear(String year) {
+		this.year = year;
+	}
+	
+	public String getLangTx() {
+		return langTx;
+	}
+	public void setLangTx(String langTx) {
+		this.langTx = langTx;
+	}
+	public String getDsplPlanIn() {
+		return dsplPlanIn;
+	}
+	public void setDsplPlanIn(String dsplPlanIn) {
+		this.dsplPlanIn = dsplPlanIn;
+	}
+	
+	
+	
+	public String getPlanName() {
+		return planName;
+	}
+	public void setPlanName(String planName) {
+		this.planName = planName;
+	}
+	public String getCarrierId() {
+		return carrierId;
+	}
+	public void setCarrierId(String carrierId) {
+		this.carrierId = carrierId;
+	}
+	public String getPlanDetailsDisplayId() {
+		return planDetailsDisplayId;
+	}
+	public void setPlanDetailsDisplayId(String planDetailsDisplayId) {
+		this.planDetailsDisplayId = planDetailsDisplayId;
+	}
+	public String getMetalLevel() {
+		return metalLevel;
+	}
+	public void setMetalLevel(String metalLevel) {
+		this.metalLevel = metalLevel;
+	}
+	public Integer getQualityRating() {
+		return qualityRating;
+	}
+	public void setQualityRating(Integer qualityRating) {
+		this.qualityRating = qualityRating;
+	}
+	public String getCheckDocLink() {
+		return checkDocLink;
+	}
+	public void setCheckDocLink(String checkDocLink) {
+		this.checkDocLink = checkDocLink;
+	}
+	public Integer getHealthPlanId() {
+		return healthPlanId;
+	}
+	public void setHealthPlanId(Integer healthPlanId) {
+		this.healthPlanId = healthPlanId;
+	}
+	public String getAge() {
+		return age;
+	}
+	public void setAge(String age) {
+		this.age = age;
+	}
+	public Double getPlanRate() {
+		return planRate;
+	}
+	public void setPlanRate(Double planRate) {
+		this.planRate = planRate;
+	}
+//	@Override
+//	public int compareTo(HealthPlans obj) {
+//		
+//		int objHealthPlanId = ((HealthPlans) obj).getHealthPlanId(); 
+//		 
+//		//ascending order
+//		return this.healthPlanId - objHealthPlanId;
+// 
+//		//descending order
+//		//return compareQuantity - this.quantity;
+//	}
+	public Double getTotalCostPlan() {
+		return totalCostPlan;
+	}
+	public void setTotalCostPlan(Double totalCostPlan) {
+		this.totalCostPlan = totalCostPlan;
+	}
+	public String getAnnualDeductible() {
+		return annualDeductible;
+	}
+	public void setAnnualDeductible(String annualDeductible) {
+		this.annualDeductible = annualDeductible;
+	}
+	public String getPrimCareCoPay() {
+		return primCareCoPay;
+	}
+	public void setPrimCareCoPay(String primCareCoPay) {
+		this.primCareCoPay = primCareCoPay;
+	}
+	public String getAnnualOutOfPocMax() {
+		return annualOutOfPocMax;
+	}
+	public void setAnnualOutOfPocMax(String annualOutOfPocMax) {
+		this.annualOutOfPocMax = annualOutOfPocMax;
+	}
+	public String getViewUrl() {
+		return viewUrl;
+	}
+	public void setViewUrl(String viewUrl) {
+		this.viewUrl = viewUrl;
+	}
+	public BigDecimal getTotalPlanRate() {
+		return totalPlanRate;
+	}
+	public void setTotalPlanRate(BigDecimal totalPlanRate) {
+		this.totalPlanRate = totalPlanRate;
+	}
+	public String getEmergencyRoom() {
+		return emergencyRoom;
+	}
+	public void setEmergencyRoom(String emergencyRoom) {
+		this.emergencyRoom = emergencyRoom;
+	}
+	public String getCsrVarId() {
+		return csrVarId;
+	}
+	public void setCsrVarId(String csrVarId) {
+		this.csrVarId = csrVarId;
+	}
+	public String getCarrierName() {
+		return carrierName;
+	}
+	public void setCarrierName(String carrierName) {
+		this.carrierName = carrierName;
+	}
+	public String getPlanEvidCov() {
+		return planEvidCov;
+	}
+	public void setPlanEvidCov(String planEvidCov) {
+		this.planEvidCov = planEvidCov;
+	}
+	public Double getEhb() {
+		return ehb;
+	}
+	public void setEhb(Double ehb) {
+		this.ehb = ehb;
+	}
+	/**
+	 * @return the tobaccoUserType
+	 */
+	public String getTobaccoUserType() {
+		return tobaccoUserType;
+	}
+	/**
+	 * @param tobaccoUserType the tobaccoUserType to set
+	 */
+	public void setTobaccoUserType(String tobaccoUserType) {
+		this.tobaccoUserType = tobaccoUserType;
+	}
+	/**
+	 * @return the rateStartDate
+	 */
+	public Date getRateStartDate() {
+		return rateStartDate;
+	}
+	/**
+	 * @param rateStartDate the rateStartDate to set
+	 */
+	public void setRateStartDate(Date rateStartDate) {
+		this.rateStartDate = rateStartDate;
+	}
+	public String getPlanId() {
+		return planId;
+	}
+	public void setPlanId(String planId) {
+		this.planId = planId;
+	}
+	/**
+	 * @return the rateEndDate
+	 */
+	public Date getRateEndDate() {
+		return rateEndDate;
+	}
+	/**
+	 * @param rateEndDate the rateEndDate to set
+	 */
+	public void setRateEndDate(Date rateEndDate) {
+		this.rateEndDate = rateEndDate;
+	}
+	/**
+	 * @return the childCopay
+	 */
+	public String getChildCopay() {
+		return childCopay;
+	}
+	/**
+	 * @param childCopay the childCopay to set
+	 */
+	public void setChildCopay(String childCopay) {
+		this.childCopay = childCopay;
+	}
+	/**
+	 * @return the adultCopay
+	 */
+	public String getAdultCopay() {
+		return adultCopay;
+	}
+	/**
+	 * @param adultCopay the adultCopay to set
+	 */
+	public void setAdultCopay(String adultCopay) {
+		this.adultCopay = adultCopay;
+	}
+	
+
+}

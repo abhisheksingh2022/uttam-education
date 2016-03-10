@@ -1,0 +1,5 @@
+package com.hixapi.framework.service;
+
+public interface IService {
+
+}

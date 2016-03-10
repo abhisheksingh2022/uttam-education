@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+	<class name="com.hixapi.prescreening.api.model.FPLLimitsWithDisregards" table="elig_lkup_fpl_limits_with_disregards">
+		<id name="fplLimitsId" column="fpl_Limit_Id">
+            <generator class="native"/>
+        </id>
+
+		<property name="disregardPercentage" column="disregard_perc" />
+		<property name="maxFPLLimit" column="max_fpl_limit" />
+		<property name="minFPLLimit" column="min_fpl_limit" />
+		<property name="programCode" column="program_Code" />
+		<property name="subProgramCode" column="sub_Program_Code" />
+		<property name="startDateMinFPLLimit" column="start_Dt_Min_FPL_Limit" />
+		<property name="endDateMinFPLLimit" column="end_Dt_Min_FPL_Limit" />
+		<property name="startDateMaxFPLLimit" column="start_Dt_Max_FPL_Limit" />
+		<property name="endDateMaxFPLLimit" column="end_Dt_Max_FPL_Limit" />
+	</class>	
+</hibernate-mapping>

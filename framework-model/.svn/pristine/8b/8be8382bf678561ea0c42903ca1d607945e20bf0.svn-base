@@ -1,0 +1,319 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+
+public class Individual implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8312361506474425626L;
+
+	private Double income;
+	private String nativeAmericanIndicator;
+	private String qualifiedAlienIndicator;
+	private String alienExemptionTypeCode;
+	private String pregnantIndicator;
+	private Integer age;
+	private String relationToApplicantCode;
+	private String name;
+	private Integer individualSequenceNumber;
+	private String gender;
+	private String disease;
+	private String surgery;
+	private String severity;
+	private Boolean medicaidIndicator;
+	private String legalStatusTypeIndicator;
+	private String legalStatusTypeCode;
+	private Boolean chipIndicator;
+	private String coveredIndicator;
+	private Boolean medicaidExemptIndicator = true;
+	private IndividualEligibilityResults eligibilityResult;
+	
+	//From Person Model
+	private List<String> drldwnCd;
+	private List<UtilzAndCosts> utlzAndCostsList;
+	private Map<String,Integer> utlzVal = new LinkedHashMap<String,Integer>();
+	private Map<String,Double> avgCost;
+	private Map<String,Double> totalCostMap;
+	private Double deductCost;
+	private String ratingAreaId;
+	//11Ma
+	private String categoryCode;
+	private String aianValue;
+	private List<TPlanBenefit> planBenefits;
+	
+	
+	
+	public List<String> getDrldwnCd() {
+		return drldwnCd;
+	}
+
+	public void setDrldwnCd(List<String> drldwnCd) {
+		this.drldwnCd = drldwnCd;
+	}
+
+	public List<UtilzAndCosts> getUtlzAndCostsList() {
+		return utlzAndCostsList;
+	}
+
+	public void setUtlzAndCostsList(List<UtilzAndCosts> utlzAndCostsList) {
+		this.utlzAndCostsList = utlzAndCostsList;
+	}
+
+	public Map<String, Integer> getUtlzVal() {
+		return utlzVal;
+	}
+
+	public void setUtlzVal(Map<String, Integer> utlzVal) {
+		this.utlzVal = utlzVal;
+	}
+
+	public Map<String, Double> getAvgCost() {
+		return avgCost;
+	}
+
+	public void setAvgCost(Map<String, Double> avgCost) {
+		this.avgCost = avgCost;
+	}
+
+	public Map<String, Double> getTotalCostMap() {
+		return totalCostMap;
+	}
+
+	public void setTotalCostMap(Map<String, Double> totalCostMap) {
+		this.totalCostMap = totalCostMap;
+	}
+
+	public Double getDeductCost() {
+		return deductCost;
+	}
+
+	public void setDeductCost(Double deductCost) {
+		this.deductCost = deductCost;
+	}
+
+	public String getRatingAreaId() {
+		return ratingAreaId;
+	}
+
+	public void setRatingAreaId(String ratingAreaId) {
+		this.ratingAreaId = ratingAreaId;
+	}
+
+	public String getCategoryCode() {
+		return categoryCode;
+	}
+
+	public void setCategoryCode(String categoryCode) {
+		this.categoryCode = categoryCode;
+	}
+
+	public String getAianValue() {
+		return aianValue;
+	}
+
+	public void setAianValue(String aianValue) {
+		this.aianValue = aianValue;
+	}
+
+	public List<TPlanBenefit> getPlanBenefits() {
+		return planBenefits;
+	}
+
+	public void setPlanBenefits(List<TPlanBenefit> planBenefits) {
+		this.planBenefits = planBenefits;
+	}
+
+	public String getAgeCategory() {
+		return ageCategory;
+	}
+
+	public void setAgeCategory(String ageCategory) {
+		this.ageCategory = ageCategory;
+	}
+
+	private String ageCategory;
+	
+
+	public Boolean getMedicaidIndicator() {
+		return medicaidIndicator;
+	}
+
+	public void setMedicaidIndicator(Boolean medicaidIndicator) {
+		this.medicaidIndicator = medicaidIndicator;
+	}
+
+	public String getGender() {
+		return gender;
+	}
+
+	public void setGender(String gender) {
+		this.gender = gender;
+	}
+
+	public String getDisease() {
+		return disease;
+	}
+
+	public void setDisease(String disease) {
+		this.disease = disease;
+	}
+
+	public String getSurgery() {
+		return surgery;
+	}
+
+	public void setSurgery(String surgery) {
+		this.surgery = surgery;
+	}
+
+	public String getSeverity() {
+		return severity;
+	}
+
+	public void setSeverity(String severity) {
+		this.severity = severity;
+	}
+
+	public Double getIncome() {
+		return income;
+	}
+
+	public void setIncome(Double income) {
+		this.income = income;
+	}
+
+	public String getNativeAmericanIndicator() {
+		return nativeAmericanIndicator;
+	}
+
+	public void setNativeAmericanIndicator(String nativeAmericanIndicator) {
+		this.nativeAmericanIndicator = nativeAmericanIndicator;
+	}
+
+	public String getQualifiedAlienIndicator() {
+		return qualifiedAlienIndicator;
+	}
+
+	public void setQualifiedAlienIndicator(String qualifiedAlienIndicator) {
+		this.qualifiedAlienIndicator = qualifiedAlienIndicator;
+	}
+
+	public String getAlienExemptionTypeCode() {
+		return alienExemptionTypeCode;
+	}
+
+	public void setAlienExemptionTypeCode(String alienExemptionTypeCode) {
+		this.alienExemptionTypeCode = alienExemptionTypeCode;
+	}
+
+	public String getPregnantIndicator() {
+		return pregnantIndicator;
+	}
+
+	public void setPregnantIndicator(String pregnantIndicator) {
+		this.pregnantIndicator = pregnantIndicator;
+	}
+
+	public Integer getAge() {
+		return age;
+	}
+
+	public void setAge(Integer age) {
+		this.age = age;
+	}
+
+	public String getRelationToApplicantCode() {
+		return relationToApplicantCode;
+	}
+
+	public void setRelationToApplicantCode(String relationToApplicantCode) {
+		this.relationToApplicantCode = relationToApplicantCode;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Integer getIndividualSequenceNumber() {
+		return individualSequenceNumber;
+	}
+
+	public void setIndividualSequenceNumber(Integer individualSequenceNumber) {
+		this.individualSequenceNumber = individualSequenceNumber;
+	}
+
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+	}
+	
+	public boolean equals(Individual obj) {
+		if(this.individualSequenceNumber == obj.individualSequenceNumber) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	public String getLegalStatusTypeIndicator() {
+		return legalStatusTypeIndicator;
+	}
+
+	public void setLegalStatusTypeIndicator(String legalStatusTypeIndicator) {
+		this.legalStatusTypeIndicator = legalStatusTypeIndicator;
+	}
+
+	public String getLegalStatusTypeCode() {
+		return legalStatusTypeCode;
+	}
+
+	public void setLegalStatusTypeCode(String legalStatusTypeCode) {
+		this.legalStatusTypeCode = legalStatusTypeCode;
+	}
+
+	public IndividualEligibilityResults getEligibilityResult() {
+		return eligibilityResult;
+	}
+
+	public void setEligibilityResult(IndividualEligibilityResults eligibilityResult) {
+		this.eligibilityResult = eligibilityResult;
+	}
+
+	public Boolean getChipIndicator() {
+		return chipIndicator;
+	}
+
+	public void setChipIndicator(Boolean chipIndicator) {
+		this.chipIndicator = chipIndicator;
+	}
+
+	public Boolean getMedicaidExemptIndicator() {
+		return medicaidExemptIndicator;
+	}
+
+	public void setMedicaidExemptIndicator(Boolean medicaidExemptIndicator) {
+		this.medicaidExemptIndicator = medicaidExemptIndicator;
+	}
+
+	public String getCoveredIndicator() {
+		return coveredIndicator;
+	}
+
+	public void setCoveredIndicator(String coveredIndicator) {
+		this.coveredIndicator = coveredIndicator;
+	}
+
+}

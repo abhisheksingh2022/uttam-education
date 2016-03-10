@@ -1,0 +1,9 @@
+package com.hixapi.pmp.dao.admin;
+
+import com.hixapi.pmp.entity.model.ExceptionLog;
+
+public interface SystemAdministrationDAO {
+
+	void saveExceptionLog(ExceptionLog log);
+
+}

@@ -1,0 +1,22 @@
+package com.hixapi.pmp.common.util.xml;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventHandler;
+
+public class ValidationEventHandlerImpl implements ValidationEventHandler {
+
+	private List<ValidationEvent> events = new ArrayList<ValidationEvent>();
+
+	public boolean handleEvent(ValidationEvent event) {
+		events.add(event);
+		return true;
+	}
+
+	public List<ValidationEvent> getEvents() {
+		return this.events;
+	}
+
+}

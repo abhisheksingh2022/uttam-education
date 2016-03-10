@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 24, 2015 3:27:04 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.ExceptionLog" table="EXCEPTION_LOG" optimistic-lock="version">
+        <id name="exceptionLogId" type="java.lang.Long">
+            <column name="EXCEPTION_LOG_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_EXCEPTION_LOG_SEQ</param>
+    		</generator>
+        </id>
+        <property name="exceptionMessage" type="string">
+            <column name="EXCEPTION_MESSAGE" length="200" not-null="true" />
+        </property>
+        <property name="serverIp" type="string">
+            <column name="SERVER_IP" length="50" />
+        </property>
+        <property name="clientIp" type="string">
+            <column name="CLIENT_IP" length="50" />
+        </property>
+        <property name="userAgent" type="string">
+            <column name="USER_AGENT" length="200" />
+        </property>
+        <property name="exceptionClass" type="string">
+            <column name="EXCEPTION_CLASS" length="200" />
+        </property>
+        <property name="exceptionDetail" type="string">
+            <column name="EXCEPTION_DETAIL" length="18000" />
+        </property>
+        <property name="actionName" type="string">
+            <column name="ACTION_NM" length="200" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,136 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+public class Household implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8312361506474425626L;
+	
+	private Long householdIncome;
+	private String householdIncomeTypeCode;
+	private String csrVarId;
+	private List<Individual> householdMembers;
+	private List<Individual> coveredMembers;
+	//required to retain back all memebers when back buton is pressed on health status
+	private List<Individual> uncoveredMembers;
+	private String county;
+	private String householdLegalStatusTypeIndicator;
+	private String coverageYearStr;
+	private Double householdFPL;
+	private List<Individual> nonMedicaidMembers = new ArrayList<Individual>(0);
+	//for calculations
+	private Long annualIncome;
+	
+	
+	public List<Individual> getCoveredMembers() {
+		return coveredMembers;
+	}
+
+	public void setCoveredMembers(List<Individual> coveredMembers) {
+		this.coveredMembers = coveredMembers;
+	}
+	
+	public String getCounty() {
+		return county;
+	}
+
+	public void setCounty(String county) {
+		this.county = county;
+	}
+
+	
+
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+	}
+
+	public String getCsrVarId() {
+		return csrVarId;
+	}
+
+	public void setCsrVarId(String csrVarId) {
+		this.csrVarId = csrVarId;
+	}
+
+	public Long getHouseholdIncome() {
+		return householdIncome;
+	}
+
+	public void setHouseholdIncome(Long householdIncome) {
+		this.householdIncome = householdIncome;
+	}
+
+	public List<Individual> getHouseholdMembers() {
+		return householdMembers;
+	}
+
+	public void setHouseholdMembers(List<Individual> householdMembers) {
+		this.householdMembers = householdMembers;
+	}
+
+	public String getHouseholdIncomeTypeCode() {
+		return householdIncomeTypeCode;
+	}
+
+	public void setHouseholdIncomeTypeCode(String householdIncomeTypeCode) {
+		this.householdIncomeTypeCode = householdIncomeTypeCode;
+	}
+
+	public String getHouseholdLegalStatusTypeIndicator() {
+		return householdLegalStatusTypeIndicator;
+	}
+
+	public void setHouseholdLegalStatusTypeIndicator(String householdLegalStatusTypeIndicator) {
+		this.householdLegalStatusTypeIndicator = householdLegalStatusTypeIndicator;
+	}
+
+	public String getCoverageYearStr() {
+		return coverageYearStr;
+	}
+
+	public void setCoverageYearStr(String coverageYearStr) {
+		this.coverageYearStr = coverageYearStr;
+	}
+
+	public Double getHouseholdFPL() {
+		return householdFPL;
+	}
+
+	public void setHouseholdFPL(Double householdFPL) {
+		this.householdFPL = householdFPL;
+	}
+
+	public List<Individual> getNonMedicaidMembers() {
+		return nonMedicaidMembers;
+	}
+
+	public void setNonMedicaidMembers(List<Individual> noMedicaidMembers) {
+		this.nonMedicaidMembers = noMedicaidMembers;
+	}
+
+	public Long getAnnualIncome() {
+		return annualIncome;
+	}
+
+	public void setAnnualIncome(Long annualIncome) {
+		this.annualIncome = annualIncome;
+	}
+
+	public List<Individual> getUncoveredMembers() {
+		return uncoveredMembers;
+	}
+
+	public void setUncoveredMembers(List<Individual> uncoveredMembers) {
+		this.uncoveredMembers = uncoveredMembers;
+	}
+
+}

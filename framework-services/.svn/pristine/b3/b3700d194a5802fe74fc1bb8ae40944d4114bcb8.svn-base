@@ -1,0 +1,385 @@
+package com.hixapi.pmp.service.user;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.env.IEnvironmentProvider;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants;
+import com.hixapi.pmp.api.model.APICodeConstants.UserActivationStatus;
+import com.hixapi.pmp.api.model.APICodeConstants.UserRole;
+import com.hixapi.pmp.api.model.CarrierUserVO;
+import com.hixapi.pmp.api.model.LoginHistoryVO;
+import com.hixapi.pmp.api.model.RoleVO;
+import com.hixapi.pmp.api.model.UserVO;
+import com.hixapi.pmp.api.model.criteria.CarrierUserSearchCriteria;
+import com.hixapi.pmp.api.model.criteria.LoginHistorySearchCriteria;
+import com.hixapi.pmp.api.modeltranslator.RoleModelTranslator;
+import com.hixapi.pmp.api.modeltranslator.UserModelTranslator;
+import com.hixapi.pmp.common.util.PMPAccessController;
+import com.hixapi.pmp.dao.carrier.CarrierDAO;
+import com.hixapi.pmp.dao.user.UserDAO;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+import com.hixapi.pmp.entity.model.CarrierUser;
+import com.hixapi.pmp.entity.model.RoleMstr;
+import com.hixapi.pmp.entity.model.UsrContactDetail;
+import com.hixapi.pmp.entity.model.UsrLoginHistory;
+import com.hixapi.pmp.entity.model.idm.IDMUser;
+
+public class UserServiceImpl implements UserService {
+
+	private UserDAO userDAO;
+	private CarrierDAO carrierDAO;
+	private UserModelTranslator userModelTranslator;
+	private RoleModelTranslator roleModelTranslator;
+	private IdentityManagerService identityManagerService;
+	private UsrLoginHistory ulh;
+	private CarrierUser carrierUser;
+	private static final Logger log = LogManager.getLogger(UserServiceImpl.class);
+
+	public UserDAO getUserDAO() {
+		return userDAO;
+	}
+
+	public UsrLoginHistory getUlh() {
+		return ulh;
+	}
+
+	public void setUlh(UsrLoginHistory ulh) {
+		this.ulh = ulh;
+	}
+
+	public CarrierUser getCarrierUser() {
+		return carrierUser;
+	}
+
+	public void setCarrierUser(CarrierUser carrierUser) {
+		this.carrierUser = carrierUser;
+	}
+
+	public void setUserDAO(UserDAO userDAO) {
+		this.userDAO = userDAO;
+	}
+
+	public UserModelTranslator getUserModelTranslator() {
+		return userModelTranslator;
+	}
+
+	public void setUserModelTranslator(UserModelTranslator userModelTranslator) {
+		this.userModelTranslator = userModelTranslator;
+	}
+
+	public RoleModelTranslator getRoleModelTranslator() {
+		return roleModelTranslator;
+	}
+
+	public void setRoleModelTranslator(RoleModelTranslator roleModelTranslator) {
+		this.roleModelTranslator = roleModelTranslator;
+	}
+
+	public IdentityManagerService getIdentityManagerService() {
+		return identityManagerService;
+	}
+
+	public void setIdentityManagerService(IdentityManagerService identityManagerService) {
+		this.identityManagerService = identityManagerService;
+	}
+
+	@Override
+	public UserVO retrieveUserByLoginId(String loginId, List<String> roles) throws BusinessServiceException {
+		log.entry();
+
+		IDMUser idmUser = null;
+		final IEnvironmentProvider environment = ServiceLocator.getInstance().getService(IEnvironmentProvider.class);
+		if (!environment.isProduction()
+				&& !environment.getPropertyInGroup(APIConstants.PROPGROUP_GLOBAL, APIConstants.PROPKEY_ENABLE_ISIM,
+						Boolean.class, true)) {
+			log.info("Bypassing ISIM in test environment");
+			idmUser = new IDMUser();
+			idmUser.setFirstName(environment.getProperty(APIConstants.PROPKEY_TEST_USER_FNAME, String.class, "Unknown"));
+			idmUser.setLastName(environment.getProperty(APIConstants.PROPKEY_TEST_USER_LNAME, String.class, "Unknown"));
+			idmUser.setEmail(environment.getProperty(APIConstants.PROPKEY_TEST_USER_EMAIL, String.class,
+					"Unknown@unknown.com"));
+			idmUser.setUserStatusCode(UserActivationStatus.ACTIVE.getCode());
+		} else {
+			log.debug("Retriving user information from Identity Manager");
+			idmUser = identityManagerService.retrieveUser(loginId);
+		}
+		UserVO vo = null;
+		if (idmUser != null) {
+			vo = new UserVO();
+			vo.setLoginId(loginId);
+			vo.setFirstName(idmUser.getFirstName());
+			vo.setLastName(idmUser.getLastName());
+			//		vo.setUserId();
+			vo.setLoginId(loginId);
+			vo.setStatusCode(APICodeConstants.UserActivationStatus.getEnum(idmUser.getUserStatusCode()).getCode());
+			//		vo.setRoles(idmUser.getRoles());
+			CarrierUser carrierUser = userDAO.retrieveUserByLoginId(loginId);
+			if (carrierUser != null) {
+				vo.setUserId(carrierUser.getCarrierUserId());
+				vo.setOrganizationId(ConversionUtil.toString(carrierUser.getCarrierMstr().getCarrierIdNbr()));
+				vo.setOrganizationName(carrierUser.getCarrierMstr().getCarrierName());
+				vo.setOrgIdStr(carrierUser.getCarrierMstr().getCarrierId());
+				if (hasDifference(carrierUser, idmUser)) {
+					updateUserInDatabase(carrierUser, idmUser);
+				}
+			}else{
+				if(CollectionUtils.isNotEmpty(roles)&& roles.size() == 1 && roles.contains(UserRole.CARRIER.getCode())){
+					throw new BusinessServiceException("msg.userservice.no_profile_found");
+				}
+			}
+		}
+		return log.exit(vo);
+	}
+
+	private void updateUserInDatabase(CarrierUser carrierUser, IDMUser idmUser) {
+		if (carrierUser.getUsrContactDetail() == null) {
+			carrierUser.setUsrContactDetail(new UsrContactDetail());
+		}
+		carrierUser.getUsrContactDetail().setFrstNm(idmUser.getFirstName());
+		carrierUser.getUsrContactDetail().setLastNm(idmUser.getLastName());
+		carrierUser.getUsrContactDetail().setEmailAdr(idmUser.getEmail());
+		carrierUser.setUsrStatusCd(idmUser.getUserStatusCode());
+		userDAO.updateCarrierUser(carrierUser);
+	}
+
+	private boolean hasDifference(CarrierUser carrierUser, IDMUser idmUser) {
+		log.entry();
+		boolean retVal = false;
+		if (!StringUtils.trimToEmpty(idmUser.getUserStatusCode()).equals(carrierUser.getUsrStatusCd())) {
+			retVal = true;
+		}
+		if (!StringUtils.trimToEmpty(idmUser.getEmail()).equals(carrierUser.getUsrContactDetail().getEmailAdr())) {
+			retVal = true;
+		}
+		if (!StringUtils.trimToEmpty(idmUser.getFirstName()).equals(carrierUser.getUsrContactDetail().getFrstNm())) {
+			retVal = true;
+		}
+		if (!StringUtils.trimToEmpty(idmUser.getLastName()).equals(carrierUser.getUsrContactDetail().getLastNm())) {
+			retVal = true;
+		}
+		if (!StringUtils.trimToEmpty(idmUser.getPhoneNumber()).equals(carrierUser.getUsrContactDetail().getPhoneNum())) {
+			retVal = true;
+		}
+		log.debug("Difference exists between IDM record and DB record ? : {}", retVal);
+		return log.exit(retVal);
+	}
+
+	@Override
+	public UserVO retrieveUserById(Long id) throws BusinessServiceException {
+		CarrierUser u = userDAO.retrieveUserById(id);
+		if (u != null) {
+			UserVO vo = userModelTranslator.initializeCarrierUserVO(u);
+			return log.exit(vo);
+		}
+		return log.exit(null);
+	}
+
+	@Override
+	public CarrierUserVO retrieveCarrierUserById(Long id) throws BusinessServiceException {
+
+		CarrierUser u = userDAO.retrieveUserById(id);
+		if (u != null) {
+			CarrierUserVO vo = userModelTranslator.initializeCarrierUserVO(u);
+			return log.exit(vo);
+		}
+		return log.exit(null);
+	}
+
+	@Override
+	public void saveCarrierUser(CarrierUserVO user) throws BusinessServiceException {
+		IDMUser idmUser = userModelTranslator.initializeIDMUser(user);
+		identityManagerService.saveCarrierUser(idmUser);
+		CarrierUser u = userModelTranslator.initializeCarrierUserEntity(user);
+		try {
+			userDAO.saveCarrierUser(u);
+			if (u.getPmpAdrId() != null) {
+				user.setAddressId(u.getPmpAdrId().getAddressId());
+			}
+			if (u.getUsrContactDetail() != null) {
+				user.setContactInfoId(u.getUsrContactDetail().getUsrContactId());
+			}
+			if(u.getCarrierUserId() != null){
+				user.setUserId(u.getCarrierUserId());
+			}
+		} catch (Exception ex) {
+			log.error("Error saving carrier user in database attempting idm rollback", ex);
+			try {
+				identityManagerService.deleteUser(idmUser);
+			} catch (Exception idmEx) {
+				log.error("Error deleting carrier user in idm", idmEx);
+			}
+			throw new BusinessServiceException(ex);
+		}
+	}
+
+	@Override
+	public List<CarrierUserVO> searchCarrierUsers(CarrierUserSearchCriteria criteria) throws BusinessServiceException {
+
+		log.entry();
+		/**
+		 * Abhishek: these below two lines would be un-commented when database will have data
+		 * 
+		 */
+		List<CarrierUser> carrierUsersList = userDAO.searchCarrierUsers(criteria);
+		List<CarrierUserVO> userVOList = initializeCarrierUserVOList(carrierUsersList);
+
+		return log.exit(userVOList);
+
+	}
+
+	private List<CarrierUserVO> initializeCarrierUserVOList(List<CarrierUser> userList) {
+		List<CarrierUserVO> carrierUserList = new ArrayList<CarrierUserVO>(0);
+		for (CarrierUser user : userList) {
+			CarrierUserVO vo = userModelTranslator.initializeCarrierUserVO(user);
+			carrierUserList.add(vo);
+		}
+		return carrierUserList;
+	}
+
+	@Override
+	public List<RoleVO> retrieveAvailableRoles() {
+		log.entry();
+		List<RoleMstr> roles = userDAO.retrieveAvailableRoles();
+		List<RoleVO> voList = new ArrayList<RoleVO>();
+		if (CollectionUtils.isNotEmpty(roles)) {
+			for (RoleMstr role : roles) {
+				voList.add(roleModelTranslator.initializeRoleVO(role));
+			}
+		}
+		return log.exit(voList);
+	}
+
+	@Override
+	public void updateCarrierUser(CarrierUserVO user) throws BusinessServiceException {
+		log.entry();
+		IDMUser idmUser = userModelTranslator.initializeIDMUser(user);
+		identityManagerService.updateUser(idmUser);
+		CarrierUser entity = userDAO.retrieveUserById(user.getUserId());
+		Long carrierIdNbr = entity.getCarrierMstr().getCarrierIdNbr();
+		userModelTranslator.updateCarrierUserEntity(user, entity);
+		if(!ConversionUtil.toString(carrierIdNbr).equals(user.getOrganizationId())){
+			CarrierMstr carr = carrierDAO.retrieveCarrierByCarrierIdNumber(Long.parseLong(user.getOrganizationId()));
+			entity.setCarrierMstr(carr);
+		}
+		userDAO.updateCarrierUser(entity);
+		if (entity.getPmpAdrId() != null) {
+			user.setAddressId(entity.getPmpAdrId().getAddressId());
+		}
+		if (entity.getUsrContactDetail() != null) {
+			user.setContactInfoId(entity.getUsrContactDetail().getUsrContactId());
+		}
+		if(entity.getCarrierUserId() != null){
+			user.setUserId(entity.getCarrierUserId());
+		}
+		log.exit();
+	}
+
+	@Override
+	public void resetCarrierUserPassword(CarrierUserVO user) throws BusinessServiceException {
+		log.entry();
+		IDMUser idmUser = userModelTranslator.initializeIDMUser(user);
+		identityManagerService.resetUserPassword(idmUser);
+		log.exit();
+
+	}
+
+	@Override
+	public void suspendUser(CarrierUserVO user) throws BusinessServiceException {
+		log.entry();
+		IDMUser idmUser = userModelTranslator.initializeIDMUser(user);
+		identityManagerService.suspendUser(idmUser);
+		CarrierUser entity = userDAO.retrieveUserById(user.getUserId());
+		entity.setUsrStatusCd(UserActivationStatus.DEACTIVATED.getCode());
+		userDAO.updateCarrierUser(entity);
+		log.exit();
+
+	}
+
+	@Override
+	public void restoreUser(CarrierUserVO user) throws BusinessServiceException {
+		log.entry();
+		IDMUser idmUser = userModelTranslator.initializeIDMUser(user);
+		identityManagerService.restoreUser(idmUser);
+		CarrierUser entity = userDAO.retrieveUserById(user.getUserId());
+		entity.setUsrStatusCd(UserActivationStatus.ACTIVE.getCode());
+		userDAO.updateCarrierUser(entity);
+		log.exit();
+
+	}
+	
+	public List<LoginHistoryVO> searchLoginHistory(LoginHistorySearchCriteria criteria) 
+	{
+		log.entry();
+		List<Object[]> userVOList = new ArrayList<Object[]>();
+		List<LoginHistoryVO> loginHistoryList = new ArrayList<LoginHistoryVO>();
+		userVOList=userDAO.retrieveLoginHistory(criteria);
+		loginHistoryList=userModelTranslator.initializeLoginHistory(userVOList);
+		return loginHistoryList;
+			}
+
+	@Override
+	public void saveLoginHistory(String userId) {
+		UsrLoginHistory record = new UsrLoginHistory();
+		record.setLoginDt(APIUtil.getCurrentDate());
+		record.setUsrLoginId(userId);
+		userDAO.saveLoginHistory(record);
+		
+	}
+
+	@Override
+	public boolean checkIfPlanAccessibleToCurrentUser(Long planId) {
+		boolean retVal = false;
+		if(PMPAccessController.getInstance().hasAllCarrierAccessForCurrentUser()){
+			log.debug("Not a carrier user, allowing all access to plan {}", planId);
+			retVal = true;
+		}else{
+			Long carrierId = PMPAccessController.getInstance().getCurrentUserCarrierId();
+			if(carrierId == null){
+				retVal = false;
+			}
+			else{
+				retVal = userDAO.checkIfPlanAccessibleToCurrentUser(planId);
+			}
+		}
+		
+		return retVal;
+	}
+
+	@Override
+	public boolean checkIfPlanAccessibleToCurrentUser(String planHiosId) {
+		boolean retVal = false;
+		if(PMPAccessController.getInstance().hasAllCarrierAccessForCurrentUser()){
+			log.debug("Not a carrier user, allowing all access to plan {}", planHiosId);
+			retVal = true;
+		}else{
+			Long carrierId = PMPAccessController.getInstance().getCurrentUserCarrierId();
+			if(carrierId == null){
+				retVal = false;
+			}
+			else{
+				retVal = userDAO.checkIfPlanAccessibleToCurrentUser(planHiosId);
+			}
+		}
+		
+		return retVal;
+	}
+
+	public CarrierDAO getCarrierDAO() {
+		return carrierDAO;
+	}
+
+	public void setCarrierDAO(CarrierDAO carrierDAO) {
+		this.carrierDAO = carrierDAO;
+	}		
+}

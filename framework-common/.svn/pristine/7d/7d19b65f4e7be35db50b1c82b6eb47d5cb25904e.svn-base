@@ -1,0 +1,302 @@
+package com.hixapi.pmp.common.util;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.context.ContextKeyEnum;
+import com.hixapi.framework.common.context.ContextProvider;
+import com.hixapi.framework.common.model.UserIdentity;
+import com.hixapi.pmp.api.model.APICodeConstants;
+import com.hixapi.pmp.api.model.APICodeConstants.AccessCheckMode;
+import com.hixapi.pmp.api.model.APICodeConstants.UserFunction;
+import com.hixapi.pmp.api.model.APICodeConstants.UserRole;
+import com.hixapi.pmp.entity.model.FunctionMstr;
+import com.hixapi.pmp.entity.model.FunctionRole;
+import com.hixapi.pmp.entity.model.RoleMstr;
+
+public class PMPAccessController {
+
+	private static final String ENTRY_WILD_CARD = "*";
+
+	private static final Logger LOG = LogManager.getLogger(PMPAccessController.class);
+
+	private static final PMPAccessController INSTANCE = new PMPAccessController();
+
+	private Map<String, List<String>> actionRoleMap = new HashMap<String, List<String>>();
+	private Map<String, List<String>> moduleRoleMap = new HashMap<String, List<String>>();
+	private Map<String, List<String>> urlRoleMap = new HashMap<String, List<String>>();
+
+	private PMPAccessController() {
+
+	}
+
+	public static final PMPAccessController getInstance() {
+		return INSTANCE;
+	}
+
+	private List<FunctionRole> functionRoles;
+
+	public void initialize(final List<FunctionRole> frList) {
+		LOG.entry();
+		Validate.notNull(frList, "Parameter is null");
+		this.functionRoles = frList;
+		populateMatrix();
+		LOG.exit();
+	}
+
+	/**
+	 * Populates the access control matrix
+	 */
+	private void populateMatrix() {
+		LOG.entry();
+		if (CollectionUtils.isNotEmpty(functionRoles)) {
+			LOG.debug("Populating function roles of size {}", functionRoles.size());
+			for (FunctionRole fr : functionRoles) {
+				final FunctionMstr fn = fr.getFunctionMstr();
+				final AccessCheckMode mode = AccessCheckMode.getEnum(fn.getFunctionTypeCd());
+				if (mode != null) {
+					final RoleMstr role = fr.getRoleMstr();
+					switch (mode) {
+					case WEB_URL: {
+						LOG.debug("Populating WEB_URL '{}' which is allowed to '{}'", fn.getWebUrlNm(),
+								role.getReqHeaderNm());
+						if (!this.urlRoleMap.containsKey(fn.getWebUrlNm())) {
+							this.urlRoleMap.put(fn.getWebUrlNm(), new ArrayList<String>());
+						}
+						this.urlRoleMap.get(fn.getWebUrlNm()).add(role.getReqHeaderNm());
+						break;
+					}
+					case WEB_ACTION: {
+						LOG.debug("Populating WEB_ACTION '{}' which is allowed to '{}'", fn.getWebActionNm(),
+								role.getReqHeaderNm());
+						if (!this.moduleRoleMap.containsKey(fn.getWebActionNm())) {
+							this.moduleRoleMap.put(fn.getWebActionNm(), new ArrayList<String>());
+						}
+						this.moduleRoleMap.get(fn.getWebActionNm()).add(role.getReqHeaderNm());
+						break;
+					}
+					case USER_ACTION: {
+						LOG.debug("Populating USER_ACTION '{}' which is allowed to '{}'", fn.getFunctionNm(),
+								role.getReqHeaderNm());
+						if (!this.actionRoleMap.containsKey(fn.getFunctionNm())) {
+							this.actionRoleMap.put(fn.getFunctionNm(), new ArrayList<String>());
+						}
+						this.actionRoleMap.get(fn.getFunctionNm()).add(role.getReqHeaderNm());
+						break;
+					}
+					default:
+
+					}
+				}
+			}
+		}
+
+	}
+
+	public boolean isAllowedForCurrentUser(final AccessCheckMode mode, final String value) {
+		boolean returnVal = false;
+		if (mode != null) {
+			UserIdentity uid = ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class);
+			switch (mode) {
+			case WEB_URL: {
+				LOG.trace("Checking access to WEB_URL '{}'", value);
+				List<String> rolesAllowed = findRolesAllowed(this.urlRoleMap, value);
+				if (rolesAllowed.contains(ENTRY_WILD_CARD) || CollectionUtils.containsAny(uid.getRoles(), rolesAllowed)) {
+					LOG.trace("Access granted to WEB_URL '{}' for user '{}'", value, uid.getLoginId());
+					returnVal = true;
+				} else {
+					LOG.trace("Access denied to WEB_URL '{}' for user '{}'", value, uid.getLoginId());
+				}
+				break;
+			}
+			case WEB_ACTION: {
+				LOG.trace("Checking access to WEB_ACTION '{}'", value);
+				List<String> rolesAllowed = findRolesAllowed(this.moduleRoleMap, value);
+				if (rolesAllowed.contains(ENTRY_WILD_CARD) || CollectionUtils.containsAny(uid.getRoles(), rolesAllowed)) {
+					LOG.trace("Access granted to WEB_ACTION '{}' for user '{}'", value, uid.getLoginId());
+					returnVal = true;
+				} else {
+					LOG.trace("Access denied to WEB_ACTION '{}' for user '{}'", value, uid.getLoginId());
+				}
+				break;
+			}
+			case USER_ACTION: {
+				LOG.trace("Checking access to USER_ACTION '{}'", value);
+				UserFunction fn = UserFunction.getEnum(value);
+				if (fn != null) {
+
+					List<String> rolesAllowed = findRolesAllowed(this.actionRoleMap, value);
+					if (rolesAllowed.contains(ENTRY_WILD_CARD) || CollectionUtils.containsAny(uid.getRoles(), rolesAllowed)) {
+						LOG.trace("Access granted to USER_ACTION '{}' for user '{}'", value, uid.getLoginId());
+						returnVal = true;
+					} else {
+						LOG.trace("Access denied to USER_ACTION '{}' for user '{}'", value, uid.getLoginId());
+					}
+				} else {
+					LOG.error("Function '{}' is unknown to the system. No matching entry in UserFunction enum", value);
+				}
+				break;
+			}
+			default:
+
+			}
+		}
+		return LOG.exit(returnVal);
+
+	}
+
+	private List<String> findRolesAllowed(final Map<String, List<String>> map, final String input) {
+		final Set<String> rolesAllowed = new TreeSet<String>();
+		if (map != null) {
+			for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+				final String key = entry.getKey();
+				if (key.equals(input)) {
+					rolesAllowed.addAll(entry.getValue());
+				} else if (key.endsWith(ENTRY_WILD_CARD)) {
+					LOG.trace("Checking wild card entry '{}'", key);
+					if (input.startsWith(key.substring(0, key.length() - 1))) {
+						LOG.trace("Wild card match found comparing entry '{}', with '{}'", key, input);
+						rolesAllowed.addAll(entry.getValue());
+					}
+				}
+			}
+		}
+		return new ArrayList<String>(rolesAllowed);
+	}
+
+	public List<String> getAllowedRoleHeaderNames(final AccessCheckMode mode, final String value) {
+		LOG.entry();
+		List<String> rolesAllowed = Collections.emptyList();
+		switch (mode) {
+		case WEB_URL: {
+			LOG.trace("Checking access to WEB_URL '{}'", value);
+			rolesAllowed = findRolesAllowed(this.urlRoleMap, value);
+			break;
+		}
+		case WEB_ACTION: {
+			LOG.trace("Checking access to WEB_ACTION '{}'", value);
+			rolesAllowed = findRolesAllowed(this.moduleRoleMap, value);
+			break;
+		}
+		case USER_ACTION: {
+			LOG.trace("Checking access to USER_ACTION '{}'", value);
+			rolesAllowed = findRolesAllowed(this.actionRoleMap, value);
+			break;
+		}
+		default:
+		}
+		return LOG.exit(rolesAllowed);
+	}
+
+	public boolean isCarrierAccessibleForCurrentUser(Long carrierId) {
+		LOG.entry();
+		boolean returnVal = false;
+		UserIdentity uid = ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class);
+
+		if (uid != null) {
+			LOG.debug("Checking access for user '{}' to carrier of id '{}'", uid.getLoginId(), carrierId);
+			List<String> roles = uid.getRoles();
+			if (roles.contains(APICodeConstants.UserRole.PLAN_MANAGER.getCode())
+					|| roles.contains(APICodeConstants.UserRole.PLAN_SPECIALIST.getCode())) {
+				returnVal = true;
+			} else if (roles.contains(APICodeConstants.UserRole.CARRIER.getCode()) && uid.getOrgId() != null
+					&& uid.getOrgId().equals(carrierId)) {
+				returnVal = true;
+			}
+		}
+		LOG.debug("Access Check Result : {}", returnVal);
+		return LOG.exit(returnVal);
+	}
+
+	public boolean hasAllCarrierAccessForCurrentUser() {
+		LOG.entry();
+		boolean returnVal = false;
+		UserIdentity uid = ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class);
+
+		if (uid != null) {
+			LOG.debug("Checking access for user '{}' to all carriers", uid.getLoginId());
+			List<String> roles = uid.getRoles();
+			if (roles.contains(APICodeConstants.UserRole.PLAN_MANAGER.getCode())
+					|| roles.contains(APICodeConstants.UserRole.PLAN_SPECIALIST.getCode())) {
+				returnVal = true;
+			}
+		}
+		LOG.debug("Access Check Result : {}", returnVal);
+		return LOG.exit(returnVal);
+	}
+
+
+	public Long getCurrentUserCarrierId() {
+		LOG.entry();
+		UserIdentity uid = ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class);
+		Long result = -1l;
+		if (uid != null) {
+			List<String> roles = uid.getRoles();
+			if (roles.contains(APICodeConstants.UserRole.CARRIER.getCode()) && uid.getOrgId() != null) {
+				result = uid.getOrgId();
+			}
+		}
+		if(result == null || result.longValue() == -1){
+			LOG.error("Requested for non existent user carrier id in context, returning -1");
+		}
+		return result;
+	}
+
+	/** For Plan Manage **/
+	private boolean isPlanManager(UserIdentity uid) {
+		if (uid != null) {
+			LOG.debug("Retrieving Roles for ", uid.getLoginId());
+			List<String> roles = uid.getRoles();
+			if (roles.contains(APICodeConstants.UserRole.PLAN_MANAGER.getCode())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isPlanSpecialist(UserIdentity uid) {
+		if (uid != null) {
+			LOG.debug("Retrieving Roles for ", uid.getLoginId());
+			List<String> roles = uid.getRoles();
+			if (roles.contains(APICodeConstants.UserRole.PLAN_SPECIALIST.getCode())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isCarrierUser(UserIdentity uid) {
+		if (uid != null) {
+			LOG.debug("Retrieving Roles for ", uid.getLoginId());
+			List<String> roles = uid.getRoles();
+			if (roles.contains(APICodeConstants.UserRole.CARRIER.getCode())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public UserRole getHighestRole() {
+		UserIdentity uid = ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class);
+		if (isPlanManager(uid)) {
+			return UserRole.PLAN_MANAGER;
+		} else if (isPlanSpecialist(uid)) {
+			return UserRole.PLAN_SPECIALIST;
+		} else if (isCarrierUser(uid)) {
+			return UserRole.CARRIER;
+		} else {
+			return null;
+		}
+	}
+
+}

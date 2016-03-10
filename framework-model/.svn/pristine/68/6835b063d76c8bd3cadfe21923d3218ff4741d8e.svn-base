@@ -1,0 +1,484 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+public class PlanVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private String coverageYear;
+	private String carrierId;
+	private String carrierName;
+	private String carrierTaxId;
+	private String carrierState;
+	private String planId;
+	private String planName;
+	private String planType;
+	private String metalLevel;
+	private NetworkURLVO networkUrl = new NetworkURLVO();
+	private CarrierFormularyVO carrierFormularyVO = new CarrierFormularyVO();
+	private String qualityRating;
+	private String ehbPercentage;
+	private String exchangeStatus;
+	private String publishDate;
+	private String language;
+	private List<PlanRateVO> planRates = new ArrayList<PlanRateVO>();
+	private List<PlanBenefitVO> planBenefits = new ArrayList<PlanBenefitVO>();
+	private String lastUpdateDate;
+	private Boolean carrierUpdateAllowed;
+
+	private String effectiveDate;
+	private String expirationDate;
+	private String planHiosId;
+	private String dentalOnlyPlanFlag;
+	private String productId;
+	private String hpId;
+	private String serviceAreaId;
+	private String newPlanFlag;
+	private String uniquePlanFlag;
+	private String qhpCd;
+	private String noticePregnancyFlag;
+	private String referralRequiredForSpecialistFlg;
+	private String specialistRequiringReferralText;
+	private String planLevelExclusionText;
+	private String limitedCsvEstimateAdvancePayment;
+	private String compositeRatingFlag;
+	private String childOnlyOffering;
+	private String childOnlyPlanId;
+	private String tobaccoWellnessFlag;
+	private String diseaseManagementProgramsOfferedText;
+	private String ehbAppointment;
+	private String guaranteedRateFlag;
+	private String maxCoinsNumber;
+	private String maxDaysChargingCopayNumber;
+	private String beginCostSharingAfterVisitNumber;
+	private String beginCoinsAfterCopaysNumber;
+	private String outOfCountryCoverageFlag;
+	private String outOfCountryCoverageDescText;
+	private String outOfServiceAreaCoverageFlag;
+	private String outOfServiceAreaCoverageDescText;
+	private String nationalNetworkFlag;
+	private String enrollPaymentUrlText;
+
+	public String getCoverageYear() {
+		return coverageYear;
+	}
+
+	public void setCoverageYear(String coverageYear) {
+		this.coverageYear = coverageYear;
+	}
+
+	public String getCarrierId() {
+		return carrierId;
+	}
+
+	public void setCarrierId(String carrierId) {
+		this.carrierId = carrierId;
+	}
+
+	public String getCarrierName() {
+		return carrierName;
+	}
+
+	public void setCarrierName(String carrierName) {
+		this.carrierName = carrierName;
+	}
+
+	public String getCarrierTaxId() {
+		return carrierTaxId;
+	}
+
+	public void setCarrierTaxId(String carrierTaxId) {
+		this.carrierTaxId = carrierTaxId;
+	}
+
+	public String getCarrierState() {
+		return carrierState;
+	}
+
+	public void setCarrierState(String carrierState) {
+		this.carrierState = carrierState;
+	}
+
+	public String getPlanId() {
+		return planId;
+	}
+
+	public void setPlanId(String planId) {
+		this.planId = planId;
+	}
+
+	public String getPlanName() {
+		return planName;
+	}
+
+	public void setPlanName(String planName) {
+		this.planName = planName;
+	}
+
+	public String getPlanType() {
+		return planType;
+	}
+
+	public void setPlanType(String planType) {
+		this.planType = planType;
+	}
+
+	public String getMetalLevel() {
+		return metalLevel;
+	}
+
+	public void setMetalLevel(String metalLevel) {
+		this.metalLevel = metalLevel;
+	}
+
+	public NetworkURLVO getNetworkUrl() {
+		return networkUrl;
+	}
+
+	public void setNetworkUrl(NetworkURLVO networkUrl) {
+		this.networkUrl = networkUrl;
+	}
+
+	public CarrierFormularyVO getCarrierFormularyVO() {
+		return carrierFormularyVO;
+	}
+
+	public void setCarrierFormularyVO(CarrierFormularyVO carrierFormularyVO) {
+		this.carrierFormularyVO = carrierFormularyVO;
+	}
+
+	public String getQualityRating() {
+		return qualityRating;
+	}
+
+	public void setQualityRating(String qualityRating) {
+		this.qualityRating = qualityRating;
+	}
+
+	public String getEhbPercentage() {
+		return ehbPercentage;
+	}
+
+	public void setEhbPercentage(String ehbPercentage) {
+		this.ehbPercentage = ehbPercentage;
+	}
+
+	public String getExchangeStatus() {
+		return exchangeStatus;
+	}
+
+	public void setExchangeStatus(String exchangeStatus) {
+		this.exchangeStatus = exchangeStatus;
+	}
+
+	public String getPublishDate() {
+		return publishDate;
+	}
+
+	public void setPublishDate(String publishDate) {
+		this.publishDate = publishDate;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
+	public List<PlanRateVO> getPlanRates() {
+		return planRates;
+	}
+
+	public void setPlanRates(List<PlanRateVO> planRates) {
+		this.planRates = planRates;
+	}
+
+	public List<PlanBenefitVO> getPlanBenefits() {
+		return planBenefits;
+	}
+
+	public void setPlanBenefits(List<PlanBenefitVO> planBenefits) {
+		this.planBenefits = planBenefits;
+	}
+
+	public String getLastUpdateDate() {
+		return lastUpdateDate;
+	}
+
+	public void setLastUpdateDate(String lastUpdateDate) {
+		this.lastUpdateDate = lastUpdateDate;
+	}
+
+	public String getEffectiveDate() {
+		return effectiveDate;
+	}
+
+	public void setEffectiveDate(String effectiveDate) {
+		this.effectiveDate = effectiveDate;
+	}
+
+	public String getExpirationDate() {
+		return expirationDate;
+	}
+
+	public void setExpirationDate(String expirationDate) {
+		this.expirationDate = expirationDate;
+	}
+
+	public String getPlanHiosId() {
+		return planHiosId;
+	}
+
+	public void setPlanHiosId(String planHiosId) {
+		this.planHiosId = planHiosId;
+	}
+
+	public String getDentalOnlyPlanFlag() {
+		return dentalOnlyPlanFlag;
+	}
+
+	public void setDentalOnlyPlanFlag(String dentalOnlyPlanFlag) {
+		this.dentalOnlyPlanFlag = dentalOnlyPlanFlag;
+	}
+
+	public String getProductId() {
+		return productId;
+	}
+
+	public void setProductId(String productId) {
+		this.productId = productId;
+	}
+
+	public String getHpId() {
+		return hpId;
+	}
+
+	public void setHpId(String hpId) {
+		this.hpId = hpId;
+	}
+
+	public String getServiceAreaId() {
+		return serviceAreaId;
+	}
+
+	public void setServiceAreaId(String serviceAreaId) {
+		this.serviceAreaId = serviceAreaId;
+	}
+
+	public String getNewPlanFlag() {
+		return newPlanFlag;
+	}
+
+	public void setNewPlanFlag(String newPlanFlag) {
+		this.newPlanFlag = newPlanFlag;
+	}
+
+	public String getUniquePlanFlag() {
+		return uniquePlanFlag;
+	}
+
+	public void setUniquePlanFlag(String uniquePlanFlag) {
+		this.uniquePlanFlag = uniquePlanFlag;
+	}
+
+	public String getQhpCd() {
+		return qhpCd;
+	}
+
+	public void setQhpCd(String qhpCd) {
+		this.qhpCd = qhpCd;
+	}
+
+	public String getNoticePregnancyFlag() {
+		return noticePregnancyFlag;
+	}
+
+	public void setNoticePregnancyFlag(String noticePregnancyFlag) {
+		this.noticePregnancyFlag = noticePregnancyFlag;
+	}
+
+	public String getReferralRequiredForSpecialistFlg() {
+		return referralRequiredForSpecialistFlg;
+	}
+
+	public void setReferralRequiredForSpecialistFlg(String referralRequiredForSpecialistFlg) {
+		this.referralRequiredForSpecialistFlg = referralRequiredForSpecialistFlg;
+	}
+
+	public String getSpecialistRequiringReferralText() {
+		return specialistRequiringReferralText;
+	}
+
+	public void setSpecialistRequiringReferralText(String specialistRequiringReferralText) {
+		this.specialistRequiringReferralText = specialistRequiringReferralText;
+	}
+
+	public String getPlanLevelExclusionText() {
+		return planLevelExclusionText;
+	}
+
+	public void setPlanLevelExclusionText(String planLevelExclusionText) {
+		this.planLevelExclusionText = planLevelExclusionText;
+	}
+
+	public String getLimitedCsvEstimateAdvancePayment() {
+		return limitedCsvEstimateAdvancePayment;
+	}
+
+	public void setLimitedCsvEstimateAdvancePayment(String limitedCsvEstimateAdvancePayment) {
+		this.limitedCsvEstimateAdvancePayment = limitedCsvEstimateAdvancePayment;
+	}
+
+	public String getCompositeRatingFlag() {
+		return compositeRatingFlag;
+	}
+
+	public void setCompositeRatingFlag(String compositeRatingFlag) {
+		this.compositeRatingFlag = compositeRatingFlag;
+	}
+
+	public String getChildOnlyOffering() {
+		return childOnlyOffering;
+	}
+
+	public void setChildOnlyOffering(String childOnlyOffering) {
+		this.childOnlyOffering = childOnlyOffering;
+	}
+
+	public String getChildOnlyPlanId() {
+		return childOnlyPlanId;
+	}
+
+	public void setChildOnlyPlanId(String childOnlyPlanId) {
+		this.childOnlyPlanId = childOnlyPlanId;
+	}
+
+	public String getTobaccoWellnessFlag() {
+		return tobaccoWellnessFlag;
+	}
+
+	public void setTobaccoWellnessFlag(String tobaccoWellnessFlag) {
+		this.tobaccoWellnessFlag = tobaccoWellnessFlag;
+	}
+
+	public String getDiseaseManagementProgramsOfferedText() {
+		return diseaseManagementProgramsOfferedText;
+	}
+
+	public void setDiseaseManagementProgramsOfferedText(String diseaseManagementProgramsOfferedText) {
+		this.diseaseManagementProgramsOfferedText = diseaseManagementProgramsOfferedText;
+	}
+
+	public String getEhbAppointment() {
+		return ehbAppointment;
+	}
+
+	public void setEhbAppointment(String ehbAppointment) {
+		this.ehbAppointment = ehbAppointment;
+	}
+
+	public String getGuaranteedRateFlag() {
+		return guaranteedRateFlag;
+	}
+
+	public void setGuaranteedRateFlag(String guaranteedRateFlag) {
+		this.guaranteedRateFlag = guaranteedRateFlag;
+	}
+
+	public String getMaxCoinsNumber() {
+		return maxCoinsNumber;
+	}
+
+	public void setMaxCoinsNumber(String maxCoinsNumber) {
+		this.maxCoinsNumber = maxCoinsNumber;
+	}
+
+	public String getMaxDaysChargingCopayNumber() {
+		return maxDaysChargingCopayNumber;
+	}
+
+	public void setMaxDaysChargingCopayNumber(String maxDaysChargingCopayNumber) {
+		this.maxDaysChargingCopayNumber = maxDaysChargingCopayNumber;
+	}
+
+	public String getBeginCostSharingAfterVisitNumber() {
+		return beginCostSharingAfterVisitNumber;
+	}
+
+	public void setBeginCostSharingAfterVisitNumber(String beginCostSharingAfterVisitNumber) {
+		this.beginCostSharingAfterVisitNumber = beginCostSharingAfterVisitNumber;
+	}
+
+	public String getBeginCoinsAfterCopaysNumber() {
+		return beginCoinsAfterCopaysNumber;
+	}
+
+	public void setBeginCoinsAfterCopaysNumber(String beginCoinsAfterCopaysNumber) {
+		this.beginCoinsAfterCopaysNumber = beginCoinsAfterCopaysNumber;
+	}
+
+	public String getOutOfCountryCoverageFlag() {
+		return outOfCountryCoverageFlag;
+	}
+
+	public void setOutOfCountryCoverageFlag(String outOfCountryCoverageFlag) {
+		this.outOfCountryCoverageFlag = outOfCountryCoverageFlag;
+	}
+
+	public String getOutOfCountryCoverageDescText() {
+		return outOfCountryCoverageDescText;
+	}
+
+	public void setOutOfCountryCoverageDescText(String outOfCountryCoverageDescText) {
+		this.outOfCountryCoverageDescText = outOfCountryCoverageDescText;
+	}
+
+	public String getOutOfServiceAreaCoverageFlag() {
+		return outOfServiceAreaCoverageFlag;
+	}
+
+	public void setOutOfServiceAreaCoverageFlag(String outOfServiceAreaCoverageFlag) {
+		this.outOfServiceAreaCoverageFlag = outOfServiceAreaCoverageFlag;
+	}
+
+	public String getOutOfServiceAreaCoverageDescText() {
+		return outOfServiceAreaCoverageDescText;
+	}
+
+	public void setOutOfServiceAreaCoverageDescText(String outOfServiceAreaCoverageDescText) {
+		this.outOfServiceAreaCoverageDescText = outOfServiceAreaCoverageDescText;
+	}
+
+	public String getNationalNetworkFlag() {
+		return nationalNetworkFlag;
+	}
+
+	public void setNationalNetworkFlag(String nationalNetworkFlag) {
+		this.nationalNetworkFlag = nationalNetworkFlag;
+	}
+
+	public String getEnrollPaymentUrlText() {
+		return enrollPaymentUrlText;
+	}
+
+	public void setEnrollPaymentUrlText(String enrollPaymentUrlText) {
+		this.enrollPaymentUrlText = enrollPaymentUrlText;
+	}
+
+	public Boolean getCarrierUpdateAllowed() {
+		return carrierUpdateAllowed;
+	}
+
+	public void setCarrierUpdateAllowed(Boolean carrierUpdateAllowed) {
+		this.carrierUpdateAllowed = carrierUpdateAllowed;
+	}
+
+}

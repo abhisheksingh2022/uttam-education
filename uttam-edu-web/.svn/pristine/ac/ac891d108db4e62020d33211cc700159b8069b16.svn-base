@@ -1,0 +1,124 @@
+package com.hixapi.pmp.struts.prescreen;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.entity.model.TDsplPlanStg;
+import com.hixapi.pmp.service.plan.PlanManagerService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+import com.hixapi.web.framework.struts.SessionController;
+
+public class PlanComparisonAction extends BaseSecureAction {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5036585345699319849L;
+
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager
+			.getLogger(PlanComparisonAction.class);
+
+	private List<TDsplPlanStg> comparePlansList;
+
+	private String selectedAPTC;
+
+	private boolean anonymous = true;
+	private String coverageYear;
+	private boolean allHMO = true;
+
+	@Override
+	protected void loadDisplayContents() throws Exception {
+
+		Map<String, String> planIdMap = SessionController.getComparePlans();
+
+		initPlanMap(planIdMap);
+		checkForAllHMO();
+		if (SessionController.getEligibility() != null && SessionController.getEligibility().isCreditEligibility()) {
+			selectedAPTC = ConversionUtil.toString(SessionController.getEligibility().getAptcAmount());
+		}
+		coverageYear = SessionController.getHousehold().getCoverageYearStr();
+
+	}
+
+	private void initPlanMap(Map<String, String> planIdMap) {
+		comparePlansList = new ArrayList<TDsplPlanStg>();
+		String year = "";
+		if (SessionController.getHousehold() != null) {
+			year = SessionController.getHousehold().getCoverageYearStr();
+		} else {
+			year = APIUtil.getCurrentCoverageYear();
+		}
+		if (planIdMap != null) {
+			for (String id : planIdMap.keySet()) {
+				comparePlansList.add(ServiceLocator.getInstance().getService(PlanManagerService.class)
+						.retrieveDisplayPlanRecord(year + "-" + id, getLocale()));
+			}
+		}
+	}
+	
+	private void checkForAllHMO(){
+		for (TDsplPlanStg dsplPlanStg: comparePlansList) {
+			if(!("HMO".equals(dsplPlanStg.getPlanTypeNa()))){
+				setAllHMO(false);
+			}
+		}
+	}
+
+	/*
+	 * Method for returning to Household Page on click of Back Button
+	 */
+	public String goBack() {
+		log.debug("IN GOBACK");
+
+		return BACK;
+	}
+
+	public List<TDsplPlanStg> getComparePlansList() {
+		return comparePlansList;
+	}
+
+	public void setComparePlansList(List<TDsplPlanStg> comparePlans) {
+		this.comparePlansList = comparePlans;
+	}
+
+	public String getSelectedAPTC() {
+		return selectedAPTC;
+	}
+
+	public void setSelectedAPTC(String selectedAptcAmount) {
+		this.selectedAPTC = selectedAptcAmount;
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean isAnonymous() {
+		return anonymous;
+	}
+
+	public void setAnonymous(boolean anonymous) {
+		this.anonymous = anonymous;
+	}
+
+	public String getCoverageYear() {
+		return coverageYear;
+	}
+
+	public void setCoverageYear(String coverageYear) {
+		this.coverageYear = coverageYear;
+	}
+
+	public boolean isAllHMO() {
+		return allHMO;
+	}
+
+	public void setAllHMO(boolean allHMO) {
+		this.allHMO = allHMO;
+	}
+}

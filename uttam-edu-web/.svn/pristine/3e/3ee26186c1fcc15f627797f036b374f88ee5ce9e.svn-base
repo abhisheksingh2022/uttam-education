@@ -1,0 +1,290 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"
+	trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp"%>
+<script>
+	$(document).ready(function() {
+		//alert('<s:property value="readOnly" />');
+
+		<s:if test="readOnly==true">
+		$('.form-control').prop("disabled", true);
+		$('.astrcs').hide();
+		</s:if>
+
+		<s:if test="validImage==true">
+		$('#imagePopup').modal('show');
+		</s:if>
+
+		//alert('<s:property value="readOnly" />');
+		/* if ('<s:property value="readOnly" />' == true) {
+			$('.form-control').prop("disabled",
+					<s:property value="readOnly" />);
+		} */
+	});
+</script>
+
+<div class="row">
+	<div class="body-bg">
+		<h2 class="inner-heading">
+			<s:text name="txt.carrier.carriersdata"></s:text>
+		</h2>
+
+		<div class="carrier-data">
+			<s:form autocomplete="off" action="carrier-profile" id="id_form_carrier" namespace="/usermgmt"
+				enctype="multipart/form-data" method="POST">
+				<s:token id="token" />
+				<s:hidden name="ajaxRequest" value="true" />
+				<s:hidden name="formId" />
+				<s:hidden name="mode" />
+				<s:hidden name="carrierIdNbr" />
+				<s:hidden name="carrier.carrierIdNbr" />
+				<s:hidden name="validImage"></s:hidden>
+				<div class="carrier-field">
+					<label><s:text name="txt.carrier.carrierid"></s:text><span class="astrcs">*</span></label> <span>
+						<s:textfield type="text" name="carrier.carrierId" class="form-control" maxlength="5" tabindex="1"></s:textfield>
+					</span>
+				</div>
+				<div class="carrier-field">
+					<label><s:text name="txt.carrier.name"></s:text><span class="astrcs">*</span></label> <span>
+
+						<s:textfield type="text" name="carrier.carrierName" class="form-control" maxlength="50" tabindex="2"></s:textfield>
+					</span>
+				</div>
+				<div class="carrier-field">
+					<label><s:text name="txt.carrier.company"></s:text>
+						<%-- <span class="astrcs">*</span> --%></label> <span> <s:textfield type="text"
+							name="carrier.naicCompanyCode" class="form-control" maxlength="6" tabindex="3"></s:textfield>
+
+					</span>
+				</div>
+				<div class="carrier-field">
+					<label><s:text name="txt.carrier.group"></s:text>
+						<%-- <span class="astrcs">*</span> --%></label> <span> <s:textfield type="text"
+							name="carrier.naicGroupCode" class="form-control" maxlength="6" tabindex="4"></s:textfield>
+
+					</span>
+				</div>
+				<div class="carerurl">
+					<div class="carrier-field">
+						<label><s:text name="txt.carrier.tax"></s:text><span class="astrcs">*</span></label> <span>
+							<s:textfield type="text" name="carrier.taxId" class="form-control" maxlength="10" tabindex="5"></s:textfield>
+
+						</span>
+					</div>
+					<div class="carrier-field">
+						<label><s:text name="txt.carrier.phone"></s:text><span class="astrcs"></span></label> <span>
+							<s:textfield type="text" name="carrier.contactPhoneNo" class="form-control phone"
+								maxlength="12" tabindex="6"></s:textfield>
+
+						</span>
+					</div>
+					<div class="carrier-field">
+						<label><s:text name="txt.carrier.url"></s:text><span class="astrcs">*</span></label> <span>
+							<s:textfield type="text" name="carrier.carrierUrl" class="form-control" maxlength="255" tabindex="12"></s:textfield>
+
+						</span>
+					</div>
+					<div id="carrierImageDiv" class="carrier-field">
+						<label> <s:if test="viewMode == true">
+								<s:text name="txt.carrier.logo_view"></s:text>
+							</s:if> <s:else>
+								<s:text name="txt.carrier.logo"></s:text>
+							</s:else><span class="astrcs">*</span></label>
+						<s:if test="editMode == true && editAccess == true">
+							<span> <s:file name="carrier.file" class="upload-input crlogo" id="imgInp"
+									onchange="readImage(this)" accept="image/*" tabindex="12"></s:file>
+								<div id="carrierImageSpan" class="upldimage">
+									<img id="carrierImage" name="carrier.icon"
+										src="<s:url action='carrier-profile_displayImage' />" width="140" height="50"
+										onError="(function(evt, self){self.onerror=null;self.src='<s:property value='rootPath'/>static/custom/images/logoUnavailable_en.png';})(event, this)">
+
+								</div>
+							</span>
+						</s:if>
+						<s:elseif test="addMode == true && addAccess == true">
+							<span> <s:file name="carrier.file" class="upload-input" id="imgInp" accept="image/*" tabindex="12"></s:file>
+							</span>
+						</s:elseif>
+						<s:elseif test="viewMode == true && viewAccess == true">
+							<span id="carrierImageSpan" class="upldimage"> <img id="carrierImage"
+								src="<s:url action='carrier-profile_displayImage' />" width="140" height="50"
+								onError="(function(evt, self){self.onerror=null;self.src='<s:property value='contextRoot'/>static/custom/images/logoUnavailable_en.png';})(event, this)">
+
+							</span>
+						</s:elseif>
+					</div>
+				</div>
+
+
+				<div class="carrier-field adresline1">
+					<label class="conadd"><s:text name="txt.carrier.address"></s:text><span class="astrcs">*</span></label>
+
+					<div class="addressline">
+						<label><s:text name="txt.carrier.address_line1"></s:text><span class="astrcs">*</span></label>
+						<span> <s:textfield type="text" name="carrier.contactAddressLine1" class="form-control"
+								maxlength="64" tabindex="7"></s:textfield>
+
+						</span>
+					</div>
+					<div class="addressline">
+						<label><s:text name="txt.carrier.address_line2"></s:text>
+							<%-- <span class="astrcs">*</span> --%></label> <span> <s:textfield type="text"
+								name="carrier.contactAddressLine2" class="form-control" maxlength="64" tabindex="8"></s:textfield>
+
+						</span>
+					</div>
+					<div class="addressline">
+						<label><s:text name="txt.carrier.city"></s:text><span class="astrcs">*</span></label> <span>
+							<s:textfield type="text" name="carrier.city" class="form-control" maxlength="28" tabindex="9"></s:textfield>
+
+						</span>
+					</div>
+					<div class="addressline">
+						<label><s:text name="txt.carrier.state"></s:text><span class="astrcs">*</span></label> <span>
+							<s:select list="lookups.States" class="class_sel_lookupState form-control"
+								id="id_sel_lookupState" name="carrier.state" headerKey="" headerValue="%{selectBoxHeader}"
+								listKey="value" listValue="label" tabindex="10"></s:select>
+
+						</span>
+					</div>
+					<div class="addressline">
+						<label><s:text name="txt.carrier.zip"></s:text><span class="astrcs">*</span></label> <span>
+							<s:textfield type="text" name="carrier.zip" maxlength="10" class="form-control"  tabindex="11"></s:textfield>
+						</span>
+					</div>
+				</div>
+				<div class="form-btn">
+
+					<s:if test="(readOnly == false) && (addAccess == true || editAccess == true)">
+						<button onclick="return setActionAndSubmit('id_form_carrier', 'save');" class="save-btn" tabindex="13">
+							<s:text name="txt.global.save"></s:text>
+						</button>
+					</s:if>
+					<button onclick="return setActionAndSubmit('id_form_carrier', 'back');" class="cancel-btn" tabindex="14">
+					   <s:if test="(editMode == true)">
+						<s:text name="txt.global.discardchanges"></s:text>
+					   </s:if>
+					   <s:else>
+					   <s:text name="txt.global.cancel"></s:text> 
+					   </s:else>
+					</button>
+					<!-- <a href="" onclick="tempFunction();" class="cancel-btn">
+						TEMP
+					</a> -->
+
+				</div>
+			</s:form>
+			<div class="clearfix"></div>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+</div>
+
+<script>
+	function response_callback() {
+		alert("File Uploaded");
+		$('#carrierImage').attr('src', $('#imgPreview').attr('src'));
+	}
+
+	//var prevLogo;
+	function readImage(input) {
+		//alert("hey");
+		if (input.files && input.files[0]) {
+			setActionAndSubmit('id_form_carrier', 'ajaxPreviewLogo');
+			/*
+			 var reader = new FileReader();
+
+			 reader.onload = function(e) {
+			 $('#imgPreview').attr('src', e.target.result);//set image in popup
+			 }
+			 //prevLogo=input.files[0];
+			 reader.readAsDataURL(input.files[0]);
+			 $('#imagePopup').modal('show');*/
+		}
+	}
+
+	function cancelImage(input) {
+		$("#imgInp").val('');
+		setActionAndSubmit('id_form_carrier', 'cancelUpload');
+	}
+
+	function saveImage(input) {
+		setActionAndSubmit('id_form_carrier', 'ajaxUploadLogo');
+
+		//save fields to action and show to #carrierImage
+		//upload file through ajax
+		/* fileSizeFlag = showFileSize('imgInp');
+		if (fileSizeFlag > 1000000) {
+			alert("File too large.");
+			return;
+		} else if (fileSizeFlag > 0) { */
+		/*$('#carrierImage').attr('src', '');
+		return ajaxSubmit({
+			formId : 'id_form_carrier',//form to submit, causing token problem for multiple upload
+			actionPath : 'ajaxUploadLogo',
+			targetId : 'carrierImageSpan',//'carrierImageSpan',target div for response todo
+			blockId : 'carrierImageDiv',//ui part to block
+		});*/
+		//$('#carrierImage').attr('src', $('#imgPreview').attr('src'));
+		//}
+	}
+
+	/*function showFileSize(inputId) {
+		var input, file;
+
+		if (!window.FileReader) {
+			alert("The file API isn't supported on this browser yet.");
+			return -1;
+		}
+
+		input = document.getElementById(inputId);
+		if (!input) {
+			alert("Couldn't find the file input element.");
+			return -1;
+		} else if (!input.files) {
+			alert("This browser doesn't seem to support the `files` property of file inputs.");
+			return -1;
+
+		} else if (!input.files[0]) {
+			alert("No file selected.");
+			return -1;
+		} else {
+			file = input.files[0];
+			//alert("File " + file.name + " is " + file.size + " bytes in size");
+
+			return file.size;
+		}
+	}*/
+</script>
+<div class="modal fade imagemodal" id="imagePopup" role="dialog">
+	<div class="modal-dialog">
+
+		<!-- Modal content-->
+		<div class="modal-content">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<div class="modal-body">
+
+				<div>
+					<img id="imgPreview" src="<s:url action='carrier-profile_displayPreview' />" width="140"
+						height="50"
+						onError="(function(evt, self){self.onerror=null;self.src='<s:property value='rootPath'/>static/custom/images/logoUnavailable_en.png';})(event, this)">
+
+				</div>
+				<p>
+					<s:text name="txt.carrier.popup"></s:text>
+				</p>
+				<button class="save-btn" data-dismiss="modal" onclick="saveImage()">
+					<s:text name="txt.global.save"></s:text>
+				</button>
+				<button class="cancel-btn" data-dismiss="modal" onclick="cancelImage()">
+					<s:text name="txt.global.discardchanges"></s:text>
+				</button>
+			</div>
+
+		</div>
+
+	</div>
+</div>
+
+<%@include file="/jsp/includes/footer.jsp"%>
+

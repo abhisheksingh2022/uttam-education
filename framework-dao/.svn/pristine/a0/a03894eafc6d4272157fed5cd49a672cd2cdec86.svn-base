@@ -1,0 +1,187 @@
+package com.hixapi.pmp.dao.prescreen.impl;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.transaction.Transactional;
+
+import org.hibernate.Query;
+import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Restrictions;
+
+import com.hixapi.pmp.api.model.APICodeConstants.PlanMetalLevel;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanVariant;
+import com.hixapi.pmp.dao.prescreen.PlanListingDAO;
+import com.hixapi.prescreening.api.model.CountyDetails;
+import com.hixapi.prescreening.api.model.HealthPlan;
+
+public class PlanListingDAOImpl implements PlanListingDAO {
+
+	private SessionFactory sessionFactory;
+
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager
+			.getLogger(PlanListingDAOImpl.class);
+	
+	public PlanListingDAOImpl(SessionFactory sessionFactory) {
+		this.sessionFactory = sessionFactory;
+	}
+
+	@Transactional
+	public Map<Integer, List<HealthPlan>> getAllHealthPlansForFamily(
+			Integer coverageYear, String ratingAreaId,
+			List<String> ageCategories, String csrId, boolean catastrophicElig) {
+		// integrate with DAO query
+
+		List<HealthPlan> healthPlansList = new ArrayList<HealthPlan>();
+
+		StringBuilder query = new StringBuilder(
+				"select DISTINCT RT.healthPlanId, RT.age, PL.ehbLevel, RT.planRt, PL.metalLevelCode,"
+						+ "PL.dsplPlanIn,PL.year,PL.carrierName,PL.docFileName,PL.planDetailsDisplayId,PL.planName,PL.inNetworkDoctorsLink,"
+						+ "PL.carrierId,PL.ratingCode,PL.primCareCoPay,"
+						+ "PL.viewUrl,PL.emergencyRoom,PL.csrVarId, "
+						+ "PL.deductibleAmt, PL.outOfPocketMaxAmt, PL.planId from "
+						+ "TPlanIndivRt RT, Plan PL where RT.healthPlanId = PL.healthPlanId and PL.ehbLevel IS NOT NULL "
+						+ "and PL.dsplPlanIn ='Y' and PL.langTx = 'EN' and PL.year = :coverageYear "
+						+ "and RT.ratingAreaId = :ratingAreaId and RT.age in (");
+
+		int length = ageCategories.size();
+		int index = 0;
+		for (String group : ageCategories) {
+			index++;
+			query.append("'").append(group).append("'");
+			if (index < length) {
+				query.append(", ");
+			}
+		}
+		// query.append(") and PL.csrVarId = :csrVarId");
+
+		query.append(") and PL.csrVarId in (");
+		query.append("'").append(csrId).append("'");
+		query.append(",'01')");
+		query.append(" order by RT.healthPlanId, RT.age");
+
+		Query query1 = sessionFactory.getCurrentSession().createQuery(
+				query.toString());
+		query1.setParameter("coverageYear", String.valueOf(coverageYear));
+		query1.setParameter("ratingAreaId", ratingAreaId);
+		// query1.setParameter("csrVarId", csrId);
+		List<Object[]> list = query1.list();
+		Map<Integer, List<HealthPlan>> planMap = new LinkedHashMap<Integer, List<HealthPlan>>();
+
+		HealthPlan plan = null;
+		for (Object[] obj : list) {
+			plan = new HealthPlan();
+			plan.setHealthPlanId(Integer.parseInt(obj[0].toString()));
+			plan.setAge(obj[1].toString());
+			plan.setEhb(Double.parseDouble(obj[2].toString()));
+			plan.setPlanRate(Double.parseDouble(obj[3].toString()));
+			plan.setMetalLevel(obj[4].toString());
+			plan.setDsplPlanIn(obj[5].toString());
+			plan.setYear(obj[6].toString());
+			plan.setCarrierName(obj[7].toString());
+			plan.setCheckDocLink(obj[8].toString());
+			plan.setPlanDetailsDisplayId(obj[9].toString());
+			plan.setPlanName(obj[10].toString());
+			plan.setHlthProvUrl(obj[11].toString());
+			plan.setCarrierId(obj[12].toString());
+			plan.setQualityRating(Integer.parseInt(obj[13].toString()));
+			plan.setPrimCareCoPay(obj[14].toString());
+			plan.setViewUrl(obj[15].toString());
+			plan.setEmergencyRoom(obj[16].toString());
+			plan.setCsrVarId(obj[17].toString());
+			plan.setAnnualDeductible(obj[18].toString());
+			plan.setAnnualOutOfPocMax(obj[19].toString());
+			plan.setPlanId(obj[20].toString());
+			healthPlansList.add(plan);
+		}
+		// ensures that for household with only APTC silver plans are not
+		// removed
+		if (csrId.equals(PlanVariant.VAR_04.getCode())
+				|| csrId.equals(PlanVariant.VAR_05.getCode())
+				|| csrId.equals(PlanVariant.VAR_06.getCode())) {
+			// we get silver plans with 04or05or06 and 01c
+			// eliminate 01 csrvarid silver plans- not the once required
+			for (Iterator<HealthPlan> iterator = healthPlansList.iterator(); iterator
+					.hasNext();) {
+				HealthPlan health = iterator.next();
+				if (PlanMetalLevel.SILVER.getDescription().contentEquals(health
+						.getMetalLevel())
+						&& PlanVariant.VAR_01.getCode().equalsIgnoreCase(health
+								.getCsrVarId()))
+					// Remove the current element from the iterator and the
+					// list.
+					iterator.remove();
+			}
+		}
+
+		// removing catastrophic plans if household not eligibile
+		if (catastrophicElig != true) {
+			for (Iterator<HealthPlan> iterator = healthPlansList.iterator(); iterator
+					.hasNext();) {
+				HealthPlan pln = iterator.next();
+				if (pln.getMetalLevel().equalsIgnoreCase("Catastrophic")) {
+					iterator.remove();
+				}
+			}
+		}
+		if (csrId.equals(PlanVariant.VAR_02)
+				|| csrId.equals(PlanVariant.VAR_03)) {
+			for (Iterator<HealthPlan> iterator = healthPlansList.iterator(); iterator
+					.hasNext();) {
+				HealthPlan health = iterator.next();
+				String planId = health.getPlanId();
+				String csrVarId = health.getCsrVarId();
+				String age = health.getAge();
+				HealthPlan pl = findPlan(planId, csrVarId,age,healthPlansList);
+				if (null != pl) {
+					iterator.remove();
+				}
+			}
+		}
+		for(HealthPlan pl:healthPlansList)
+		{
+		log.debug("plan id : "+pl.getPlanId()+" csr id: "+pl.getCsrVarId());	
+		}
+		for (HealthPlan pl : healthPlansList) {
+			List<HealthPlan> planList = planMap.get(pl.getHealthPlanId());
+			if (planList == null) {
+				planList = new ArrayList<HealthPlan>();
+				planMap.put(pl.getHealthPlanId(), planList);
+			}
+			planList.add(pl);
+		}
+
+		return planMap;
+	}
+
+	private HealthPlan findPlan(String planId, String csrId,String age,
+			List<HealthPlan> healthPlanList) {
+		for (HealthPlan pl : healthPlanList) {
+			if (planId.equalsIgnoreCase(pl.getPlanId())
+					&& !csrId.equalsIgnoreCase(pl.getCsrVarId()) && age.equalsIgnoreCase(pl.getAge())) {
+				return pl;
+			}
+		}
+
+		return null;
+	}
+
+	public SessionFactory getSessionFactory() {
+		return sessionFactory;
+	}
+
+	public void setSessionFactory(SessionFactory sessionFactory) {
+		this.sessionFactory = sessionFactory;
+	}
+
+	@Transactional
+	public String getRatingAreaId(String county) {
+		CountyDetails countyDetails = (CountyDetails) sessionFactory
+				.getCurrentSession().createCriteria(CountyDetails.class)
+				.add(Restrictions.eq("countyId", county)).uniqueResult();
+		return countyDetails.getRatingAreaId();
+	}
+}

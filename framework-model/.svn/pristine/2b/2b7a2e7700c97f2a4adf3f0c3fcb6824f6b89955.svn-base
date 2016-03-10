@@ -1,0 +1,41 @@
+package com.hixapi.prescreening.api.model.plan;
+
+import java.io.Serializable;
+
+public class PediatricDentalCare implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7159712850982389925L;
+	private InAndOutNetwork diagnosticPreventive;
+	private InAndOutNetwork basicRestorative;
+	private InAndOutNetwork majorRestorative;
+	private InAndOutNetwork orthodonticServices;
+	public InAndOutNetwork getDiagnosticPreventive() {
+		return diagnosticPreventive;
+	}
+	public void setDiagnosticPreventive(InAndOutNetwork diagnosticPreventive) {
+		this.diagnosticPreventive = diagnosticPreventive;
+	}
+	public InAndOutNetwork getBasicRestorative() {
+		return basicRestorative;
+	}
+	public void setBasicRestorative(InAndOutNetwork basicRestorative) {
+		this.basicRestorative = basicRestorative;
+	}
+	public InAndOutNetwork getMajorRestorative() {
+		return majorRestorative;
+	}
+	public void setMajorRestorative(InAndOutNetwork majorRestorative) {
+		this.majorRestorative = majorRestorative;
+	}
+	public InAndOutNetwork getOrthodonticServices() {
+		return orthodonticServices;
+	}
+	public void setOrthodonticServices(InAndOutNetwork orthodonticServices) {
+		this.orthodonticServices = orthodonticServices;
+	}
+	
+	
+}

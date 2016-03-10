@@ -1,0 +1,474 @@
+package com.hixapi.pmp.service.plan;
+
+import gov.hhs.cms.ffe.pbt.vo.PlanBenefitTemplateVO;
+import gov.hhs.cms.ffe.rates.vo.QhpApplicationRateGroupVO;
+import gov.hhs.cms.ffe.rx.vo.PrescriptionDrugTemplateVO;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.context.ContextKeyEnum;
+import com.hixapi.framework.common.context.ContextProvider;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.exception.PlanUploadException;
+import com.hixapi.framework.common.model.BaseException;
+import com.hixapi.framework.common.model.UserIdentity;
+import com.hixapi.pm.admin_data.extension.v1_0.PayloadType;
+import com.hixapi.pmp.api.model.APICodeConstants;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanStatus;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.api.model.APICodeConstants.YesNo;
+import com.hixapi.pmp.api.model.PlanUploadHistoryVO;
+import com.hixapi.pmp.api.model.PlanUploadVO;
+import com.hixapi.pmp.api.modeltranslator.PlanModelTranslator;
+import com.hixapi.pmp.dao.plan.PlanDAO;
+import com.hixapi.pmp.dao.plan.PlanUploadSupportDAO;
+import com.hixapi.pmp.entity.model.CarrierAdminInfo;
+import com.hixapi.pmp.entity.model.CarrierDrugCoverage;
+import com.hixapi.pmp.entity.model.CarrierFormularyInfo;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+import com.hixapi.pmp.entity.model.CarrierNetwork;
+import com.hixapi.pmp.entity.model.PlanLifecycle;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanMstrHist;
+import com.hixapi.pmp.entity.model.PlanRateDetail;
+import com.hixapi.pmp.entity.model.PlanUploadHist;
+import com.hixapi.pmp.entity.model.TDsplPlanStg;
+import com.hixapi.pmp.service.plan.mapping.CarrierAdminMapping;
+import com.hixapi.pmp.service.plan.mapping.ConsistentTextMapper;
+import com.hixapi.pmp.service.plan.mapping.DrugListTemplateMapping;
+import com.hixapi.pmp.service.plan.mapping.NetworkMapping;
+import com.hixapi.pmp.service.plan.mapping.PlanBenefitsTemplateMapping;
+import com.hixapi.pmp.service.plan.mapping.PlanRatesTemplateMapping;
+import com.hixapi.pmp.service.plan.mapping.hix.HIXDisplayPlanMapper;
+
+/**
+ * This is the service to upload the planBenefitDetails into the DB First it unmarshalls the File Maps the data with the
+ * structure of the DAO Classes Upload
+ * 
+ * @author ujjalb
+ *
+ */
+public class PlanUploadServiceImpl implements PlanUploadService {
+
+	private static final Logger log = LogManager.getLogger(PlanUploadServiceImpl.class);
+
+	private PlanDAO planDAO;
+	private PlanUploadSupportDAO planUploadSupportDAO;
+
+	private PlanModelTranslator planModelTranslator;
+
+	public PlanUploadServiceImpl() {
+
+	}
+
+	/**
+	 * @return the planDAO
+	 */
+	public PlanDAO getPlanDAO() {
+		return planDAO;
+	}
+
+	/**
+	 * @param planDAO
+	 *            the planDAO to set
+	 */
+	public void setPlanDAO(PlanDAO planDAO) {
+		this.planDAO = planDAO;
+	}
+
+	@Override
+	public void uploadPlan(PlanUploadVO vo) throws BusinessServiceException {
+		log.entry();
+		log.debug("PlanUploadVO - " + vo);
+		PlanUploadException ex = new PlanUploadException();
+		//If there are errors that prevent saving, accumulate them to a PlanUploadException object and throw it.
+		try {
+			if (vo != null) {
+				APICodeConstants.UploadTypes uploadType = APICodeConstants.UploadTypes.getEnum(vo.getPlanTemplateType());
+				CarrierMstr carrier = planUploadSupportDAO.retrieveCarrierById(vo.getCarrierId());
+				vo.setCarrierName(carrier.getCarrierName());
+				if (uploadType != null)
+					switch (uploadType) {
+					case ADMIN_TEMP: {
+						log.debug("Handling 1." + uploadType.getUploadDescription());
+						handleAdminTemplate(vo, ex, carrier);
+						break;
+					}
+					case NETWORK_TEMP:
+						log.debug("2." + uploadType.getUploadDescription());
+						handleNetworkTemplate(vo, ex, carrier);
+
+						break;
+					case PBT_TEMP:
+						log.debug("3." + uploadType.getUploadDescription());
+						handlePlanBenefitsTemplate(vo, ex, carrier);
+						//getPlanDAO().savePlan(planEntity);
+						break;
+					case DRUG_TEMP:
+						log.debug("4." + uploadType.getUploadDescription());
+						handleDrugTemplate(vo, ex, carrier);
+						break;
+					case RATE_TEMP:
+						log.debug("5." + uploadType.getUploadDescription());
+						handleRatesTemplate(vo, ex, carrier);
+						break;
+					default:
+						//Add exception here
+						break;
+					}
+				else {
+					log.error("Plan Upload type " + vo.getPlanTemplateType() + " is not a valid type. Valid values - "
+							+ Arrays.asList(APICodeConstants.UploadTypes.values()));
+					ex.addError("msg.planupload.unable_to_parse", Severity.ERROR);
+					throw ex;
+				}
+			}
+
+		} catch (BusinessServiceException bex) {
+			//no-op
+			throw bex;
+		} catch (BaseException baseEx) {
+			log.error("Error parsing template xml", baseEx);
+			ex.addError("msg.planupload.unable_to_parse", Severity.ERROR);
+			throw ex;
+		}
+
+		log.exit();
+	}
+
+	private void handleRatesTemplate(PlanUploadVO vo, PlanUploadException ex, CarrierMstr carrier) {
+		QhpApplicationRateGroupVO ratesVO = null;
+		try {
+			ratesVO = (QhpApplicationRateGroupVO) PlanUploadUnmarshaller.unmarshallWithStax(vo.getUploadFile(),
+					QhpApplicationRateGroupVO.class, false);
+		} catch (Exception e) {
+			log.error("Error parsing rates template xml", e);
+			ex.addError("msg.planupload.unable_to_parse", Severity.ERROR);
+			throw ex;
+		}
+
+		if (ratesVO != null) {
+			log.debug("Successfully parsed rates template XML");
+			CarrierAdminInfo entity = planUploadSupportDAO.retrieveCarrierAdminInfo(Long.parseLong(vo.getCarrierId()),
+					vo.getCoverageYear());
+			if (entity == null) {
+				log.debug("No existing admin records for the carrier id {} in year {}", vo.getCarrierId(),
+						vo.getCoverageYear());
+				List<Object> substitutions = new ArrayList<Object>();
+				substitutions.add(carrier.getCarrierId());
+				substitutions.add(vo.getCoverageYear());
+				ex.addError("msg.planupload.admin_template_missing", Severity.ERROR, substitutions);
+				throw ex;
+			}
+			if (ratesVO.getHeader() != null) {
+				if (!StringUtils.trimToEmpty(ratesVO.getHeader().getIssuerId().getCellValue())
+						.equals(carrier.getCarrierId())) {
+					ex.addError("msg.planupload.carrier_mismatch", Severity.ERROR);
+					throw ex;
+				}
+			}
+
+			log.debug("Retrieving existing master list");
+			List<PlanMstr> planMstrList = planUploadSupportDAO.retrievePlanMstrRecords(entity.getCarrierAdminInfoIdNbr());
+			if (CollectionUtils.isEmpty(planMstrList)) {
+				log.error("PBT not uploaded yet");
+				ex.addError("msg.planupload.pbt_not_uploaded", Severity.ERROR);
+			}
+			PlanRatesTemplateMapping mapper = new PlanRatesTemplateMapping();
+			List<PlanRateDetail> rates = mapper.buildPlanRatesList(ratesVO, planMstrList);
+			if (mapper.hasFatalErrors()) {
+				ex.addErrors(mapper.getErrors());
+				throw ex;
+			}
+			planUploadSupportDAO.synchPlanRatesInfo(rates, entity.getCarrierAdminInfoIdNbr());
+			recordUploadActivity(vo, entity);
+		}
+	}
+
+	private void handlePlanBenefitsTemplate(PlanUploadVO vo, PlanUploadException ex, CarrierMstr carrier) {
+		PlanBenefitTemplateVO pbtVO = null;
+		try {
+			pbtVO = (PlanBenefitTemplateVO) PlanUploadUnmarshaller.unmarshallWithStax(vo.getUploadFile(),
+					PlanBenefitTemplateVO.class, false);
+		} catch (Exception e) {
+			log.error("Error parsing pbt template xml", e);
+			ex.addError("msg.planupload.unable_to_parse", Severity.ERROR);
+			throw ex;
+		}
+
+		if (pbtVO != null) {
+			log.debug("Successfully parsed benefit template XML");
+			final long carrierIdNbr = Long.parseLong(vo.getCarrierId());
+			CarrierAdminInfo entity = planUploadSupportDAO.retrieveCarrierAdminInfo(carrierIdNbr, vo.getCoverageYear());
+			if (entity == null) {
+				log.debug("No existing admin records for the carrier id {} in year {}", vo.getCarrierId(),
+						vo.getCoverageYear());
+				List<Object> substitutions = new ArrayList<Object>();
+				substitutions.add(carrier.getCarrierId());
+				substitutions.add(vo.getCoverageYear());
+				ex.addError("msg.planupload.admin_template_missing", Severity.ERROR, substitutions);
+				throw ex;
+			}
+			if (!planUploadSupportDAO.hasCarrierNetworkRecords(entity.getCarrierAdminInfoIdNbr())) {
+				ex.addError("msg.planupload.nw_not_uploaded", Severity.ERROR);
+				throw ex;
+			}
+			if (!planUploadSupportDAO.hasCarrierFormularyRecords(entity.getCarrierAdminInfoIdNbr())) {
+				ex.addError("msg.planupload.rx_not_uploaded", Severity.ERROR);
+				throw ex;
+			}
+			if (pbtVO.getPackagesList() != null && CollectionUtils.isNotEmpty(pbtVO.getPackagesList().getPackages())) {
+				if (!StringUtils.trimToEmpty(
+						pbtVO.getPackagesList().getPackages().get(0).getHeader().getIssuerId().getCellValue()).equals(
+						carrier.getCarrierId())) {
+					ex.addError("msg.planupload.carrier_mismatch", Severity.ERROR);
+					throw ex;
+				}
+			}
+
+			log.debug("Retrieving existing benefits list");
+			Set<PlanMstr> masterList = planUploadSupportDAO.retrievePlanMstrListForBenefits(carrierIdNbr,
+					Short.parseShort(vo.getCoverageYear()));
+			PlanBenefitsTemplateMapping mapper = new PlanBenefitsTemplateMapping();
+			
+			mapper.populatePlanEntities(pbtVO, masterList, entity);
+			if (mapper.hasFatalErrors()) {
+				ex.addErrors(mapper.getErrors());
+				throw ex;
+			}
+			if (CollectionUtils.isNotEmpty(masterList)) {
+				for (PlanMstr mstr : masterList) {
+
+					new ConsistentTextMapper().applyConsistentText(mstr);
+					
+					if (CollectionUtils.isNotEmpty(mstr.getPlanLifecycles())) {
+						for(PlanLifecycle l : mstr.getPlanLifecycles()){
+							l.setActiveInd(YesNo.NO.getCode());
+						}
+					}
+					PlanLifecycle entry = new PlanLifecycle();
+					entry.setPlanMstr(mstr);
+					entry.setActiveInd(APIConstants.INDICATOR_YES);
+					entry.setLkPlanStatusCd(PlanStatus.INCOMPLETE.getCode());
+					entry.setStatusChangeDt(APIUtil.getCurrentDate());
+					entry.setStatusChangeUsrId(ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER,
+							UserIdentity.class).getLoginId());
+					mstr.getPlanLifecycles().add(entry);
+				}
+			}
+			planUploadSupportDAO.synchPlanBenefitsInfo(masterList);
+
+			if (CollectionUtils.isNotEmpty(masterList)) {
+				for (PlanMstr mstr : masterList) {
+					PlanMstrHist entry = new PlanMstrHist();
+					entry.setPlanMstr(mstr);
+					entry.setChangeDetailTxt("XML template uploaded (Plan Benefits Template)");
+					entry.setChangeLocationTxt(vo.getPlanTemplateType());
+					entry.setChngByUsr(ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class)
+							.getLoginId());
+					entry.setComments("XML Template Uploaded");
+					entry.setDtChng(APIUtil.getCurrentDate());
+					planDAO.savePlanUpdateHistory(entry);
+				}
+				Collection<TDsplPlanStg> displayPlans = planDAO.retrieveDisplayPlanStagingRecords(carrier.getCarrierId(),
+						vo.getCoverageYear());
+				Collection<CarrierNetwork> networks = planDAO.retrieveCarrierNetworks(entity.getCarrierAdminInfoIdNbr());
+				Collection<CarrierFormularyInfo> rxes = planDAO.retrieveCarrierFormularyInfo(entity
+						.getCarrierAdminInfoIdNbr());
+
+				new HIXDisplayPlanMapper().mapToDisplayPlans(masterList, displayPlans, networks, rxes);
+				planDAO.saveDisplayPlans(displayPlans, carrier);
+			}
+			recordUploadActivity(vo, entity);
+		}
+	}
+
+	private void handleAdminTemplate(PlanUploadVO vo, PlanUploadException ex, CarrierMstr carrier) {
+		PayloadType adminTempVO = null;
+		try {
+			adminTempVO = PlanUploadUnmarshaller.unmarshallWithStax(vo.getUploadFile(), PayloadType.class, false);
+		} catch (BusinessServiceException busEx) {
+			log.error("Error parsing admin template xml", busEx.toString());
+			ex.addError("msg.planupload.unable_to_parse", Severity.ERROR);
+			throw ex;
+		} catch (Exception e) {
+			log.error("Error parsing admin template xml", e);
+			ex.addError("msg.planupload.unable_to_parse", Severity.ERROR);
+			throw ex;
+		}
+		if (adminTempVO != null) {
+			log.debug("Successfully parsed admin template XML");
+			if (!(String.valueOf(adminTempVO.getIssuer().getIssuerIdentification().getIdentificationID().getValue())
+					.equals(carrier.getCarrierId()))) {
+				ex.addError("msg.planupload.carrier_mismatch", Severity.ERROR);
+				throw ex;
+			}
+			CarrierAdminInfo entity = planUploadSupportDAO.retrieveCarrierAdminInfo(Long.parseLong(vo.getCarrierId()),
+					vo.getCoverageYear());
+			if (entity == null) {
+				log.debug("No existing CarrierAdminInfo records for the carrier id {} in year {}", vo.getCarrierId(),
+						vo.getCoverageYear());
+				entity = new CarrierAdminInfo();
+				entity.setCarrierMstr(carrier);
+				entity.setCoverageYear(Short.parseShort(vo.getCoverageYear()));
+			}
+			CarrierAdminMapping mapper = new CarrierAdminMapping();
+			mapper.convertAdminTemplateToCarrierAdminInfo(adminTempVO, entity);
+			if (mapper.hasFatalErrors()) {
+				ex.addErrors(mapper.getErrors());
+				throw ex;
+			}
+			planUploadSupportDAO.synchCarrierAdminInfo(entity);
+			recordUploadActivity(vo, entity);
+		}
+	}
+
+	private void handleNetworkTemplate(PlanUploadVO vo, PlanUploadException ex, CarrierMstr carrier) {
+		com.hixapi.pm.issuer_network.extension.v1_0.PayloadType networkTemplateVO = null;
+		try {
+			networkTemplateVO = PlanUploadUnmarshaller.unmarshallWithStax(vo.getUploadFile(),
+					com.hixapi.pm.issuer_network.extension.v1_0.PayloadType.class, false);
+		} catch (BusinessServiceException busEx) {
+			log.error("Error parsing network template xml", busEx.toString());
+			ex.addError("msg.planupload.unable_to_parse", Severity.ERROR);
+			throw ex;
+		} catch (Exception e) {
+			log.error("Error parsing network template xml", e);
+			ex.addError("msg.planupload.unable_to_parse", Severity.ERROR);
+			throw ex;
+		}
+		if (networkTemplateVO != null) {
+			log.debug("Successfully parsed network template XML");
+			if (!(String.valueOf(networkTemplateVO.getIssuer().getIssuerIdentification().getIdentificationID().getValue())
+					.equals(carrier.getCarrierId()))) {
+				ex.addError("msg.planupload.carrier_mismatch", Severity.ERROR);
+				throw ex;
+			}
+			CarrierAdminInfo entity = planUploadSupportDAO.retrieveCarrierAdminInfo(Long.parseLong(vo.getCarrierId()),
+					vo.getCoverageYear());
+			if (entity == null) {
+				log.debug("No existing admin records for the carrier id {} in year {}", vo.getCarrierId(),
+						vo.getCoverageYear());
+				List<Object> substitutions = new ArrayList<Object>();
+				substitutions.add(carrier.getCarrierId());
+				substitutions.add(vo.getCoverageYear());
+				ex.addError("msg.planupload.admin_template_missing", Severity.ERROR, substitutions);
+				throw ex;
+			}
+			
+			NetworkMapping mapper = new NetworkMapping();
+			List<CarrierNetwork> networkList = mapper.buildNetworkMappingRecords(networkTemplateVO, entity);
+			if (mapper.hasFatalErrors()) {
+				ex.addErrors(mapper.getErrors());
+				throw ex;
+			}
+			if (CollectionUtils.isNotEmpty(networkList)) {
+				planUploadSupportDAO.saveNetworkRecords(networkList);
+			}
+			recordUploadActivity(vo, entity);
+		}
+	}
+
+	private void handleDrugTemplate(PlanUploadVO vo, PlanUploadException ex, CarrierMstr carrier) {
+		PrescriptionDrugTemplateVO templateVO = null;
+		try {
+			templateVO = PlanUploadUnmarshaller.unmarshallWithStax(vo.getUploadFile(), PrescriptionDrugTemplateVO.class,
+					false);
+		} catch (BusinessServiceException busEx) {
+			log.error("Error parsing drug template xml", busEx.toString());
+			ex.addError("msg.planupload.unable_to_parse", Severity.ERROR);
+			throw ex;
+		} catch (Exception e) {
+			log.error("Error parsing drug template xml", e);
+			ex.addError("msg.planupload.unable_to_parse", Severity.ERROR);
+			throw ex;
+		}
+		if (templateVO != null) {
+			log.debug("Successfully parsed drug template XML");
+			if (templateVO.getHeader() == null || templateVO.getHeader().getIssuerId() == null
+					|| !(String.valueOf(templateVO.getHeader().getIssuerId().getCellValue()).equals(carrier.getCarrierId()))) {
+				ex.addError("msg.planupload.carrier_mismatch", Severity.ERROR);
+				throw ex;
+			}
+			CarrierAdminInfo entity = planUploadSupportDAO.retrieveCarrierAdminInfo(Long.parseLong(vo.getCarrierId()),
+					vo.getCoverageYear());
+			if (entity == null) {
+				log.debug("No existing admin records for the carrier id {} in year {}", vo.getCarrierId(),
+						vo.getCoverageYear());
+				List<Object> substitutions = new ArrayList<Object>();
+				substitutions.add(carrier.getCarrierId());
+				substitutions.add(vo.getCoverageYear());
+				ex.addError("msg.planupload.admin_template_missing", Severity.ERROR, substitutions);
+				throw ex;
+			}
+
+			DrugListTemplateMapping mapper = new DrugListTemplateMapping();
+			List<CarrierFormularyInfo> formularyInfo = mapper.buildFormularyInfoRecords(templateVO, entity);
+			List<CarrierDrugCoverage> drugCoverage = mapper.buildDrugCoverageRecords(templateVO, entity);
+			if (mapper.hasFatalErrors()) {
+				ex.addErrors(mapper.getErrors());
+				throw ex;
+			}
+			planUploadSupportDAO.saveFormularyInfo(formularyInfo, entity.getCarrierAdminInfoIdNbr());
+			planUploadSupportDAO.saveDrugListInfo(drugCoverage, entity.getCarrierAdminInfoIdNbr());
+
+			recordUploadActivity(vo, entity);
+		}
+	}
+
+	private void recordUploadActivity(PlanUploadVO vo, CarrierAdminInfo entity) {
+		PlanUploadHist history = new PlanUploadHist();
+		history.setCarrierAdminInfo(entity);
+		history.setFileName(vo.getUploadFileFileName());
+		history.setLkTemplateTypeCd(vo.getPlanTemplateType());
+		history.setUploadTs(APIUtil.getCurrentDate());
+		final UserIdentity user = ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class);
+		if (user != null) {
+			history.setUploadUsrId(user.getLoginId());
+		} else {
+			history.setUploadUsrId(APIConstants.SYSTEM_USER_ID);
+		}
+		planUploadSupportDAO.saveUploadHistory(history);
+	}
+
+	public List<PlanUploadHistoryVO> retrievePlanUploadHistory(Short coverageYear, Long carrierId) {
+		log.entry();
+		Validate.notNull(coverageYear, "Coverage Year is null");
+		Validate.notNull(carrierId, "Carrier ID is null");
+		List<PlanUploadHist> uploadHistoryList = planDAO.retrievePlanUploadHistory(coverageYear, carrierId);
+		List<PlanUploadHistoryVO> voList = new ArrayList<PlanUploadHistoryVO>();
+		for (PlanUploadHist entity : uploadHistoryList) {
+			voList.add(planModelTranslator.initializePlanUploadHistoryVO(entity));
+		}
+		return log.exit(voList);
+
+	}
+
+	public PlanModelTranslator getPlanModelTranslator() {
+		return planModelTranslator;
+	}
+
+	public void setPlanModelTranslator(PlanModelTranslator planModelTranslator) {
+		this.planModelTranslator = planModelTranslator;
+	}
+
+	public PlanUploadSupportDAO getPlanUploadSupportDAO() {
+		return planUploadSupportDAO;
+	}
+
+	public void setPlanUploadSupportDAO(PlanUploadSupportDAO planUploadSupportDAO) {
+		this.planUploadSupportDAO = planUploadSupportDAO;
+	}
+}

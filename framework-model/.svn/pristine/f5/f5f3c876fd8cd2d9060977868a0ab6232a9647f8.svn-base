@@ -1,0 +1,49 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+public class EligLkupFplAmounts implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private int fplID;
+	private int size;
+	private Double fplAmount;
+	private Date fplStartDate;
+	private Date fplEndDate;
+	
+	public int getFplID() {
+		return fplID;
+	}
+	public void setFplID(int fplID) {
+		this.fplID = fplID;
+	}
+	public int getSize() {
+		return size;
+	}
+	public void setSize(int size) {
+		this.size = size;
+	}
+	public Double getFplAmount() {
+		return fplAmount;
+	}
+	public void setFplAmount(Double fplAmount) {
+		this.fplAmount = fplAmount;
+	}
+	public Date getFplStartDate() {
+		return fplStartDate;
+	}
+	public void setFplStartDate(Date fplStartDate) {
+		this.fplStartDate = fplStartDate;
+	}
+	public Date getFplEndDate() {
+		return fplEndDate;
+	}
+	public void setFplEndDate(Date fplEndDate) {
+		this.fplEndDate = fplEndDate;
+	}
+
+}

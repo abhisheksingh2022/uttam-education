@@ -1,0 +1,28 @@
+package com.hixapi.pmp.api.model.plandetails;
+
+import java.io.Serializable;
+
+public class AdditionalInformation implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 9204548883081817871L;
+	private String detailedPlanDocumentLink;
+	private String benefitsAndCoverageLink;
+	public String getDetailedPlanDocumentLink() {
+		return detailedPlanDocumentLink;
+	}
+	public void setDetailedPlanDocumentLink(String detailedPlanDocumentLink) {
+		this.detailedPlanDocumentLink = detailedPlanDocumentLink;
+	}
+	public String getBenefitsAndCoverageLink() {
+		return benefitsAndCoverageLink;
+	}
+	public void setBenefitsAndCoverageLink(String benefitsAndCoverageLink) {
+		this.benefitsAndCoverageLink = benefitsAndCoverageLink;
+	}
+	
+	
+	
+}

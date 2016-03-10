@@ -1,0 +1,188 @@
+package com.hixapi.pmp.service.carrier;
+
+import java.sql.Blob;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sql.rowset.serial.SerialException;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.api.model.CarrierUserVO;
+import com.hixapi.pmp.api.model.CarrierVO;
+import com.hixapi.pmp.api.model.criteria.CarrierSearchCriteria;
+import com.hixapi.pmp.api.modeltranslator.CarrierModelTranslator;
+import com.hixapi.pmp.dao.carrier.CarrierDAO;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+
+public class CarrierServiceImpl implements CarrierService {
+	private CarrierDAO carrierDAO;
+	private CarrierModelTranslator carrierModelTranslator;
+
+	public CarrierDAO getCarrierDAO() {
+		return carrierDAO;
+	}
+
+	public void setCarrierDAO(CarrierDAO carrierSearchDAO) {
+		this.carrierDAO = carrierSearchDAO;
+	}
+
+	private static final Logger LOG = LogManager.getLogger(CarrierServiceImpl.class);
+
+	@Override
+	public List<CarrierVO> searchCarriers(CarrierSearchCriteria criteria) throws BusinessServiceException {
+		LOG.entry();
+		List<CarrierMstr> carrierList = carrierDAO.searchCarrier(criteria);
+		List<CarrierVO> carrierVOList = initializeCarrierVOList(carrierList);
+
+		LOG.exit();
+		return carrierVOList;
+
+	}
+
+	private List<CarrierVO> initializeCarrierVOList(List<CarrierMstr> carrierList) {
+		List<CarrierVO> carrierListVo = new ArrayList<CarrierVO>(0);
+		CarrierVO vo;
+		for (CarrierMstr carrier : carrierList) {
+			//				vo = new CarrierVO();
+			//				vo.setCarrierId(carrier.getCarrierId());
+			//				vo.setCarrierName(carrier.getCarrierName());
+			//				vo.setCarrierUrl(carrier.getPrimaryUrl());
+			//				vo.setContactPhoneNo(carrier.getContactPhoneNbr());
+			//				vo.setCarrierIdNbr(Long.toString(carrier.getCarrierIdNbr()));
+			vo = carrierModelTranslator.initializeCarrierVO(carrier);
+			carrierListVo.add(vo);
+		}
+		return carrierListVo;
+	}
+
+	@Override
+	public CarrierVO retrieveCarrier(Long id) throws BusinessServiceException {
+
+		LOG.entry();
+		LOG.debug("getting Carrier with carrier IdNbr :" + id);
+		CarrierMstr carrierMstr = carrierDAO.retrieveCarrierByCarrierIdNumber(id);
+		CarrierVO carrierVO = carrierModelTranslator.initializeCarrierVO(carrierMstr);
+
+		/*
+		CarrierVO carrierVO = new CarrierVO();
+		carrierVO.setCarrierId("91069");
+		carrierVO.setCarrierName("91069");
+		carrierVO.setNaicCompanyCode("comp");
+		carrierVO.setNaicGroupCode("group");
+		carrierVO.setTaxId("taxId");
+		carrierVO.setContactPhoneNo("9911054412");
+		carrierVO.setCarrierUrl("www.carrier.com");
+		carrierVO.setContactAddress("carrierAddress");
+		carrierVO.setCity("carrierCity");
+		carrierVO.setState("CT");
+		carrierVO.setZip("zip");*/
+		//		AttachmentVO attachment = new AttachmentVO();
+		//		attachment.setPath("AttachmentPath");
+		//carrierVO.setAttachment(attachment);
+		return LOG.exit(carrierVO);
+	}
+
+	@Override
+	public void saveCarrier(CarrierVO carrier) throws BusinessServiceException {
+		LOG.entry();
+		LOG.debug("Saved Carrier :" + carrier.getCarrierId());
+		CarrierMstr carrierMstr = carrierModelTranslator.initializeCarrierEntity(carrier);
+
+		/* check duplicate carrier id */
+		boolean isDuplicate = carrierDAO.checkDuplicateCarrier(null, carrierMstr.getCarrierId());
+
+		if (isDuplicate) {
+			List<Object> subs = new ArrayList<Object>();
+			subs.add(carrierMstr.getCarrierId());
+			BusinessServiceException bex = new BusinessServiceException();
+			bex.addError("err.carrier.duplicate", Severity.ERROR, subs);
+			throw bex;
+		}
+		carrierDAO.saveCarrier(carrierMstr);
+		carrier.setCarrierIdNbr(Long.toString(carrierMstr.getCarrierIdNbr()));
+		LOG.exit();
+
+	}
+
+	@Override
+	public void updateCarrier(CarrierVO carrier) throws BusinessServiceException {
+		LOG.entry();
+		LOG.debug("Updated Carrier :" + carrier.getCarrierId());
+
+		boolean isDuplicate = carrierDAO.checkDuplicateCarrier(ConversionUtil.toLong(carrier.getCarrierIdNbr()),
+				carrier.getCarrierId());
+
+		if (isDuplicate) {
+			List<Object> subs = new ArrayList<Object>();
+			subs.add(carrier.getCarrierId());
+			BusinessServiceException bex = new BusinessServiceException();
+			bex.addError("err.carrier.duplicate", Severity.ERROR, subs);
+			throw bex;
+		}
+		CarrierMstr carrierMstr = carrierDAO.retrieveCarrierByCarrierIdNumber(Long.parseLong(carrier.getCarrierIdNbr()));
+		carrierModelTranslator.updateCarrierEntity(carrierMstr, carrier);
+		carrierDAO.updateCarrier(carrierMstr);
+
+		LOG.exit();
+
+	}
+
+	@Override
+	public List<CarrierUserVO> retrieveCarrierUsers(Long carrierId) throws BusinessServiceException {
+		LOG.entry();
+
+		LOG.exit();
+		return new ArrayList<CarrierUserVO>();
+	}
+
+	@Override
+	public void retrieveCarrierLogo(CarrierVO carrierVO) {
+		LOG.entry();
+		Blob blob = carrierDAO.retrieveCarrierLogo(Long.parseLong(carrierVO.getCarrierIdNbr()));
+		try {
+			if (blob != null) {
+				carrierVO.setIcon(blob.getBytes(1, (int) blob.length()));
+			}
+		} catch (SQLException ex) {
+			LOG.error("Error occured reading bytes from blob", ex);
+			throw new BusinessServiceException(ex);
+		}
+		LOG.exit();
+	}
+
+	@Override
+	public void saveCarrierLogo(CarrierVO carrierVO) throws BusinessServiceException, SerialException, SQLException {
+		LOG.entry();
+		LOG.debug("Saving Carrier Logo :" + carrierVO.getCarrierIdNbr());
+		/*Blob blob = null;
+		if (null != carrierVO.getIcon()) {
+			blob = new SerialBlob(carrierVO.getIcon());
+		}
+		if (null != blob) {*/
+		CarrierMstr carrierMstr = carrierModelTranslator.initializeCarrierEntity(carrierVO);
+		carrierMstr.setCarrierIdNbr(Long.parseLong(carrierVO.getCarrierIdNbr()));
+
+		carrierDAO.saveCarrierLogo(carrierMstr);
+		//		}
+		LOG.exit();
+	}
+
+	public CarrierModelTranslator getCarrierModelTranslator() {
+		return carrierModelTranslator;
+	}
+
+	public void setCarrierModelTranslator(CarrierModelTranslator carrierModelTranslator) {
+		this.carrierModelTranslator = carrierModelTranslator;
+	}
+
+	@Override
+	public byte[] retrieveCarrierLogo(String carrierId) {
+		return carrierDAO.retrieveCarrierLogo(carrierId);
+	}
+}

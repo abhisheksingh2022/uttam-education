@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.PlanVariantDtlCopayCoins" table="PLAN_VARIANT_DTL_COPAY_COINS" optimistic-lock="version">
+        <id name="planVariantDtlCopayCoinsId" type="java.lang.Long">
+            <column name="PLAN_VARIANT_DTL_COPAY_COINS_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_PLAN_VARIANT_DTL_COPAY_COINS_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="planVariantDtl" class="com.hixapi.pmp.entity.model.PlanVariantDtl" fetch="select">
+            <column name="PLAN_VARIANT_DTL_ID" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="lkCopayCoinsTypeCd" type="string">
+            <column name="LK_COPAY_COINS_TYPE_CD" length="3" not-null="true" />
+        </property>
+        <property name="copayInNetworkTier1" type="string">
+            <column name="COPAY_IN_NETWORK_TIER1" length="200" />
+        </property>
+        <property name="copayInNetworkTier2" type="string">
+            <column name="COPAY_IN_NETWORK_TIER2" length="200" />
+        </property>
+        <property name="copayOutOfNetwork" type="string">
+            <column name="COPAY_OUT_OF_NETWORK" length="200" />
+        </property>
+        <property name="coinsInNetworkTier1" type="string">
+            <column name="COINS_IN_NETWORK_TIER1" length="200" />
+        </property>
+        <property name="coinsInNetworkTier2" type="string">
+            <column name="COINS_IN_NETWORK_TIER2" length="200" />
+        </property>
+        <property name="coinsOutOfNetwork" type="string">
+            <column name="COINS_OUT_OF_NETWORK" length="200" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

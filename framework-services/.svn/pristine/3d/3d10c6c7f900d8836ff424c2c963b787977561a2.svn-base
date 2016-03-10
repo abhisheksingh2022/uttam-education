@@ -1,0 +1,727 @@
+package com.hixapi.pmp.api.modeltranslator;
+
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.context.ContextKeyEnum;
+import com.hixapi.framework.common.context.ContextProvider;
+import com.hixapi.framework.dao.LookupManager;
+import com.hixapi.pmp.api.model.APICodeConstants.Language;
+import com.hixapi.pmp.api.model.APICodeConstants.YesNo;
+import com.hixapi.pmp.api.model.CarrierFormularyVO;
+import com.hixapi.pmp.api.model.NetworkURLVO;
+import com.hixapi.pmp.api.model.PlanBenefitVO;
+import com.hixapi.pmp.api.model.PlanBenefitsDetailVO;
+import com.hixapi.pmp.api.model.PlanChangeVO;
+import com.hixapi.pmp.api.model.PlanHistoryVO;
+import com.hixapi.pmp.api.model.PlanRateVO;
+import com.hixapi.pmp.api.model.PlanUploadHistoryVO;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsCopayVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsDeductibleVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsMoopVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsVO;
+import com.hixapi.pmp.api.model.PlanVariantVO;
+import com.hixapi.pmp.entity.model.CarrierFormularyInfo;
+import com.hixapi.pmp.entity.model.CarrierNetwork;
+import com.hixapi.pmp.entity.model.PlanBenefitDetail;
+import com.hixapi.pmp.entity.model.PlanBenefitMstr;
+import com.hixapi.pmp.entity.model.PlanLifecycle;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanMstrHist;
+import com.hixapi.pmp.entity.model.PlanRateDetail;
+import com.hixapi.pmp.entity.model.PlanUploadHist;
+import com.hixapi.pmp.entity.model.PlanVariantDtl;
+import com.hixapi.pmp.entity.model.PlanVariantDtlCopayCoins;
+import com.hixapi.pmp.entity.model.PlanVariantDtlDeductible;
+import com.hixapi.pmp.entity.model.PlanVariantDtlMaxOop;
+import com.hixapi.pmp.service.plan.mapping.HIXBenefitFieldIdentifier;
+
+public class PlanModelTranslator {
+
+	private static final Logger log = LogManager.getLogger(PlanModelTranslator.class);
+	public static final String MOOP_DRG = "MOOP_DRG";
+	public static final String MOOP_MED = "MOOP_MED";
+
+	public static final String DED_DRG = "DED_DRG";
+	public static final String DED_MED = "DED_MED";
+
+	
+	public PlanVO intializePlanVO(final PlanMstr plan, final CarrierNetwork cn, final CarrierFormularyInfo cfi) {
+		final PlanVO vo = new PlanVO();
+		final List<PlanRateVO> planrdvo = new ArrayList<PlanRateVO>(0);
+
+		vo.setCoverageYear(ConversionUtil.toString(plan.getCvgYr()));
+		vo.setCarrierId(StringUtils.trimToEmpty((plan.getCarrierAdminInfo().getCarrierMstr().getCarrierId())));
+		vo.setCarrierName(StringUtils.trimToEmpty(plan.getCarrierAdminInfo().getCarrierMstr().getCarrierName()));
+		vo.setPlanId(ConversionUtil.toString(plan.getPlanMstrId()));
+		try {
+			vo.setPlanName(StringUtils.trimToEmpty(plan.getPlanBenefitMstrs().iterator().next().getPlanNameTxt()));
+		} catch (Exception e) {
+			log.error("Exception Occured", e);
+			return null;
+		}
+		vo.setPlanType(StringUtils.trimToEmpty(plan.getPlanTypCd()));
+		//vo.setMetalLevel(StringUtils.trimToEmpty(plan.getPlanBenefitMstrs().iterator().next().getMetalLevelTxt()));
+		vo.setMetalLevel(ConversionUtil.toString(plan.getLvlCvgCd()));
+		if (cn != null) {
+			vo.setNetworkUrl(initializeNetworkUrlVO(cn));
+		}
+		if (cfi != null) {
+			vo.setCarrierFormularyVO(initializeCarrierFormularyVO(cfi));
+		}
+		vo.setQualityRating(ConversionUtil.toString(plan.getQltyRating()));
+		vo.setEhbPercentage(ConversionUtil.toString(plan.getEhbPercent()));
+		if (CollectionUtils.isNotEmpty(plan.getPlanLifecycles())) {
+			vo.setExchangeStatus(StringUtils.trimToEmpty(plan.getPlanLifecycles().iterator().next().getLkPlanStatusCd()));
+			vo.setLastUpdateDate(ConversionUtil.toTimestampString(plan.getPlanLifecycles().iterator().next()
+					.getStatusChangeDt()));
+		} else {
+			//vo.setLastUpdateDate(ConversionUtil.toTimestampString(plan.getPlanLifecycles().iterator().next().getStatusChangeDt()));
+		}
+		vo.setPublishDate(ConversionUtil.toString(plan.getPublicDt()));
+
+		vo.setPlanBenefits(intializePlanBenefitsVO(plan.getPlanBenefitMstrs()));
+
+		if (YesNo.YES.getCode().equalsIgnoreCase(plan.getCarrierUpdatesAllowedInd())) {
+			vo.setCarrierUpdateAllowed(true);
+		} else {
+			vo.setCarrierUpdateAllowed(false);
+		}
+		vo.setPlanRates(planrdvo);
+		vo.setEffectiveDate(ConversionUtil.toString(plan.getEffDt()));
+		vo.setExpirationDate(ConversionUtil.toString(plan.getExpDt()));
+		vo.setPlanHiosId(StringUtils.trimToEmpty(plan.getPlanHiosId()));
+		vo.setDentalOnlyPlanFlag(ConversionUtil.toString(plan.getDntlOnlyPlanFlg()));
+		vo.setHpId(StringUtils.trimToEmpty(plan.getHpid()));
+		vo.setServiceAreaId(StringUtils.trimToEmpty(plan.getSvcAreaId()));
+		vo.setNewPlanFlag(ConversionUtil.toString(plan.getNewPlanFlg()));
+		vo.setUniquePlanFlag(ConversionUtil.toString(plan.getUnqPlanFlg()));
+		vo.setQhpCd(StringUtils.trimToEmpty(plan.getQhpCd()));
+		vo.setNoticePregnancyFlag(ConversionUtil.toString(plan.getNoticePrgncyFlg()));
+		vo.setReferralRequiredForSpecialistFlg(ConversionUtil.toString(plan.getRfrlRqdForSpecialistFlg()));
+		vo.setSpecialistRequiringReferralText(StringUtils.trimToEmpty(plan.getSpecialistRequiringRfrlTxt()));
+		vo.setPlanLevelExclusionText(StringUtils.trimToEmpty(plan.getPlanLvlExclTxt()));
+		vo.setLimitedCsvEstimateAdvancePayment(StringUtils.trimToEmpty(plan.getLimitedCsvEstAdvPymnt()));
+		vo.setCompositeRatingFlag(ConversionUtil.toString(plan.getCompositeRatingFlg()));
+		vo.setCompositeRatingFlag(ConversionUtil.toString(plan.getCompositeRatingFlg()));
+		vo.setChildOnlyOffering(StringUtils.trimToEmpty(plan.getChldOnlyPlanId()));
+		vo.setChildOnlyPlanId(StringUtils.trimToEmpty(plan.getChldOnlyPlanId()));
+		vo.setTobaccoWellnessFlag(ConversionUtil.toString(plan.getTobaccoWellnessFlg()));
+		vo.setDiseaseManagementProgramsOfferedText(StringUtils.trimToEmpty(plan.getDisMgmtPgmOffrdTxt()));
+		vo.setEhbPercentage(ConversionUtil.toString(plan.getEhbPercent()));
+		vo.setEhbAppointment(StringUtils.trimToEmpty(plan.getEhbApptmnt()));
+		vo.setGuaranteedRateFlag(ConversionUtil.toString(plan.getGuranteedRateFlg()));
+		vo.setMaxCoinsNumber(StringUtils.trimToEmpty(plan.getMaxCoinsNbr()));
+		vo.setMaxDaysChargingCopayNumber(StringUtils.trimToEmpty(plan.getMaxDaysChargingCopayNbr()));
+		vo.setBeginCostSharingAfterVisitNumber(StringUtils.trimToEmpty(plan.getBeginCostSharingAfetrVisitNbr()));
+		vo.setBeginCoinsAfterCopaysNumber(StringUtils.trimToEmpty(plan.getBeginCoinsAfterCopaysNbr()));
+		vo.setOutOfCountryCoverageDescText(StringUtils.trimToEmpty(plan.getOutOfCntryCvgDescTxt()));
+		vo.setOutOfCountryCoverageFlag(ConversionUtil.toString(plan.getOutOfCntryCvgFlg()));
+		vo.setOutOfServiceAreaCoverageDescText(StringUtils.trimToEmpty(plan.getOutOfSvcAreaCvgDescTxt()));
+		vo.setOutOfServiceAreaCoverageFlag(ConversionUtil.toString(plan.getOutOfSvcAreaCvgFlg()));
+		vo.setNationalNetworkFlag(ConversionUtil.toString(plan.getNationalNtwrkFlg()));
+		vo.setEnrollPaymentUrlText(StringUtils.trimToEmpty(plan.getEnrollPymntUrlTxt()));
+		vo.setCarrierTaxId(plan.getCarrierAdminInfo().getCarrierMstr().getTinIdNbr());
+		vo.setCarrierState(plan.getCarrierAdminInfo().getCarrierMstr().getStateCd());
+		//setting the language from planbenefitmstr 
+
+		try {
+			vo.setLanguage(StringUtils.trimToEmpty(plan.getPlanBenefitMstrs().iterator().next().getLanguageCd()));
+		} catch (Exception e) {
+			log.error("Exception Occured", e);
+			return null;
+		}
+
+		return vo;
+	}
+
+	private CarrierFormularyVO initializeCarrierFormularyVO(final CarrierFormularyInfo cfi) {
+		// TODO Auto-generated method stub
+		final CarrierFormularyVO carrierFormularyVO = new CarrierFormularyVO();
+		carrierFormularyVO.setFormularyId(StringUtils.trimToEmpty(cfi.getFormularyId()));
+		carrierFormularyVO.setFormularyUrlLink(StringUtils.trimToEmpty(cfi.getFormularyUrlLink()));
+		carrierFormularyVO.setCarrierFormularyInfoId(cfi.getCarrierFormularyInfoId());
+		return carrierFormularyVO;
+	}
+
+	public List<PlanVO> initializePlanVOlist(Set<PlanLifecycle> planlcset) {
+		if (planlcset != null && CollectionUtils.isNotEmpty(planlcset)) {
+			final List<PlanVO> planvolist = new ArrayList<PlanVO>(planlcset.size());
+			PlanVO planvo = null;
+			for (final PlanLifecycle planlc : planlcset) {
+				planvo = new PlanVO();
+				planvo.setPlanId(StringUtils.trimToEmpty(ConversionUtil.toString(planlc.getPlanMstr().getPlanMstrId())));
+				planvo.setPlanHiosId(StringUtils.trimToEmpty(planlc.getPlanMstr().getPlanHiosId()));
+				planvo.setCoverageYear(ConversionUtil.toString(planlc.getPlanMstr().getCvgYr()));
+				planvo.setPlanName(StringUtils.trimToEmpty(planlc.getPlanMstr().getPlanMktngName()));
+				planvo.setCarrierName(StringUtils.trimToEmpty(planlc.getPlanMstr().getCarrierAdminInfo().getCarrierMstr()
+						.getCarrierName()));
+				planvo.setMetalLevel(ConversionUtil.toString(planlc.getPlanMstr().getLvlCvgCd()));
+				planvo.setCarrierId(StringUtils.trimToEmpty(planlc.getPlanMstr().getCarrierAdminInfo().getCarrierMstr()
+						.getCarrierId()));
+				planvo.setExchangeStatus(StringUtils.trimToEmpty(planlc.getLkPlanStatusCd()));
+				planvolist.add(planvo);
+			}
+			return planvolist;
+		}
+		return Collections.emptyList();
+	}
+
+	public void intializePlanMstrEntity(PlanVO planvo, PlanMstr planm, CarrierNetwork cn, List<PlanChangeVO> planChanges,
+			PlanVO oldPlanVO) {
+		if (planm != null) {
+			planm.setPlanMstrId(ConversionUtil.toLong(planvo.getPlanId()));
+
+			if (!planvo.getPlanHiosId().equalsIgnoreCase(oldPlanVO.getPlanHiosId())) {
+				PlanChangeVO changeVO = new PlanChangeVO();
+				changeVO.setFieldUpdated("Plan HIOS ID");
+				changeVO.setPlanId(oldPlanVO.getPlanHiosId());
+				changeVO.setLanguage(Language.getEnum(planvo.getLanguage()).getDescription());
+				changeVO.setOldValue(oldPlanVO.getPlanHiosId());
+				changeVO.setNewValue(planvo.getPlanHiosId());
+				planChanges.add(changeVO);
+			}
+			planm.setPlanHiosId(StringUtils.trimToEmpty(planvo.getPlanHiosId()));
+
+			if (!planvo.getPlanName().equalsIgnoreCase(oldPlanVO.getPlanName())) {
+				PlanChangeVO changeVO = new PlanChangeVO();
+				changeVO.setFieldUpdated("Plan Marketing Name");
+				changeVO.setPlanId(planvo.getPlanHiosId());
+				changeVO.setLanguage(Language.getEnum(planvo.getLanguage()).getDescription());
+				changeVO.setOldValue(oldPlanVO.getPlanName());
+				changeVO.setNewValue(planvo.getPlanName());
+				planChanges.add(changeVO);
+			}
+			/*			planm.getPlanBenefitMstrs().iterator().next().setPlanNameTxt(planvo.getPlanName());
+			*/if (planvo.getLanguage().equalsIgnoreCase(Language.ENGLISH.getCode())) {
+				planm.setPlanMktngName(StringUtils.trimToEmpty(planvo.getPlanName()));
+			}
+
+			if (!planvo.getEhbPercentage().equalsIgnoreCase(oldPlanVO.getEhbPercentage())) {
+				PlanChangeVO changeVO = new PlanChangeVO();
+				changeVO.setFieldUpdated("EHB Percentage");
+				changeVO.setPlanId(oldPlanVO.getPlanHiosId());
+				changeVO.setLanguage(Language.getEnum(planvo.getLanguage()).getDescription());
+				changeVO.setOldValue(oldPlanVO.getEhbPercentage());
+				changeVO.setNewValue(planvo.getEhbPercentage());
+				planChanges.add(changeVO);
+			}
+			planm.setEhbPercent(ConversionUtil.toBigDecimal(planvo.getEhbPercentage()));
+
+			if (!planvo.getQualityRating().equalsIgnoreCase(oldPlanVO.getQualityRating())) {
+				PlanChangeVO changeVO = new PlanChangeVO();
+				changeVO.setFieldUpdated("Quality Rating");
+				changeVO.setPlanId(oldPlanVO.getPlanHiosId());
+				changeVO.setLanguage(Language.getEnum(planvo.getLanguage()).getDescription());
+				changeVO.setOldValue(oldPlanVO.getQualityRating());
+				changeVO.setNewValue(planvo.getQualityRating());
+				planChanges.add(changeVO);
+			}
+			planm.setQltyRating(ConversionUtil.toShort(planvo.getQualityRating()));
+
+			if (!planvo.getPlanType().equalsIgnoreCase(oldPlanVO.getPlanType())) {
+				PlanChangeVO changeVO = new PlanChangeVO();
+				changeVO.setFieldUpdated("Plan Type Code");
+				changeVO.setPlanId(oldPlanVO.getPlanHiosId());
+				changeVO.setLanguage(Language.getEnum(planvo.getLanguage()).getDescription());
+				changeVO.setOldValue(oldPlanVO.getPlanType());
+				changeVO.setNewValue(planvo.getPlanType());
+				planChanges.add(changeVO);
+			}
+			planm.setPlanTypCd(StringUtils.trimToEmpty(planvo.getPlanType()));
+
+			if (!planvo.getMetalLevel().equalsIgnoreCase(oldPlanVO.getMetalLevel())) {
+				PlanChangeVO changeVO = new PlanChangeVO();
+				changeVO.setFieldUpdated("Coverage Level");
+				changeVO.setPlanId(oldPlanVO.getPlanHiosId());
+				changeVO.setLanguage(Language.getEnum(planvo.getLanguage()).getDescription());
+				changeVO.setOldValue(LookupManager.getLookupDisplayValue(APIUtil.getLocale(planvo.getLanguage()),
+						"MetalLevel", oldPlanVO.getMetalLevel()));
+				changeVO.setNewValue(LookupManager.getLookupDisplayValue(APIUtil.getLocale(planvo.getLanguage()),
+						"MetalLevel", planvo.getMetalLevel()));
+				planChanges.add(changeVO);
+			}
+			planm.setLvlCvgCd(ConversionUtil.toChar(StringUtils.trimToEmpty(planvo.getMetalLevel())));
+
+			for (PlanBenefitMstr planbm : planm.getPlanBenefitMstrs()) {
+				if (planbm.getLanguageCd().equals(planvo.getLanguage())) {
+					intializePlanBenefitMstr(planvo, planbm);
+					break;
+				}
+			}
+			/* initializeCarrierAdminInfo*/
+		}
+		if (cn != null) {
+			intializeCarrierNetworkEntity(cn, planvo, oldPlanVO, planChanges);
+		}
+	}
+
+	public List<PlanRateVO> initializePlanRatesVO(final Set<PlanRateDetail> planrdlist) {
+		if (planrdlist != null && CollectionUtils.isNotEmpty(planrdlist)) {
+			final List<PlanRateVO> planrvolist = new ArrayList<PlanRateVO>(planrdlist.size());
+			PlanRateVO planrvo = null;
+			for (final PlanRateDetail prd : planrdlist) {
+				planrvo = new PlanRateVO();
+				planrvo.setAge(StringUtils.trimToEmpty(prd.getLkAgeCd()));
+				planrvo.setRate(ConversionUtil.toString(prd.getIndvRateAmt()));
+				planrvo.setRatingArea(StringUtils.trimToEmpty(prd.getLkRatingAreaId()));
+				planrvo.setTobaccoPreference(StringUtils.trimToEmpty(prd.getLkTobaccoCd()));
+				planrvolist.add(planrvo);
+			}
+			return planrvolist;
+		}
+		return Collections.emptyList();
+	}
+
+	public NetworkURLVO initializeNetworkUrlVO(CarrierNetwork cn) {
+		final NetworkURLVO netvo = new NetworkURLVO();
+		netvo.setNetworkURL(StringUtils.trimToEmpty(cn.getUrl()));
+		netvo.setNetworkURLId(StringUtils.trimToEmpty(cn.getNetworkId()));
+		netvo.setNetworkIdNbr(cn.getNetworkIdNbr());
+		return netvo;
+	}
+
+	public void intializeCarrierNetworkEntity(CarrierNetwork cn, PlanVO planvo, PlanVO oldPlanVO,
+			List<PlanChangeVO> planChanges) {
+		cn.setNetworkIdNbr(planvo.getNetworkUrl().getNetworkIdNbr());
+
+		if (!planvo.getNetworkUrl().getNetworkURL().equalsIgnoreCase(oldPlanVO.getNetworkUrl().getNetworkURL())) {
+			PlanChangeVO changeVO = new PlanChangeVO();
+			changeVO.setFieldUpdated("Network URL");
+			changeVO.setPlanId(planvo.getPlanHiosId());
+			changeVO.setOldValue(oldPlanVO.getNetworkUrl().getNetworkURL());
+			changeVO.setNewValue(planvo.getNetworkUrl().getNetworkURL());
+			planChanges.add(changeVO);
+		}
+		cn.setUrl(StringUtils.trimToEmpty(planvo.getNetworkUrl().getNetworkURL()));
+		cn.setNetworkId(planvo.getNetworkUrl().getNetworkURLId());
+	}
+
+	public void intializeCarrierFormularyInfoEntity(CarrierFormularyInfo cfi, PlanVO planvo) {
+		cfi.setCarrierFormularyInfoId(planvo.getCarrierFormularyVO().getCarrierFormularyInfoId());
+		cfi.setFormularyId(planvo.getCarrierFormularyVO().getFormularyId());
+		cfi.setFormularyUrlLink(planvo.getCarrierFormularyVO().getFormularyUrlLink());
+
+	}
+
+	public void intializePlanBenefitMstr(PlanVO planvo, PlanBenefitMstr planbm) {
+		if (planbm != null) {
+			planbm.setMetalLevelTxt(StringUtils.trimToEmpty(planvo.getMetalLevel()));
+		}
+	}
+
+	public List<PlanBenefitVO> intializePlanBenefitsVO(final Set<PlanBenefitMstr> planbmset) {
+		final List<PlanBenefitVO> planbvolist = new ArrayList<PlanBenefitVO>(planbmset.size());
+		{
+			PlanBenefitVO planbenefitvo = null;
+			for (PlanBenefitMstr planbm : planbmset) {
+				planbenefitvo = new PlanBenefitVO();
+				planbenefitvo.setPlanBenefitsDetailsMap(initializePlanBenefitDetailsVO(planbm.getPlanBenefitDetails()));
+				planbenefitvo.setPlanVariants(initializePlanVariantsVO(planbm.getPlanVariantDtls()));
+				planbvolist.add(planbenefitvo);
+			}
+		}
+		return planbvolist;
+	}
+
+	public Map<PlanVariantVO, PlanVariantDetailsVO> initializePlanVariantsVO(Set<PlanVariantDtl> planvdset) {
+		if (planvdset != null && CollectionUtils.isNotEmpty(planvdset)) {
+			final Map<PlanVariantVO, PlanVariantDetailsVO> planvdvomap = new TreeMap<PlanVariantVO, PlanVariantDetailsVO>();
+			PlanVariantDetailsVO planvdvo = null;
+			PlanVariantVO planvvo = null;
+			for (PlanVariantDtl planvd : planvdset) {
+				planvdvo = new PlanVariantDetailsVO();
+				planvvo = new PlanVariantVO();
+				planvvo.setVarId(StringUtils.trimToEmpty(planvd.getVarId()));
+				planvvo.setVarTypTxt(StringUtils.trimToEmpty(planvd.getVarTypTxt()));
+				planvvo.setVariantHiosId(StringUtils.trimToEmpty(planvd.getVariantHiosId()));
+				planvvo.setPlanSecondaryName(StringUtils.trimToEmpty(planvd.getPlanSecondaryName()));
+				planvdvo.setPlanVariantDtlId(ConversionUtil.toString(planvd.getPlanVariantDtlId()));
+				planvdvo.setIssuerActVal(ConversionUtil.toString(planvd.getIssuerActVal()));
+				planvdvo.setAvCalcOutputNum(StringUtils.trimToEmpty(planvd.getAvCalcOutputNum()));
+				planvdvo.setMedAndDrgDeducIntgFlg(ConversionUtil.toString(planvd.getMedAndDrgDeducIntgFlg()));
+				planvdvo.setMedAndDrgMaxOutOfPocketIntgFlg(ConversionUtil.toString(planvd
+						.getMedAndDrgMaxOutOfPocketIntgFlg()));
+				planvdvo.setPlanVariantDtlCol(ConversionUtil.toString(planvd.getPlanVariantDtlCol()));
+				planvdvo.setTierUtilization1(StringUtils.trimToEmpty(planvd.getTierUtilization1()));
+				planvdvo.setTierUtilization2(StringUtils.trimToEmpty(planvd.getTierUtilization2()));
+				planvdvo.setSbcDiabetesCoins(StringUtils.trimToEmpty(planvd.getSbcDiabetesCoins()));
+				planvdvo.setSbcDiabetesCopay(StringUtils.trimToEmpty(planvd.getSbcDiabetesCopay()));
+				planvdvo.setSbcDiabetesDeductible(StringUtils.trimToEmpty(planvd.getSbcDiabetesDeductible()));
+				planvdvo.setSbcDiabetesLimit(StringUtils.trimToEmpty(planvd.getSbcDiabetesLimit()));
+				planvdvo.setSbcHavingBabyCoins(StringUtils.trimToEmpty(planvd.getSbcHavingBabyCoins()));
+				planvdvo.setSbcHavingBabyCopay(StringUtils.trimToEmpty(planvd.getSbcHavingBabyCopay()));
+				planvdvo.setSbcHavingBabyDeductible(StringUtils.trimToEmpty(planvd.getSbcHavingBabyDeductible()));
+				planvdvo.setSbcHavingBabyLimit(StringUtils.trimToEmpty(planvd.getSbcHavingBabyLimit()));
+				planvdvo.setHsaBenefitCoverageUrlTxt(StringUtils.trimToEmpty(planvd.getHsaBenifitCoverageUrlTxt()));
+				planvdvo.setHsaEligibleFlag(ConversionUtil.toString(planvd.getHsaEligibleFlag()));
+				planvdvo.setHsaEmplrContributionFlag(ConversionUtil.toString(planvd.getHsaEmplrContributionFlag()));
+				planvdvo.setHsaEmplrContributionNbr(StringUtils.trimToEmpty(planvd.getHsaEmplrContributionNbr()));
+				planvdvo.setHsaPlanBrochureUrlTxt(StringUtils.trimToEmpty(planvd.getHsaPlanBrochureUrlTxt()));
+				planvdvo.setVariantHiosId(StringUtils.trimToEmpty(planvd.getVariantHiosId()));
+				planvdvo.setCopayDetails(initializePlanVariantDetailsCopayVO(planvd));
+				planvdvo.setDeductibleDetails(initializePlanVariantDetailsDeductibleVO(planvd));
+				planvdvo.setMoopDetails(initializePlanVariantDetailsMoopVO(planvd));
+				planvdvomap.put(planvvo, planvdvo);
+
+			}
+			return planvdvomap;
+		}
+		return Collections.emptyMap();
+	}
+
+	private PlanVariantDtl findPlanVariantDetailVO(String varId, Set<PlanVariantDtl> entityList) {
+		for (PlanVariantDtl dtl : entityList) {
+			if (dtl.getVarId().equals(varId)) {
+				return dtl;
+			}
+		}
+		return null;
+	}
+
+	public void initializePlanVariantDtlEntity(PlanVO planvo, Set<PlanVariantDtl> planvdset) {
+
+		PlanBenefitVO benefitVO = planvo.getPlanBenefits().get(0);
+		Map<PlanVariantVO, PlanVariantDetailsVO> planvdvomap = benefitVO.getPlanVariants();
+
+		if (planvdvomap != null && !CollectionUtils.sizeIsEmpty(planvdvomap)) {
+			PlanVariantDtl planvd = null;
+			for (final Map.Entry<PlanVariantVO, PlanVariantDetailsVO> entry : planvdvomap.entrySet()) {
+				planvd = findPlanVariantDetailVO(entry.getKey().getVarId(), planvdset);
+				initializePlanVariantDtlCopayCoinsEntity(entry.getValue().getCopayDetails(),
+						planvd.getPlanVariantDtlCopayCoinses());
+				initializePlanVariantDtlDeductibleEntity(entry.getValue().getDeductibleDetails(),
+						planvd.getPlanVariantDtlDeductibles());
+				initializePlanVariantDtlMaxOopEntity(entry.getValue().getMoopDetails(), planvd.getPlanVariantDtlMaxOops());
+			}
+		}
+	}
+
+	public Map<String, PlanVariantDetailsCopayVO> initializePlanVariantDetailsCopayVO(PlanVariantDtl variant) {
+		final Set<PlanVariantDtlCopayCoins> planvdccset = variant.getPlanVariantDtlCopayCoinses();
+		if (planvdccset != null && CollectionUtils.isNotEmpty(planvdccset)) {
+			final Map<String, PlanVariantDetailsCopayVO> plandcvomap = new LinkedHashMap<String, PlanVariantDetailsCopayVO>();
+			PlanVariantDetailsCopayVO plandcvo = null;
+			HIXBenefitFieldIdentifier helper = new HIXBenefitFieldIdentifier();
+			for (final PlanVariantDtlCopayCoins planvdcc : planvdccset) {
+				plandcvo = new PlanVariantDetailsCopayVO();
+				plandcvo.setCopayId(ConversionUtil.toString(planvdcc.getPlanVariantDtlCopayCoinsId()));
+				plandcvo.setCoinsInNetworkTier1(StringUtils.trimToEmpty(planvdcc.getCoinsInNetworkTier1()));
+				plandcvo.setCoinsInNetworkTier2(StringUtils.trimToEmpty(planvdcc.getCoinsInNetworkTier2()));
+				plandcvo.setCoinsOutOfNetwork(StringUtils.trimToEmpty(planvdcc.getCoinsOutOfNetwork()));
+				plandcvo.setCopayInNetworkTier1(StringUtils.trimToEmpty(planvdcc.getCopayInNetworkTier1()));
+				plandcvo.setCopayInNetworkTier2(StringUtils.trimToEmpty(planvdcc.getCopayInNetworkTier2()));
+				plandcvo.setCopayOutOfNetwork(StringUtils.trimToEmpty(planvdcc.getCopayOutOfNetwork()));
+				plandcvomap.put(StringUtils.trimToEmpty(planvdcc.getLkCopayCoinsTypeCd()), plandcvo);
+				helper.setControlFieldsForCopay(plandcvo);
+
+			}
+			return plandcvomap;
+		}
+		return Collections.emptyMap();
+	}
+
+	public void initializePlanVariantDtlCopayCoinsEntity(Map<String, PlanVariantDetailsCopayVO> planvdcvomap,
+			Set<PlanVariantDtlCopayCoins> planvdccset) {
+
+		if (planvdcvomap != null && !CollectionUtils.sizeIsEmpty(planvdcvomap)) {
+			PlanVariantDtlCopayCoins planvdcc = null;
+			for (final Map.Entry<String, PlanVariantDetailsCopayVO> entry : planvdcvomap.entrySet()) {
+				planvdcc = findPlanVariantDtlCopayCoins(entry.getValue().getCopayId(), planvdccset);
+				final PlanVariantDetailsCopayVO planvdcvo = entry.getValue();
+				planvdcc.setLkCopayCoinsTypeCd(entry.getKey());
+				planvdcc.setPlanVariantDtlCopayCoinsId(ConversionUtil.toLong(planvdcvo.getCopayId()));
+				planvdcc.setCoinsInNetworkTier1(StringUtils.trimToEmpty(planvdcvo.getCoinsInNetworkTier1()));
+				//planvdcc.setCoinsInNetworkTier2(StringUtils.trimToEmpty(planvdcvo.getCoinsInNetworkTier2()));
+				planvdcc.setCoinsOutOfNetwork(StringUtils.trimToEmpty(planvdcvo.getCoinsOutOfNetwork()));
+				planvdcc.setCopayOutOfNetwork(StringUtils.trimToEmpty(planvdcvo.getCopayOutOfNetwork()));
+				planvdcc.setCopayInNetworkTier1(StringUtils.trimToEmpty(planvdcvo.getCopayInNetworkTier1()));
+				//planvdcc.setCopayInNetworkTier2(StringUtils.trimToEmpty(planvdcvo.getCopayInNetworkTier2()));
+				planvdccset.add(planvdcc);
+			}
+
+		}
+
+	}
+
+	private PlanVariantDtlCopayCoins findPlanVariantDtlCopayCoins(String copayId,
+			Collection<PlanVariantDtlCopayCoins> planvdccset) {
+		for (PlanVariantDtlCopayCoins dtl : planvdccset) {
+			if (dtl.getPlanVariantDtlCopayCoinsId().equals(ConversionUtil.toLong(copayId))) {
+				return dtl;
+			}
+		}
+		return new PlanVariantDtlCopayCoins();
+	}
+
+	public Map<String, PlanVariantDetailsDeductibleVO> initializePlanVariantDetailsDeductibleVO(final PlanVariantDtl vd) {
+		Set<PlanVariantDtlDeductible> planvddset = vd.getPlanVariantDtlDeductibles();
+		if (CollectionUtils.isNotEmpty(planvddset)) {
+			final Map<String, PlanVariantDetailsDeductibleVO> planvddvomap = new LinkedHashMap<String, PlanVariantDetailsDeductibleVO>();
+			HIXBenefitFieldIdentifier helper = new HIXBenefitFieldIdentifier();
+
+			{
+				PlanVariantDtlDeductible medDed = helper.findDeductibleForMedical(vd);
+				if (medDed != null) {
+					PlanVariantDetailsDeductibleVO medVO = new PlanVariantDetailsDeductibleVO();
+					medVO.setDeductibleId(ConversionUtil.toString(medDed.getPlanVariantDtlDeductibleId()));
+					medVO.setInNetworkTier1Individual(StringUtils.trimToEmpty(medDed.getInNetworkIndv()));
+					medVO.setInNetworkTier1Family(StringUtils.trimToEmpty(medDed.getInNetworkFamily()));
+					medVO.setOutOfNetworkIndividual(StringUtils.trimToEmpty(medDed.getOutOfNetworkIndv()));
+					medVO.setOutOfNetworkFamily(StringUtils.trimToEmpty(medDed.getOutOfNetworkFamily()));
+					planvddvomap.put(DED_MED, medVO);
+				}
+			}
+			{
+				PlanVariantDtlDeductible drugDed = helper.findDeductibleForDrug(vd);
+				if (drugDed != null) {
+					PlanVariantDetailsDeductibleVO drugVO = new PlanVariantDetailsDeductibleVO();
+					drugVO.setDeductibleId(ConversionUtil.toString(drugDed.getPlanVariantDtlDeductibleId()));
+					drugVO.setInNetworkTier1Individual(StringUtils.trimToEmpty(drugDed.getInNetworkIndv()));
+					drugVO.setInNetworkTier1Family(StringUtils.trimToEmpty(drugDed.getInNetworkFamily()));
+					drugVO.setOutOfNetworkIndividual(StringUtils.trimToEmpty(drugDed.getOutOfNetworkIndv()));
+					drugVO.setOutOfNetworkFamily(StringUtils.trimToEmpty(drugDed.getOutOfNetworkFamily()));
+					planvddvomap.put(DED_DRG, drugVO);
+				}
+			}
+			//				medVO.setInNetworkTier1DefaultCoins(StringUtils.trimToEmpty(medDed.getInNetworkDfltCoins()));
+			//				medVO.setInNetworkTier2DefaultCoins(StringUtils.trimToEmpty(medDed.getInNetworkTier2DfltCoins()));
+
+			//				medVO.setInNetworkTier2Individual(StringUtils.trimToEmpty(medDed.getInNetworkTier2Indv()));
+			//				medVO.setInNetworkTier2Family(StringUtils.trimToEmpty(medDed.getInNetworkTier2Family()));
+
+			//				medVO.setCombinedInoutIndividual(StringUtils.trimToEmpty(medDed.getCombinedInoutIndv()));
+			//				medVO.setCombinedInoutFamily(StringUtils.trimToEmpty(medDed.getCombinedInoutFamily()));
+
+			return planvddvomap;
+		}
+		return Collections.emptyMap();
+	}
+
+	public void initializePlanVariantDtlDeductibleEntity(Map<String, PlanVariantDetailsDeductibleVO> planvddvomap,
+			Set<PlanVariantDtlDeductible> planvddset) {
+		if (planvddvomap != null && !CollectionUtils.sizeIsEmpty(planvddvomap)) {
+
+			PlanVariantDtlDeductible planvdd = null;
+			for (final Map.Entry<String, PlanVariantDetailsDeductibleVO> entry : planvddvomap.entrySet()) {
+
+				planvdd = findPlanVariantDtlDeductibleEntity(entry.getValue().getDeductibleId(), planvddset);
+				final PlanVariantDetailsDeductibleVO planvddvo = entry.getValue();
+				planvdd.setLkPlanVariantDtlDeductibleCd(entry.getKey());
+				planvdd.setPlanVariantDtlDeductibleId(ConversionUtil.toLong(planvddvo.getDeductibleId()));
+				planvdd.setInNetworkFamily(StringUtils.trimToEmpty(planvddvo.getInNetworkTier1Family()));
+				planvdd.setInNetworkIndv(StringUtils.trimToEmpty(planvddvo.getInNetworkTier1Individual()));
+				planvdd.setOutOfNetworkFamily(StringUtils.trimToEmpty(planvddvo.getOutOfNetworkFamily()));
+				planvdd.setOutOfNetworkIndv(StringUtils.trimToEmpty(planvddvo.getOutOfNetworkIndividual()));
+				planvddset.add(planvdd);
+				//planvdd.setInNetworkDfltCoins(StringUtils.trimToEmpty(planvddvo.getInNetworkTier1DefaultCoins()));
+				//planvdd.setInNetworkTier2DfltCoins(StringUtils.trimToEmpty(planvddvo.getInNetworkTier2DefaultCoins()));
+				//planvdd.setInNetworkTier2Family(StringUtils.trimToEmpty(planvddvo.getInNetworkTier2Family()));
+				//planvdd.setInNetworkTier2Indv(StringUtils.trimToEmpty(planvddvo.getInNetworkTier2Individual()));
+				//planvdd.setCombinedInoutFamily(StringUtils.trimToEmpty(planvddvo.getCombinedInoutFamily()));
+				//planvdd.setCombinedInoutIndv(StringUtils.trimToEmpty(planvddvo.getCombinedInoutIndividual()));
+			}
+		}
+	}
+
+	private PlanVariantDtlDeductible findPlanVariantDtlDeductibleEntity(String deductibleId,
+			Set<PlanVariantDtlDeductible> planvddset) {
+		for (PlanVariantDtlDeductible planvdd : planvddset) {
+			if (planvdd.getPlanVariantDtlDeductibleId().equals(ConversionUtil.toLong(deductibleId))) {
+				return planvdd;
+			}
+		}
+		return new PlanVariantDtlDeductible();
+
+	}
+
+	public Map<String, PlanVariantDetailsMoopVO> initializePlanVariantDetailsMoopVO(PlanVariantDtl variant) {
+		Set<PlanVariantDtlMaxOop> planvdmset = variant.getPlanVariantDtlMaxOops();
+		if (CollectionUtils.isNotEmpty(planvdmset)) {
+			final Map<String, PlanVariantDetailsMoopVO> planvdmvomap = new LinkedHashMap<String, PlanVariantDetailsMoopVO>();
+			HIXBenefitFieldIdentifier helper = new HIXBenefitFieldIdentifier();
+			{
+				PlanVariantDtlMaxOop planvdm = helper.findMoopForMedical(variant);
+				PlanVariantDetailsMoopVO medVO = new PlanVariantDetailsMoopVO();
+				medVO.setMoopId(ConversionUtil.toString(planvdm.getPlanVariantDtlMaxOopId()));
+				medVO.setInNetworkTier1Family(StringUtils.trimToEmpty(planvdm.getInNetworkTier1Family()));
+				medVO.setInNetworkTier1Individual(StringUtils.trimToEmpty(planvdm.getInNetworkTier1Indv()));
+				medVO.setOutOfNetworkFamily(StringUtils.trimToEmpty(planvdm.getOutOfNetworkFamily()));
+				medVO.setOutOfNetworkIndividual(StringUtils.trimToEmpty(planvdm.getOutOfNetworkIndv()));
+				planvdmvomap.put(MOOP_MED, medVO);
+				//				medVO.setInNetworkTier2Family(StringUtils.trimToEmpty(planvdm.getInNetworkTier2Family()));
+				//				medVO.setInNetworkTier2Individual(StringUtils.trimToEmpty(planvdm.getInNetworkTier2Indv()));
+				//				medVO.setCombinedInoutFamily(StringUtils.trimToEmpty(planvdm.getCombinedInoutFamily()));
+				//				medVO.setCombinedInoutIndividual(StringUtils.trimToEmpty(planvdm.getCombinedInoutIndv()));
+			}
+			{
+				PlanVariantDtlMaxOop planvdm = helper.findMoopForDrug(variant);
+				PlanVariantDetailsMoopVO drugVO = new PlanVariantDetailsMoopVO();
+				drugVO.setMoopId(ConversionUtil.toString(planvdm.getPlanVariantDtlMaxOopId()));
+				drugVO.setInNetworkTier1Family(StringUtils.trimToEmpty(planvdm.getInNetworkTier1Family()));
+				drugVO.setInNetworkTier1Individual(StringUtils.trimToEmpty(planvdm.getInNetworkTier1Indv()));
+				drugVO.setOutOfNetworkFamily(StringUtils.trimToEmpty(planvdm.getOutOfNetworkFamily()));
+				drugVO.setOutOfNetworkIndividual(StringUtils.trimToEmpty(planvdm.getOutOfNetworkIndv()));
+				planvdmvomap.put(MOOP_DRG, drugVO);
+
+			}
+			return planvdmvomap;
+		}
+		return Collections.emptyMap();
+	}
+
+	public void initializePlanVariantDtlMaxOopEntity(Map<String, PlanVariantDetailsMoopVO> planvdmvomap,
+			Set<PlanVariantDtlMaxOop> planvdmset) {
+		if (planvdmvomap != null && !CollectionUtils.sizeIsEmpty(planvdmvomap)) {
+
+			PlanVariantDtlMaxOop planvdm = null;
+			for (final Map.Entry<String, PlanVariantDetailsMoopVO> entry : planvdmvomap.entrySet()) {
+				planvdm = findPlanVariantDtlMaxOopEntity(entry.getValue().getMoopId(), planvdmset);
+
+				final PlanVariantDetailsMoopVO planvdmvo = entry.getValue();
+				planvdm.setLkPlanVariantDtlMaxOopCd(entry.getKey());
+				planvdm.setPlanVariantDtlMaxOopId(ConversionUtil.toLong(planvdmvo.getMoopId()));
+				planvdm.setInNetworkTier1Family(StringUtils.trimToEmpty(planvdmvo.getInNetworkTier1Family()));
+				planvdm.setInNetworkTier1Indv(StringUtils.trimToEmpty(planvdmvo.getInNetworkTier1Individual()));
+				planvdm.setOutOfNetworkFamily(StringUtils.trimToEmpty(planvdmvo.getOutOfNetworkFamily()));
+				planvdm.setOutOfNetworkIndv(StringUtils.trimToEmpty(planvdmvo.getOutOfNetworkIndividual()));
+				planvdmset.add(planvdm);
+			}
+
+		}
+
+	}
+
+	private PlanVariantDtlMaxOop findPlanVariantDtlMaxOopEntity(String moopId, Set<PlanVariantDtlMaxOop> planvdmset) {
+
+		for (PlanVariantDtlMaxOop dtl : planvdmset) {
+			if (dtl.getPlanVariantDtlMaxOopId().equals(ConversionUtil.toLong(moopId))) {
+				return dtl;
+			}
+		}
+
+		return new PlanVariantDtlMaxOop();
+	}
+
+	public Map<String, PlanBenefitsDetailVO> initializePlanBenefitDetailsVO(Set<PlanBenefitDetail> planbdset) {
+		if (planbdset != null && CollectionUtils.isNotEmpty(planbdset)) {
+			final Map<String, PlanBenefitsDetailVO> planbdvomap = new LinkedHashMap<String, PlanBenefitsDetailVO>();
+			PlanBenefitsDetailVO planbdvo = null;
+			for (PlanBenefitDetail planbd : planbdset) {
+				planbdvo = new PlanBenefitsDetailVO();
+				planbdvo.setBenefitDetailId(ConversionUtil.toString(planbd.getBenefitDetailId()));
+				planbdvo.setEhbYesNo(StringUtils.trimToEmpty(planbd.getEhbYn()));
+				planbdvo.setCoveredFlag(ConversionUtil.toString(planbd.getCvrdFlg()));
+				planbdvo.setQuantitativeLimitFlag(ConversionUtil.toString(planbd.getQuantitativeLimitFlg()));
+				planbdvo.setLimitQuantityTxt(StringUtils.trimToEmpty(planbd.getLimitQntyTxt()));
+				planbdvo.setLimitUnitTxt(StringUtils.trimToEmpty(planbd.getLimitUnitTxt()));
+				planbdvo.setMinStayTxt(StringUtils.trimToEmpty(planbd.getMinStayTxt()));
+				planbdvo.setExcelTxt(StringUtils.trimToEmpty(planbd.getExclTxt()));
+				planbdvo.setBenefitExplanationTxt(StringUtils.trimToEmpty(planbd.getBnftExplTxt()));
+				planbdvo.setLookupEhbVariantReasonCd(StringUtils.trimToEmpty(planbd.getLkEhbVarRsnCd()));
+				planbdvo.setExcelInNetworkMoopFlag(ConversionUtil.toString(planbd.getExclInNtwrkMoopFlg()));
+				planbdvo.setExcelOutNetworkMoopFlag(ConversionUtil.toString(planbd.getExclOutNtwrkMoopFlg()));
+				planbdvomap.put(StringUtils.trimToEmpty(planbd.getLkBnftId()), planbdvo);
+			}
+			return planbdvomap;
+		}
+		return Collections.emptyMap();
+	}
+
+	public Set<PlanBenefitDetail> initializePlanBenefitDetailEntity(Map<String, PlanBenefitsDetailVO> planbdvomap) {
+		if (planbdvomap != null && !CollectionUtils.sizeIsEmpty(planbdvomap)) {
+			final Set<PlanBenefitDetail> planbdmset = new HashSet<PlanBenefitDetail>(planbdvomap.size());
+			PlanBenefitDetail planbd = null;
+			for (final Map.Entry<String, PlanBenefitsDetailVO> entry : planbdvomap.entrySet()) {
+				planbd = new PlanBenefitDetail();
+				final PlanBenefitsDetailVO planbdvo = entry.getValue();
+
+				planbd.setLkBnftId(StringUtils.trimToEmpty(entry.getKey()));
+
+				planbd.setBenefitDetailId(ConversionUtil.toLong(planbdvo.getBenefitDetailId()));
+				planbd.setEhbYn(StringUtils.trimToEmpty(planbdvo.getEhbYesNo()));
+				planbd.setLimitQntyTxt(StringUtils.trimToEmpty(planbdvo.getLimitQuantityTxt()));
+				planbd.setLimitUnitTxt(StringUtils.trimToEmpty(planbdvo.getLimitUnitTxt()));
+				planbd.setMinStayTxt(StringUtils.trimToEmpty(planbdvo.getMinStayTxt()));
+				planbd.setExclTxt(StringUtils.trimToEmpty(planbdvo.getExcelTxt()));
+				planbd.setBnftExplTxt(StringUtils.trimToEmpty(planbdvo.getBenefitExplanationTxt()));
+				planbd.setLkEhbVarRsnCd(StringUtils.trimToEmpty(planbdvo.getLookupEhbVariantReasonCd()));
+
+				planbd.setCvrdFlg(StringUtils.trimToEmpty(planbdvo.getCoveredFlag()));
+				planbd.setQuantitativeLimitFlg(ConversionUtil.toChar(planbdvo.getQuantitativeLimitFlag()));
+				planbd.setExclInNtwrkMoopFlg(ConversionUtil.toChar(planbdvo.getExcelInNetworkMoopFlag()));
+				planbd.setExclOutNtwrkMoopFlg(ConversionUtil.toChar(planbdvo.getExcelOutNetworkMoopFlag()));
+
+				planbdmset.add(planbd);
+			}
+			return planbdmset;
+		}
+		return Collections.emptySet();
+	}
+
+	public PlanUploadHistoryVO initializePlanUploadHistoryVO(PlanUploadHist entity) {
+		PlanUploadHistoryVO vo = new PlanUploadHistoryVO();
+		vo.setFileName(entity.getFileName());
+		vo.setPlanTemplateType(LookupManager.getLookupDisplayValue(getCurrentLocale(),
+				APIConstants.LKUP_TYPE_PLAN_TEMPLATES, entity.getLkTemplateTypeCd()));
+		vo.setUploadUsrId(entity.getUploadUsrId());
+		vo.setUploadTs(ConversionUtil.toTimestampString(entity.getUploadTs()));
+		return vo;
+	}
+
+	public PlanHistoryVO initializePlanUpdateHistoryVO(PlanMstrHist entity) {
+		PlanHistoryVO vo = new PlanHistoryVO();
+		if (entity != null && entity.getPlanMstr() != null && entity.getPlanMstr().getCarrierAdminInfo() != null
+				&& entity.getPlanMstr().getCarrierAdminInfo().getCarrierMstr() != null) {
+			vo.setCarrier(entity.getPlanMstr().getCarrierAdminInfo().getCarrierMstr().getCarrierName());
+		}
+		vo.setChangeDate(ConversionUtil.toTimestampString(entity.getDtChng()));
+		vo.setChanges(entity.getChangeDetailTxt());
+		vo.setComments(entity.getComments());
+		vo.setPlanComponent(entity.getChangeLocationTxt());
+		vo.setPlanId(entity.getPlanMstr().getPlanHiosId());
+		vo.setPlanName(entity.getPlanMstr().getPlanMktngName());
+		vo.setChngByUsr(entity.getChngByUsr());
+
+		return vo;
+	}
+
+	private Locale getCurrentLocale() {
+		Locale loc = ContextProvider.getContextField(ContextKeyEnum.CURRENT_LOCALE, Locale.class);
+		if (loc == null) {
+			loc = APIUtil.getLocale("en_US");
+		}
+		return loc;
+	}
+
+	public PlanRateVO initializePlanRateVO(PlanRateDetail planRateDetail) {
+		PlanRateVO rateVo = new PlanRateVO();
+		NumberFormat nf = NumberFormat.getInstance();
+		nf.setMinimumFractionDigits(2);
+		rateVo.setTobaccoPreference(planRateDetail.getLkTobaccoCd());
+		rateVo.setRatingArea(planRateDetail.getLkRatingAreaId());
+		rateVo.setAge(planRateDetail.getLkAgeCd());
+		rateVo.setRate(ConversionUtil.toString(nf.format(planRateDetail.getIndvRateAmt())));
+
+		return rateVo;
+	}
+
+}

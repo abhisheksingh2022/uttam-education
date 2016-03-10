@@ -1,0 +1,95 @@
+package com.hixapi.pmp.api.modeltranslator;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.hixapi.pmp.api.model.CarrierVO;
+import com.hixapi.pmp.entity.model.Address;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+
+public class CarrierModelTranslator {
+	/**
+	 * transfer object from Entity to VO
+	 * 
+	 * @param carrier
+	 * @return CarrierVO
+	 */
+	public CarrierVO initializeCarrierVO(CarrierMstr carrier) {
+		//Initialize the VO fields from the entity
+		final CarrierVO vo = new CarrierVO();
+		vo.setCarrierId(StringUtils.trimToEmpty(carrier.getCarrierId()));
+		vo.setCarrierIdNbr(Long.toString(carrier.getCarrierIdNbr()));
+		vo.setCarrierName(StringUtils.trimToEmpty(carrier.getCarrierName()));
+		vo.setCarrierUrl(StringUtils.trimToEmpty(carrier.getPrimaryUrl()));
+		vo.setCity(StringUtils.trimToEmpty(carrier.getAddress().getCityNm()));
+		/*String address = StringUtils.trimToEmpty(carrier.getAddress().getAdrLine1());
+		if (StringUtils.trimToEmpty(carrier.getAddress().getAdrLine2()).length() > 0) {
+			address += " ," + StringUtils.trimToEmpty(carrier.getAddress().getAdrLine2());
+		}
+		vo.setContactAddress(address);*/
+		vo.setContactAddressLine1(StringUtils.trimToEmpty(carrier.getAddress().getAdrLine1()));
+		vo.setContactAddressLine2(StringUtils.trimToEmpty(carrier.getAddress().getAdrLine2()));
+		vo.setState(StringUtils.trimToEmpty(carrier.getAddress().getStateCd()));
+		vo.setZip(StringUtils.trimToEmpty(carrier.getAddress().getZipCd()));
+		vo.setContactPhoneNo(StringUtils.trimToEmpty(carrier.getContactPhoneNbr()));
+		vo.setNaicCompanyCode(StringUtils.trimToEmpty(carrier.getNaicCmpnyCd()));
+		vo.setNaicGroupCode(StringUtils.trimToEmpty(carrier.getNaicGrpCd()));
+		vo.setTaxId(StringUtils.trimToEmpty(carrier.getTinIdNbr()));
+		vo.setIcon(carrier.getLogoAttchmntBlob());
+		return vo;
+	}
+
+	/**
+	 * transfer object from VO to Entity
+	 * 
+	 * @param vo
+	 * @return CarrierMstr
+	 */
+	public CarrierMstr initializeCarrierEntity(CarrierVO vo) {
+		//Translate the VO to an entity instance
+		CarrierMstr carrier = new CarrierMstr();
+		Address address = new Address();
+		address.setAdrLine1(StringUtils.trimToEmpty(vo.getContactAddressLine1()));
+		address.setAdrLine2(StringUtils.trimToEmpty(vo.getContactAddressLine2()));
+		address.setCityNm(StringUtils.trimToEmpty(vo.getCity()));
+		address.setStateCd(StringUtils.trimToEmpty(vo.getState()));
+		address.setZipCd(StringUtils.trimToEmpty(vo.getZip()));
+		carrier.setCarrierId(StringUtils.trimToEmpty(vo.getCarrierId()));
+		//		carrier.setCarrierIdNbr(Long.parseLong(vo.getCarrierIdNbr()));
+		carrier.setCarrierName(StringUtils.trimToEmpty(vo.getCarrierName()));
+		carrier.setAddress(address);
+		carrier.setStateCd(StringUtils.trimToEmpty(vo.getState()));
+		carrier.setPrimaryUrl(StringUtils.trimToEmpty(vo.getCarrierUrl()));
+		carrier.setNaicCmpnyCd(StringUtils.trimToEmpty(vo.getNaicCompanyCode()));
+		carrier.setNaicGrpCd(StringUtils.trimToEmpty(vo.getNaicGroupCode()));
+		carrier.setContactPhoneNbr(StringUtils.trimToEmpty(vo.getContactPhoneNo()));
+		carrier.setTinIdNbr(StringUtils.trimToEmpty(vo.getTaxId()));
+		carrier.setLogoAttchmntBlob(vo.getIcon());
+		return carrier;
+	}
+
+	/**
+	 * Update existing carrier VO from Entity Object
+	 * 
+	 * @param carrier
+	 * @param vo
+	 */
+	public void updateCarrierEntity(CarrierMstr carrier, CarrierVO vo) {
+		//Translate the VO to an existing entity instance
+
+		Address address = new Address();
+		address.setAdrLine1(StringUtils.trimToEmpty(vo.getContactAddressLine1()));
+		address.setAdrLine2(StringUtils.trimToEmpty(vo.getContactAddressLine2()));
+		address.setCityNm(StringUtils.trimToEmpty(vo.getCity()));
+		address.setStateCd(StringUtils.trimToEmpty(vo.getState()));
+		address.setZipCd(StringUtils.trimToEmpty(vo.getZip()));
+		carrier.setCarrierId(StringUtils.trimToEmpty(vo.getCarrierId()));
+		carrier.setCarrierName(StringUtils.trimToEmpty(vo.getCarrierName()));
+		carrier.setAddress(address);
+		carrier.setPrimaryUrl(StringUtils.trimToEmpty(vo.getCarrierUrl()));
+		carrier.setNaicCmpnyCd(StringUtils.trimToEmpty(vo.getNaicCompanyCode()));
+		carrier.setNaicGrpCd(StringUtils.trimToEmpty(vo.getNaicGroupCode()));
+		carrier.setContactPhoneNbr(StringUtils.trimToEmpty(vo.getContactPhoneNo()));
+		carrier.setTinIdNbr(StringUtils.trimToEmpty(vo.getTaxId()));
+
+	}
+}

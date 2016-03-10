@@ -1,0 +1,2836 @@
+
+package com.hixapi.pmp.struts.planmgmt;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.BuiltinFormats;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellRangeAddress;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.exception.InconsistentFormularyException;
+import com.hixapi.framework.common.exception.InconsistentPlanNameException;
+import com.hixapi.framework.common.exception.InvalidExcelFormatException;
+import com.hixapi.framework.common.exception.PlanNotFoundException;
+import com.hixapi.framework.common.model.LookupBean;
+import com.hixapi.framework.common.model.UserMessage;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants.Language;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.api.model.APICodeConstants.UserFunction;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsCopayVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsDeductibleVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsMoopVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsVO;
+import com.hixapi.pmp.api.model.PlanVariantVO;
+import com.hixapi.pmp.api.model.criteria.PlanSearchCriteria;
+import com.hixapi.pmp.service.plan.PlanManagerService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+
+public class ExcelUploadAction extends BaseSecureAction {
+
+	private static final Logger LOG = LogManager.getLogger(ExcelUploadAction.class);
+
+	/*
+	  
+	 */
+	private static final long serialVersionUID = -7296331027656555878L;
+
+	public static final String CARRIERUSER_ID = "userId";
+	public static final String RECORD_MODE = "mode";
+	public static final String COPAY_IN_FIELD = "copayInNetworkTier1";
+	public static final String COINS_IN_FIELD = "coinsInNetworkTier1";
+	public static final String COPAY_OUT_FIELD = "copayOutOfNetwork";
+	public static final String COINS_OUT_FIELD = "coinsOutOfNetwork";
+
+	private String fileName;
+	private File uploadedExcel;
+	private InputStream excelInputStream;
+	private int excelFileLength;
+	private String excelFileName;
+	private String planId;
+	private PlanVO readPlan;
+	
+	private SXSSFWorkbook workbook;
+	private int colNo;
+	private int conditionCounter;
+	private boolean smallExcelFlag;
+	private String spanishPlanName = "";
+	private String spanishFormularyURL = "";
+
+	Map<String, String> moopMap;
+	Map<String, String> deductibleMap;
+	Map<String, String> copayMap;
+	Map<String, String> languages;
+	Map<String, String> benefitsMap;
+	private List<String> copayCodes = new ArrayList<String>();
+	
+	protected void loadDisplayContents() throws Exception {
+		LOG.entry();
+		/*
+		  First check if the user has access to perform the requested mode on the carrier - admin will do this using global code
+		 */
+
+		LOG.exit();
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		if(isUploadAccess()) {
+			readExcel();
+			return LOG.exit(FLASH);
+		} else {
+			return LOG.exit(UNAUTHORIZED);
+		}
+		
+	}
+
+	public void validate_execute() {
+
+	}
+
+	@Override
+	public void onValidationError() {
+
+	}
+	
+	public boolean isUploadAccess() {
+		if (isUserAllowedToAccessFunction(UserFunction.PLAN_TRANSLATED_UPLOAD.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void readExcel() throws Exception {
+		FileInputStream file = new FileInputStream(uploadedExcel);
+		readPlan = new PlanVO();
+		// Create Workbook instance holding reference to .xlsx file
+		
+		XSSFWorkbook readWorkbook = new XSSFWorkbook(file);
+		try {
+		Sheet sheet = readWorkbook.getSheetAt(0);
+		if(sheet.getLastRowNum() != 57) {
+			throw new InvalidExcelFormatException();
+		}
+		PlanSearchCriteria criteria = new PlanSearchCriteria();
+		criteria.setSearchPlanId(sheet.getRow(5).getCell(3).getStringCellValue());
+		criteria.setSearchYear(sheet.getRow(1).getCell(3).getStringCellValue());
+		List<PlanVO> plans = ServiceLocator.getInstance().getService(PlanManagerService.class).searchPlans(criteria);
+		if(plans.size() == 0) {
+			throw new PlanNotFoundException();
+		}
+		readPlan = ServiceLocator.getInstance().getService(PlanManagerService.class).retrievePlan(ConversionUtil.toLong(plans.get(0).getPlanId()), Language.SPANISH);
+		if(readPlan == null) {
+			throw new PlanNotFoundException();
+		}
+		List<PlanVariantDetailsVO> variantsList = new ArrayList<PlanVariantDetailsVO>();
+		int sheetCounter = 0;
+		for (Map.Entry<PlanVariantVO, PlanVariantDetailsVO> entry : readPlan.getPlanBenefits().get(0).getPlanVariants()
+				.entrySet()) {
+			PlanVariantVO varMaster = entry.getKey();
+			if(varMaster.getVarId().equalsIgnoreCase("00")) {
+				continue;
+			} else {
+				PlanVariantDetailsVO varDetails = new PlanVariantDetailsVO();
+				varDetails.setPlanVariantDtlId(entry.getValue().getPlanVariantDtlId());
+				varDetails.setVariantHiosId(entry.getValue().getVariantHiosId());
+				varDetails.setHsaBenefitCoverageUrlTxt(entry.getValue().getHsaBenefitCoverageUrlTxt());
+				for(Map.Entry<String, PlanVariantDetailsCopayVO> copayEntry:entry.getValue().getCopayDetails().entrySet()) {
+					PlanVariantDetailsCopayVO ob = new PlanVariantDetailsCopayVO();
+					ob.setCopayId(copayEntry.getValue().getCopayId());
+					ob.setCoinsInNetworkTier1(copayEntry.getValue().getCoinsInNetworkTier1());
+					ob.setCoinsOutOfNetwork(copayEntry.getValue().getCoinsOutOfNetwork());
+					ob.setCopayInNetworkTier1(copayEntry.getValue().getCopayInNetworkTier1());
+					ob.setCopayOutOfNetwork(copayEntry.getValue().getCopayOutOfNetwork());
+					ob.setInNetworkDisplayValue(copayEntry.getValue().getInNetworkDisplayValue());
+					ob.setInNetworkUpdateFieldName(copayEntry.getValue().getInNetworkUpdateFieldName());
+					ob.setOutNetworkDisplayValue(copayEntry.getValue().getOutNetworkDisplayValue());
+					ob.setOutNetworkUpdateFieldName(copayEntry.getValue().getOutNetworkUpdateFieldName());
+					varDetails.getCopayDetails().put(copayEntry.getKey(), ob);
+				}
+				for(Map.Entry<String, PlanVariantDetailsDeductibleVO> dedEntry:entry.getValue().getDeductibleDetails().entrySet()) {
+					PlanVariantDetailsDeductibleVO ob = new PlanVariantDetailsDeductibleVO();
+					ob.setDeductibleId(dedEntry.getValue().getDeductibleId());
+					ob.setInNetworkTier1Individual(dedEntry.getValue().getInNetworkTier1Individual());
+					ob.setOutOfNetworkIndividual(dedEntry.getValue().getOutOfNetworkIndividual());
+					ob.setInNetworkTier1Family(dedEntry.getValue().getInNetworkTier1Family());
+					ob.setOutOfNetworkFamily(dedEntry.getValue().getOutOfNetworkFamily());
+					varDetails.getDeductibleDetails().put(dedEntry.getKey(), ob);
+				}
+				for(Map.Entry<String, PlanVariantDetailsMoopVO> moopEntry:entry.getValue().getMoopDetails().entrySet()) {
+					PlanVariantDetailsMoopVO ob = new PlanVariantDetailsMoopVO();
+					ob.setMoopId(moopEntry.getValue().getMoopId());
+					ob.setInNetworkTier1Individual(moopEntry.getValue().getInNetworkTier1Individual());
+					ob.setOutOfNetworkIndividual(moopEntry.getValue().getOutOfNetworkIndividual());
+					ob.setInNetworkTier1Family(moopEntry.getValue().getInNetworkTier1Family());
+					ob.setOutOfNetworkFamily(moopEntry.getValue().getOutOfNetworkFamily());
+					varDetails.getMoopDetails().put(moopEntry.getKey(), ob);
+				}
+				if(readWorkbook.getSheetAt(sheetCounter).getLastRowNum() != 57) {
+					throw new InvalidExcelFormatException();
+				}
+				readPlanSheet(readWorkbook.getSheetAt(sheetCounter++), varMaster, varDetails);
+				variantsList.add(varDetails);
+			}	
+		}
+		ServiceLocator.getInstance().getService(PlanManagerService.class).updatePlan(readPlan, Language.SPANISH, getLookups());
+		ServiceLocator.getInstance().getService(PlanManagerService.class).updatePlanVariantDetails(variantsList, readPlan);
+		super.addBusinessMessage(new UserMessage(Severity.INFO.getCode(), "msg.excel.plan_translation_success", null,
+				null), "");
+		} catch(InvalidExcelFormatException e) {
+			super.addValidationError("msg.excel.invalid_format", "uploadedExcel");
+		} catch(PlanNotFoundException e) {
+			super.addValidationError("msg.excel.plan_notfound", "uploadedExcel");
+		} catch(InconsistentPlanNameException e) {
+			super.addValidationError("msg.excel.inconsistent_planname", "uploadedExcel");
+		} catch(InconsistentFormularyException e) {
+			super.addValidationError("msg.excel.inconsistent_formularyurl", "uploadedExcel");
+		} catch (BusinessServiceException bex) {
+			LOG.error("Caught error in plan benefits while updating plan in session", bex);
+			super.addBusinessServiceErrorMessage(bex);
+		} finally {
+			file.close();
+			readWorkbook.close();
+		}
+		
+	}
+	
+	private void readPlanSheet(XSSFSheet mainSheet, PlanVariantVO varMaster, PlanVariantDetailsVO varDetails) {
+		for(Row row: mainSheet) {
+			int mainSheetCounter = 1;
+			Cell cell = row.getCell(row.getLastCellNum()-1, Row.CREATE_NULL_AS_BLANK);
+			if(cell.getCellType() == Cell.CELL_TYPE_BLANK || (cell.getCellType() == Cell.CELL_TYPE_NUMERIC && StringUtils.isEmpty(ConversionUtil.toString(cell.getNumericCellValue())))
+					|| (cell.getCellType() == Cell.CELL_TYPE_STRING && StringUtils.isEmpty(cell.getStringCellValue()))) {
+				continue;
+			}
+			if(row.getRowNum() == mainSheetCounter++) {
+				/*if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					readPlan.setCoverageYear(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					readPlan.setCoverageYear(cell.getStringCellValue());
+				}*/	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				/*if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					readPlan.setCarrierName(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					readPlan.setCarrierName(cell.getStringCellValue());
+				}*/	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				/*if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					readPlan.setCarrierId(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					readPlan.setCarrierId(cell.getStringCellValue());
+				}*/	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					readPlan.setPlanName(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					readPlan.setPlanName(cell.getStringCellValue());
+				}
+				if(spanishPlanName.equalsIgnoreCase("")) {
+					spanishPlanName = readPlan.getPlanName();
+				} else if(!spanishPlanName.equals(readPlan.getPlanName())) {
+					throw new InconsistentPlanNameException();
+				}
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				/*if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					readPlan.setPlanHiosId(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					readPlan.setPlanHiosId(cell.getStringCellValue());
+				}*/	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				/*if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					readPlan.setPlanType(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					readPlan.setPlanType(cell.getStringCellValue());
+				}*/	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				/*for (LookupBean lookupBean : getLookups().get("MetalLevel")) {
+					if(lookupBean.getLabel().equalsIgnoreCase(cell.getStringCellValue())) {
+						readPlan.setMetalLevel(lookupBean.getValue());
+						break;
+					}
+				}*/	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				/*if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					readPlan.getNetworkUrl().setNetworkURL(Double.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					readPlan.getNetworkUrl().setNetworkURL(cell.getStringCellValue());
+				}*/
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				/*if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					readPlan.setQualityRating(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					readPlan.setQualityRating(cell.getStringCellValue());
+				}*/	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				/*if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					readPlan.setEhbPercentage(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					readPlan.setEhbPercentage(cell.getStringCellValue());
+				}*/	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				/*for (LookupBean lookupBean : getLookups().get("ExchangeStatus")) {
+					if(lookupBean.getLabel().equalsIgnoreCase(cell.getStringCellValue())) {
+						readPlan.setExchangeStatus(lookupBean.getValue());
+						break;
+					}
+				}*/
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					readPlan.getCarrierFormularyVO().setFormularyUrlLink(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					readPlan.getCarrierFormularyVO().setFormularyUrlLink(cell.getStringCellValue());
+				}
+				if(spanishFormularyURL.equalsIgnoreCase("")) {
+					spanishFormularyURL = readPlan.getCarrierFormularyVO().getFormularyUrlLink();
+				} else if(!spanishFormularyURL.equals(readPlan.getCarrierFormularyVO().getFormularyUrlLink())) {
+					throw new InconsistentFormularyException();
+				}
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				// HIOS Plan ID + Variant
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				/*if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varMaster.setPlanSecondaryName(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varMaster.setPlanSecondaryName(cell.getStringCellValue());
+				}*/	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Individual(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Individual(cell.getStringCellValue());
+				}
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkIndividual(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkIndividual(cell.getStringCellValue());
+				}
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Family(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Family(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkFamily(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkFamily(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Individual(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Individual(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkIndividual(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkIndividual(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Family(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Family(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkFamily(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkFamily(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "PSI");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "PSI");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "PCV");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "PCV");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "SPV");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "SPV");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Individual(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Individual(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkIndividual(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkIndividual(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Family(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Family(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkFamily(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getDeductibleDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkFamily(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Individual(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Individual(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkIndividual(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkIndividual(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Family(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setInNetworkTier1Family(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkFamily(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.getMoopDetails().get(row.getCell(2).getStringCellValue()).setOutOfNetworkFamily(cell.getStringCellValue());
+				}	
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "GDG");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "GDG");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "PBD");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "PBD");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "NBD");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "NBD");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "SDG");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "SDG");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "ERS");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "ERS");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "IHS");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "IHS");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "DCC");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "DCC");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "BDC");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "BDC");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "MDC");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "MDC");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayInAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "OCD");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				setCopayOutAfterRead(cell, varDetails, row.getCell(2).getStringCellValue(), "OCD");
+			} else if(row.getRowNum() == mainSheetCounter++) {
+				if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+					varDetails.setHsaBenefitCoverageUrlTxt(ConversionUtil.toString(cell.getNumericCellValue()));
+				} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+					varDetails.setHsaBenefitCoverageUrlTxt(cell.getStringCellValue());
+				}
+			}
+		}
+	}
+
+	private void setCopayInAfterRead(Cell cell, PlanVariantDetailsVO varDetails, String refCode, String copayCode) {
+		String val = readCellForCopay(cell);
+		if(refCode.equalsIgnoreCase(APIConstants.COPAY_IN)) {
+			varDetails.getCopayDetails().get(copayCode).setCopayInNetworkTier1(val);
+			varDetails.getCopayDetails().get(copayCode).setInNetworkUpdateFieldName(COPAY_IN_FIELD);
+		} else if(refCode.equalsIgnoreCase(APIConstants.COINS_IN)) {
+			varDetails.getCopayDetails().get(copayCode).setCoinsInNetworkTier1(val);
+			varDetails.getCopayDetails().get(copayCode).setInNetworkUpdateFieldName(COINS_IN_FIELD);
+		}
+	}
+	
+	private void setCopayOutAfterRead(Cell cell, PlanVariantDetailsVO varDetails, String refCode, String copayCode) {
+		String val = readCellForCopay(cell);
+		if(refCode.equalsIgnoreCase(APIConstants.COPAY_OUT)) {
+			varDetails.getCopayDetails().get(copayCode).setCopayOutOfNetwork(val);
+			varDetails.getCopayDetails().get(copayCode).setOutNetworkUpdateFieldName(COPAY_OUT_FIELD);
+		} else if(refCode.equalsIgnoreCase(APIConstants.COINS_OUT)) {
+			varDetails.getCopayDetails().get(copayCode).setCoinsOutOfNetwork(val);
+			varDetails.getCopayDetails().get(copayCode).setOutNetworkUpdateFieldName(COINS_OUT_FIELD);
+		}
+	}
+	
+	private String readCellForCopay(Cell cell) {
+		String val = "";
+		if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+			val = ConversionUtil.toString(cell.getNumericCellValue());
+		} else if(cell.getCellType() == Cell.CELL_TYPE_STRING) {
+			val = cell.getStringCellValue();
+		}
+		return val;
+	}
+	
+	private void setLookups() {
+		List<LookupBean> lookupBeans = getLookups().get("DtlMaxOop");
+		for (LookupBean lookupBean : lookupBeans) {
+			getMoopMap().put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+		lookupBeans = getLookups().get("DeductibleCd");
+		for (LookupBean lookupBean : lookupBeans) {
+			getDeductibleMap().put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+		lookupBeans = getLookups().get("DtlCopayCoins");
+		for (LookupBean lookupBean : lookupBeans) {
+			getCopayMap().put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+		lookupBeans = getLookups().get("Languages");
+		for (LookupBean lookupBean : lookupBeans) {
+			getLanguages().put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+		lookupBeans = getLookups().get("DtlCopayCoins");
+		for (LookupBean lookupBean : lookupBeans) {
+			copayCodes.add(lookupBean.getValue());
+		}
+		lookupBeans = getLookups().get("BenefitDetailType");
+		for (LookupBean lookupBean : lookupBeans) {
+			getBenefitsMap().put(lookupBean.getValue(), lookupBean.getLabel());
+		}
+	}
+
+	private Cell createCell(Row row) {
+		Cell excelCell = row.createCell(colNo);
+		CellStyle style = workbook.createCellStyle();
+		style.setDataFormat((short)BuiltinFormats.getBuiltinFormat("text"));
+		style.setWrapText(true);
+		style.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+		if(row.getRowNum() == 0) {
+			style.setAlignment(CellStyle.ALIGN_CENTER);
+			Font font = workbook.createFont();
+			font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+			style.setFont(font);
+		} else {
+			if(colNo == 0) {
+				style.setAlignment(CellStyle.ALIGN_CENTER);
+			} else {
+				style.setAlignment(CellStyle.ALIGN_LEFT);
+			}
+		}
+		
+		if(colNo == 4 && smallExcelFlag) {
+			style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+			style.setFillForegroundColor(HSSFColor.YELLOW.index);
+		}
+		excelCell.setCellStyle(style);
+		colNo++;
+		return excelCell;
+	}
+
+	private void createMainSheet(PlanVO plan, PlanVO planSpanish) {
+		Sheet sheet = workbook.createSheet(getText("txt.excel.mainsheet"));
+		int mergeCounter = 5;
+		sheet.addMergedRegion(new CellRangeAddress(mergeCounter, mergeCounter+=8, 0, 0));
+		sheet.addMergedRegion(new CellRangeAddress(++mergeCounter, mergeCounter+=15, 0, 0));
+		sheet.addMergedRegion(new CellRangeAddress(++mergeCounter, ++mergeCounter, 0, 0));
+		sheet.addMergedRegion(new CellRangeAddress(++mergeCounter, mergeCounter+=3, 0, 0));
+		sheet.addMergedRegion(new CellRangeAddress(++mergeCounter, ++mergeCounter, 0, 0));
+		sheet.addMergedRegion(new CellRangeAddress(++mergeCounter, mergeCounter+=4, 0, 0));
+
+		int totalRowsInMainSheet = 44;
+		for (int rowNo = 0; rowNo < totalRowsInMainSheet; rowNo++) {
+			colNo = 0;
+			conditionCounter = 0;
+			Row row = sheet.createRow(rowNo);
+			if (rowNo == conditionCounter++) {
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.info"));
+				cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.fieldname"));
+				cell = createCell(row);
+				cell.setCellValue(getLanguages().get(Language.ENGLISH.getCode()));
+				cell = createCell(row);
+				cell.setCellValue(getLanguages().get(Language.SPANISH.getCode()));
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.issuerstate"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getCarrierState())) {
+					cell.setCellValue(plan.getCarrierState());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getCarrierState())) {
+					cell.setCellValue(planSpanish.getCarrierState());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.issuerid"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getCarrierId())) {
+					cell.setCellValue(plan.getCarrierId());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getCarrierId())) {
+					cell.setCellValue(planSpanish.getCarrierId());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.dental"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getDentalOnlyPlanFlag())) {
+					cell.setCellValue(plan.getDentalOnlyPlanFlag());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getDentalOnlyPlanFlag())) {
+					cell.setCellValue(planSpanish.getDentalOnlyPlanFlag());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.tin"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getCarrierTaxId())) {
+					cell.setCellValue(plan.getCarrierTaxId());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getCarrierTaxId())) {
+					cell.setCellValue(planSpanish.getCarrierTaxId());
+				}
+			} else if (rowNo == conditionCounter++) {
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.planidentifiers"));
+				cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.planid"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getPlanHiosId())) {
+					cell.setCellValue(plan.getPlanHiosId());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getPlanHiosId())) {
+					cell.setCellValue(planSpanish.getPlanHiosId());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.plan_name"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getPlanName())) {
+					cell.setCellValue(plan.getPlanName());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getPlanName())) {
+					cell.setCellValue(planSpanish.getPlanName());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.productid"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getProductId())) {
+					cell.setCellValue(plan.getProductId());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getProductId())) {
+					cell.setCellValue(planSpanish.getProductId());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.hpid"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getHpId())) {
+					cell.setCellValue(plan.getHpId());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getHpId())) {
+					cell.setCellValue(planSpanish.getHpId());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.networkid"));
+				cell = createCell(row);
+				if (plan.getNetworkUrl() != null && !StringUtils.isEmpty(plan.getNetworkUrl().getNetworkURLId())) {
+					cell.setCellValue(plan.getNetworkUrl().getNetworkURLId());
+				}
+				cell = createCell(row);
+				if (planSpanish.getNetworkUrl() != null && !StringUtils.isEmpty(planSpanish.getNetworkUrl().getNetworkURLId())) {
+					cell.setCellValue(planSpanish.getNetworkUrl().getNetworkURLId());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.networkurl"));
+				cell = createCell(row);
+				if (plan.getNetworkUrl() != null && !StringUtils.isEmpty(plan.getNetworkUrl().getNetworkURL())) {
+					cell.setCellValue(plan.getNetworkUrl().getNetworkURL());
+				}
+				cell = createCell(row);
+				if (planSpanish.getNetworkUrl() != null && !StringUtils.isEmpty(planSpanish.getNetworkUrl().getNetworkURL())) {
+					cell.setCellValue(planSpanish.getNetworkUrl().getNetworkURL());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.said"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getServiceAreaId())) {
+					cell.setCellValue(plan.getServiceAreaId());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getServiceAreaId())) {
+					cell.setCellValue(planSpanish.getServiceAreaId());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.form_id"));
+				cell = createCell(row);
+				if (plan.getCarrierFormularyVO() != null && !StringUtils.isEmpty(plan.getCarrierFormularyVO().getFormularyId())) {
+					cell.setCellValue(plan.getCarrierFormularyVO().getFormularyId());
+				}
+				cell = createCell(row);
+				if (planSpanish.getCarrierFormularyVO() != null && !StringUtils.isEmpty(planSpanish.getCarrierFormularyVO().getFormularyId())) {
+					cell.setCellValue(planSpanish.getCarrierFormularyVO().getFormularyId());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.form_url"));
+				cell = createCell(row);
+				if (plan.getCarrierFormularyVO() != null && !StringUtils.isEmpty(plan.getCarrierFormularyVO().getFormularyUrlLink())) {
+					cell.setCellValue(plan.getCarrierFormularyVO().getFormularyUrlLink());
+				}
+				cell = createCell(row);
+				if (planSpanish.getCarrierFormularyVO() != null && !StringUtils.isEmpty(planSpanish.getCarrierFormularyVO().getFormularyUrlLink())) {
+					cell.setCellValue(planSpanish.getCarrierFormularyVO().getFormularyUrlLink());
+				}
+			} else if (rowNo == conditionCounter++) {
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.planattrib"));
+				cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.newplan"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getNewPlanFlag())) {
+					cell.setCellValue(plan.getNewPlanFlag());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getNewPlanFlag())) {
+					cell.setCellValue(planSpanish.getNewPlanFlag());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.plantype"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getPlanType())) {
+					cell.setCellValue(plan.getPlanType());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getPlanType())) {
+					cell.setCellValue(planSpanish.getPlanType());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.coveragelevel"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getMetalLevel())) {
+					for (LookupBean lookupBean : getLookups().get("MetalLevel")) {
+						if(lookupBean.getValue().equalsIgnoreCase(plan.getMetalLevel())) {
+							cell.setCellValue(lookupBean.getLabel());
+							break;
+						}
+					}
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getMetalLevel())) {
+					for (LookupBean lookupBean : getLookups().get("MetalLevel")) {
+						if(lookupBean.getValue().equalsIgnoreCase(planSpanish.getMetalLevel())) {
+							cell.setCellValue(lookupBean.getLabel());
+							break;
+						}
+					}
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.uniqueplan"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getUniquePlanFlag())) {
+					cell.setCellValue(plan.getUniquePlanFlag());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getUniquePlanFlag())) {
+					cell.setCellValue(planSpanish.getUniquePlanFlag());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.qhp"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getQhpCd())) {
+					cell.setCellValue(plan.getQhpCd());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getQhpCd())) {
+					cell.setCellValue(planSpanish.getQhpCd());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.pregnotice"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getNoticePregnancyFlag())) {
+					cell.setCellValue(plan.getNoticePregnancyFlag());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getNoticePregnancyFlag())) {
+					cell.setCellValue(planSpanish.getNoticePregnancyFlag());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.splreferral"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getReferralRequiredForSpecialistFlg())) {
+					cell.setCellValue(plan.getReferralRequiredForSpecialistFlg());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getReferralRequiredForSpecialistFlg())) {
+					cell.setCellValue(planSpanish.getReferralRequiredForSpecialistFlg());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.spl_require_referral"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getSpecialistRequiringReferralText())) {
+					cell.setCellValue(plan.getSpecialistRequiringReferralText());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getSpecialistRequiringReferralText())) {
+					cell.setCellValue(planSpanish.getSpecialistRequiringReferralText());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.plan_exclusion"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getPlanLevelExclusionText())) {
+					cell.setCellValue(plan.getPlanLevelExclusionText());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getPlanLevelExclusionText())) {
+					cell.setCellValue(planSpanish.getPlanLevelExclusionText());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.ltd_csr"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getLimitedCsvEstimateAdvancePayment())) {
+					cell.setCellValue(plan.getLimitedCsvEstimateAdvancePayment());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getLimitedCsvEstimateAdvancePayment())) {
+					cell.setCellValue(planSpanish.getLimitedCsvEstimateAdvancePayment());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.plan_compositerating"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getCompositeRatingFlag())) {
+					cell.setCellValue(plan.getCompositeRatingFlag());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getCompositeRatingFlag())) {
+					cell.setCellValue(planSpanish.getCompositeRatingFlag());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.childonlyoff"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getChildOnlyOffering())) {
+					cell.setCellValue(plan.getChildOnlyOffering());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getChildOnlyOffering())) {
+					cell.setCellValue(planSpanish.getChildOnlyOffering());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.childonlyid"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getChildOnlyPlanId())) {
+					cell.setCellValue(plan.getChildOnlyPlanId());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getChildOnlyPlanId())) {
+					cell.setCellValue(planSpanish.getChildOnlyPlanId());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.tobacco_well_off"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getTobaccoWellnessFlag())) {
+					cell.setCellValue(plan.getTobaccoWellnessFlag());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getTobaccoWellnessFlag())) {
+					cell.setCellValue(planSpanish.getTobaccoWellnessFlag());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.disease_manage_off"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getDiseaseManagementProgramsOfferedText())) {
+					cell.setCellValue(plan.getDiseaseManagementProgramsOfferedText());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getDiseaseManagementProgramsOfferedText())) {
+					cell.setCellValue(planSpanish.getDiseaseManagementProgramsOfferedText());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.ehb_percent_premium"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getEhbPercentage())) {
+					cell.setCellValue(plan.getEhbPercentage());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getEhbPercentage())) {
+					cell.setCellValue(planSpanish.getEhbPercentage());
+				}
+			} else if (rowNo == conditionCounter++) {
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.standalonedental"));
+				cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.ehb_apport"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getEhbAppointment())) {
+					cell.setCellValue(plan.getEhbAppointment());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getEhbAppointment())) {
+					cell.setCellValue(planSpanish.getEhbAppointment());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.guar_estimate"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getNoticePregnancyFlag())) {
+					cell.setCellValue(plan.getNoticePregnancyFlag());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getNoticePregnancyFlag())) {
+					cell.setCellValue(planSpanish.getNoticePregnancyFlag());
+				}
+			} else if (rowNo == conditionCounter++) {
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.av_calc_benefit"));
+				cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.max_coins_drugs"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getMaxCoinsNumber())) {
+					cell.setCellValue(plan.getMaxCoinsNumber());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getMaxCoinsNumber())) {
+					cell.setCellValue(planSpanish.getMaxCoinsNumber());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.max_days_inpatient_copay"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getMaxDaysChargingCopayNumber())) {
+					cell.setCellValue(plan.getMaxDaysChargingCopayNumber());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getMaxDaysChargingCopayNumber())) {
+					cell.setCellValue(planSpanish.getMaxDaysChargingCopayNumber());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.primary_csr_visits"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getBeginCostSharingAfterVisitNumber())) {
+					cell.setCellValue(plan.getBeginCostSharingAfterVisitNumber());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getBeginCostSharingAfterVisitNumber())) {
+					cell.setCellValue(planSpanish.getBeginCostSharingAfterVisitNumber());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.primary_deduct_copay"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getBeginCoinsAfterCopaysNumber())) {
+					cell.setCellValue(plan.getBeginCoinsAfterCopaysNumber());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getBeginCoinsAfterCopaysNumber())) {
+					cell.setCellValue(planSpanish.getBeginCoinsAfterCopaysNumber());
+				}
+			} else if (rowNo == conditionCounter++) {
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.plandates"));
+				cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.plan_eff"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getEffectiveDate())) {
+					cell.setCellValue(plan.getEffectiveDate());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getEffectiveDate())) {
+					cell.setCellValue(planSpanish.getEffectiveDate());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.plan_exp"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getExpirationDate())) {
+					cell.setCellValue(plan.getExpirationDate());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getExpirationDate())) {
+					cell.setCellValue(planSpanish.getExpirationDate());
+				}
+			} else if (rowNo == conditionCounter++) {
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.geo_coverage"));
+				cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.out_country_coverage"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getOutOfCountryCoverageFlag())) {
+					cell.setCellValue(plan.getOutOfCountryCoverageFlag());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getOutOfCountryCoverageFlag())) {
+					cell.setCellValue(planSpanish.getOutOfCountryCoverageFlag());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.out_country_desc"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getOutOfCountryCoverageDescText())) {
+					cell.setCellValue(plan.getOutOfCountryCoverageDescText());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getOutOfCountryCoverageDescText())) {
+					cell.setCellValue(planSpanish.getOutOfCountryCoverageDescText());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.out_sa_cover"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getOutOfServiceAreaCoverageFlag())) {
+					cell.setCellValue(plan.getOutOfServiceAreaCoverageFlag());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getOutOfServiceAreaCoverageFlag())) {
+					cell.setCellValue(planSpanish.getOutOfServiceAreaCoverageFlag());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.out_sa_desc"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getOutOfServiceAreaCoverageDescText())) {
+					cell.setCellValue(plan.getOutOfServiceAreaCoverageDescText());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getOutOfServiceAreaCoverageDescText())) {
+					cell.setCellValue(planSpanish.getOutOfServiceAreaCoverageDescText());
+				}
+			} else if (rowNo == conditionCounter++) {
+				colNo++;
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.nation_net"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getNationalNetworkFlag())) {
+					cell.setCellValue(plan.getNationalNetworkFlag());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getNationalNetworkFlag())) {
+					cell.setCellValue(planSpanish.getNationalNetworkFlag());
+				}
+			} else if (rowNo == conditionCounter++) {
+				Cell cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.plan_level_url"));
+				cell = createCell(row);
+				cell.setCellValue(getText("txt.excel.url_enrol_pay"));
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(plan.getEnrollPaymentUrlText())) {
+					cell.setCellValue(plan.getEnrollPaymentUrlText());
+				}
+				cell = createCell(row);
+				if (!StringUtils.isEmpty(planSpanish.getEnrollPaymentUrlText())) {
+					cell.setCellValue(planSpanish.getEnrollPaymentUrlText());
+				}
+			}
+
+		}
+		for (int i = 0; i < 4; i++) {
+			sheet.autoSizeColumn(i, true);
+		}
+	}
+
+	private void createVariantInfoCells(Row row, int colNo, String title, String val, String valEs) {
+		Cell cell = createCell(row);
+		cell.setCellValue(title);
+		cell = createCell(row);
+		cell.setCellValue(val);
+		if(StringUtils.isNotEmpty(valEs)) {
+			cell = createCell(row);
+			cell.setCellValue(valEs);
+		}
+	}
+	
+	private void createCopayForDetail(String copayCode, Row row, PlanVariantDetailsVO varDetails, PlanVariantDetailsVO varDetailsEs) {
+		if (row.getRowNum() == conditionCounter++) {
+			Cell cell = createCell(row);
+			cell.setCellValue(getCopayMap().get(copayCode));
+			if (varDetails.getCopayDetails().get(copayCode) != null
+					&& varDetails.getCopayDetails().get(copayCode).getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1") && !StringUtils.isEmpty(varDetails.getCopayDetails().get(copayCode).getInNetworkDisplayValue())) {
+				String valEs = "";
+				if(varDetailsEs.getCopayDetails().get(copayCode) != null && StringUtils.isNotEmpty(varDetailsEs.getCopayDetails().get(copayCode).getInNetworkDisplayValue())) {
+					valEs = varDetailsEs.getCopayDetails().get(copayCode).getInNetworkDisplayValue();
+				}
+				addVariantDetailCells(row, getText("txt.excel.copay"), getText("txt.excel.innetwork_1"), varDetails
+						.getCopayDetails().get(copayCode).getInNetworkDisplayValue(), valEs);
+			} else {
+				addVariantDetailCells(row, getText("txt.excel.copay"), getText("txt.excel.innetwork_1"), "", "");
+			}
+		} else if (row.getRowNum() == conditionCounter++) {
+			colNo += 2;
+			if (varDetails.getCopayDetails().get(copayCode) != null
+					&& !StringUtils.isEmpty(varDetails.getCopayDetails().get(copayCode).getCopayInNetworkTier2())) {
+				String valEs = "";
+				if(varDetailsEs.getCopayDetails().get(copayCode) != null && StringUtils.isNotEmpty(varDetailsEs.getCopayDetails().get(copayCode).getCopayInNetworkTier2())) {
+					valEs = varDetailsEs.getCopayDetails().get(copayCode).getCopayInNetworkTier2();
+				}
+				addVariantDetailCells(row, "", getText("txt.excel.innetwork_2"), varDetails.getCopayDetails().get(copayCode)
+						.getCopayInNetworkTier2(), valEs);
+			} else {
+				addVariantDetailCells(row, "", getText("txt.excel.innetwork_2"), "", "");
+			}
+		} else if (row.getRowNum() == conditionCounter++) {
+			colNo += 2;
+			if (varDetails.getCopayDetails().get(copayCode) != null
+					&& varDetails.getCopayDetails().get(copayCode).getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork") && !StringUtils.isEmpty(varDetails.getCopayDetails().get(copayCode).getOutNetworkDisplayValue())) {
+				String valEs = "";
+				if(varDetailsEs.getCopayDetails().get(copayCode) != null && StringUtils.isNotEmpty(varDetailsEs.getCopayDetails().get(copayCode).getOutNetworkDisplayValue())) {
+					valEs = varDetailsEs.getCopayDetails().get(copayCode).getOutNetworkDisplayValue();
+				}
+				addVariantDetailCells(row, "", getText("txt.excel.outofnetwork"), varDetails.getCopayDetails().get(copayCode)
+						.getOutNetworkDisplayValue(), valEs);
+			} else {
+				addVariantDetailCells(row, "", getText("txt.excel.outofnetwork"), "", "");
+			}
+		} else if (row.getRowNum() == conditionCounter++) {
+			colNo++;
+			if (varDetails.getCopayDetails().get(copayCode) != null
+					&& varDetails.getCopayDetails().get(copayCode).getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1") && !StringUtils.isEmpty(varDetails.getCopayDetails().get(copayCode).getInNetworkDisplayValue())) {
+				String valEs = "";
+				if(varDetailsEs.getCopayDetails().get(copayCode) != null && StringUtils.isNotEmpty(varDetailsEs.getCopayDetails().get(copayCode).getInNetworkDisplayValue())) {
+					valEs = varDetailsEs.getCopayDetails().get(copayCode).getInNetworkDisplayValue();
+				}
+				addVariantDetailCells(row, getText("txt.excel.coinsurance"), getText("txt.excel.innetwork_1"), varDetails
+						.getCopayDetails().get(copayCode).getInNetworkDisplayValue(), valEs);
+			} else {
+				addVariantDetailCells(row, getText("txt.excel.coinsurance"), getText("txt.excel.innetwork_1"), "", "");
+			}
+		} else if (row.getRowNum() == conditionCounter++) {
+			colNo += 2;
+			if (varDetails.getCopayDetails().get(copayCode) != null
+					&& !StringUtils.isEmpty(varDetails.getCopayDetails().get(copayCode).getCoinsInNetworkTier2())) {
+				String valEs = "";
+				if(varDetailsEs.getCopayDetails().get(copayCode) != null && StringUtils.isNotEmpty(varDetailsEs.getCopayDetails().get(copayCode).getCoinsInNetworkTier2())) {
+					valEs = varDetailsEs.getCopayDetails().get(copayCode).getCoinsInNetworkTier2();
+				}
+				addVariantDetailCells(row, "", getText("txt.excel.innetwork_2"), varDetails.getCopayDetails().get(copayCode)
+						.getCoinsInNetworkTier2(), valEs);
+			} else {
+
+				addVariantDetailCells(row, "", getText("txt.excel.innetwork_2"), "", "");
+			}
+		} else if (row.getRowNum() == conditionCounter++) {
+			colNo += 2;
+			if (varDetails.getCopayDetails().get(copayCode) != null
+					&& varDetails.getCopayDetails().get(copayCode).getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork") && !StringUtils.isEmpty(varDetails.getCopayDetails().get(copayCode).getOutNetworkDisplayValue())) {
+				String valEs = "";
+				if(varDetailsEs.getCopayDetails().get(copayCode) != null && StringUtils.isNotEmpty(varDetailsEs.getCopayDetails().get(copayCode).getOutNetworkDisplayValue())) {
+					valEs = varDetailsEs.getCopayDetails().get(copayCode).getOutNetworkDisplayValue();
+				}
+				addVariantDetailCells(row, "", getText("txt.excel.outofnetwork"), varDetails.getCopayDetails().get(copayCode)
+						.getOutNetworkDisplayValue(), valEs);
+			} else {
+				addVariantDetailCells(row, "", getText("txt.excel.outofnetwork"), "", "");
+			}
+		}
+	}
+
+	private void createCopayCells(Row row, PlanVariantDetailsVO varDetails, PlanVariantDetailsVO varDetailsEs) {
+		for(String copayCode:copayCodes) {
+			createCopayForDetail(copayCode, row, varDetails, varDetailsEs);
+		}
+		
+	}
+
+	private void createVariants(PlanVO plan, PlanVO planSpanish) throws IOException {
+		int var = 0;
+		for (Map.Entry<PlanVariantVO, PlanVariantDetailsVO> entry : plan.getPlanBenefits().get(0).getPlanVariants()
+				.entrySet()) {
+			PlanVariantDetailsVO varDetails = entry.getValue();
+			PlanVariantVO varMasterEs = searchVariantKey(plan, entry.getKey());
+			PlanVariantDetailsVO varDetailsEs = planSpanish.getPlanBenefits().get(0).getPlanVariants().get(varMasterEs);
+			Sheet sheet = workbook.createSheet(getText("txt.excel.variantprefix") + " " + var++);
+			mergeVariantCells(sheet);
+			int maxRowsInVariant = 548;
+			for (int rowNo = 0; rowNo < maxRowsInVariant; rowNo++) {
+				if (rowNo % 100 == 0) {
+					((SXSSFSheet) sheet).flushRows(100);
+				}
+				colNo = 0;
+				conditionCounter = 0;
+				Row row = sheet.createRow(rowNo);
+				if (rowNo == conditionCounter++) {
+					colNo += 3;
+					Cell cell = createCell(row);
+					cell.setCellValue(getLanguages().get(Language.ENGLISH.getCode()));
+					cell = createCell(row);
+					cell.setCellValue(getLanguages().get(Language.SPANISH.getCode()));
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.plan_csa"));
+					cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.plan_hiosid"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(plan.getPlanHiosId()) && !StringUtils.isEmpty(entry.getKey().getVarId())) {
+						cell.setCellValue(plan.getPlanHiosId() + "-" + entry.getKey().getVarId());
+					}
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(planSpanish.getPlanHiosId()) && !StringUtils.isEmpty(varMasterEs.getVarId())) {
+						cell.setCellValue(planSpanish.getPlanHiosId() + "-" + varMasterEs.getVarId());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!StringUtils.isEmpty(plan.getPlanName())) {
+						createVariantInfoCells(row, colNo, getText("txt.excel.plan_name"), plan.getPlanName(), planSpanish.getPlanName());
+					} else {
+						createVariantInfoCells(row, colNo, getText("txt.excel.plan_name"), "", planSpanish.getPlanName());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!StringUtils.isEmpty(entry.getKey().getPlanSecondaryName())) {
+						createVariantInfoCells(row, colNo, getText("txt.excel.plan_secondary"), entry.getKey().getPlanSecondaryName(), varMasterEs.getPlanSecondaryName());
+					} else {
+						createVariantInfoCells(row, colNo, getText("txt.excel.plan_secondary"), "", varMasterEs.getPlanSecondaryName());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					String enData = "";
+					String esData = "";
+					if (!StringUtils.isEmpty(plan.getMetalLevel())) {
+						for (LookupBean lookupBean : getLookups().get("MetalLevel")) {
+							if(lookupBean.getValue().equalsIgnoreCase(plan.getMetalLevel())) {
+								enData = lookupBean.getLabel();
+								break;
+							}
+						}			
+					} 
+					if (!StringUtils.isEmpty(planSpanish.getMetalLevel())) {
+						for (LookupBean lookupBean : getLookups().get("MetalLevel")) {
+							if(lookupBean.getValue().equalsIgnoreCase(planSpanish.getMetalLevel())) {
+								esData = lookupBean.getLabel();
+								break;
+							}
+						}			
+					}
+					createVariantInfoCells(row, colNo, getText("txt.excel.plan_metal"), enData, esData);
+			
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!StringUtils.isEmpty(entry.getKey().getVarTypTxt())) {
+						createVariantInfoCells(row, colNo,  getText("txt.excel.plan_csr"), entry.getKey().getVarTypTxt(), varMasterEs.getVarTypTxt());
+					} else {
+						createVariantInfoCells(row, colNo,  getText("txt.excel.plan_csr"), "", varMasterEs.getVarTypTxt());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!StringUtils.isEmpty(varDetails.getIssuerActVal())) {
+						createVariantInfoCells(row, colNo, getText("txt.excel.plan_issuer"), varDetails.getIssuerActVal(), varDetailsEs.getIssuerActVal());
+					} else {
+						createVariantInfoCells(row, colNo, getText("txt.excel.plan_issuer"), "", varDetailsEs.getIssuerActVal());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!StringUtils.isEmpty(varDetails.getAvCalcOutputNum())) {
+						createVariantInfoCells(row, colNo, getText("txt.excel.avcalculator"), varDetails.getAvCalcOutputNum(), varDetailsEs.getAvCalcOutputNum());
+					} else {
+						createVariantInfoCells(row, colNo, getText("txt.excel.avcalculator"), "", varDetailsEs.getAvCalcOutputNum());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!StringUtils.isEmpty(varDetails.getMedAndDrgDeducIntgFlg())) {
+						createVariantInfoCells(row, colNo, getText("txt.excel.md_deductible"),
+								varDetails.getMedAndDrgDeducIntgFlg(), varDetailsEs.getMedAndDrgDeducIntgFlg());
+					} else {
+						createVariantInfoCells(row, colNo, getText("txt.excel.md_deductible"), "", varDetailsEs.getMedAndDrgDeducIntgFlg());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!StringUtils.isEmpty(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg())) {
+						createVariantInfoCells(row, colNo, getText("txt.excel.md_moop"),
+								varDetails.getMedAndDrgMaxOutOfPocketIntgFlg(), varDetailsEs.getMedAndDrgMaxOutOfPocketIntgFlg());
+					} else {
+						createVariantInfoCells(row, colNo,getText("txt.excel.md_moop"), "", varDetailsEs.getMedAndDrgMaxOutOfPocketIntgFlg());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!StringUtils.isEmpty(varDetails.getPlanVariantDtlCol())) {
+						createVariantInfoCells(row, colNo,  getText("txt.excel.multitier"), varDetails.getPlanVariantDtlCol(), varDetailsEs.getPlanVariantDtlCol());
+					} else {
+						createVariantInfoCells(row, colNo,  getText("txt.excel.multitier"), "", varDetailsEs.getPlanVariantDtlCol());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!StringUtils.isEmpty(varDetails.getTierUtilization1())) {
+						createVariantInfoCells(row, colNo, getText("txt.excel.tier1util"), varDetails.getTierUtilization1(), varDetailsEs.getTierUtilization1());
+					} else {
+						createVariantInfoCells(row, colNo, getText("txt.excel.tier1util"), "", varDetailsEs.getTierUtilization1());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!StringUtils.isEmpty(varDetails.getTierUtilization2())) {
+						createVariantInfoCells(row, colNo, getText("txt.excel.tier2util"), varDetails.getTierUtilization2(), varDetailsEs.getTierUtilization2());
+					} else {
+						createVariantInfoCells(row, colNo, getText("txt.excel.tier2util"), "", varDetailsEs.getTierUtilization2());
+					}
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.sbc"));
+					cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.havingbaby"));
+					cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.deductible"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getSbcHavingBabyDeductible())) {
+						cell.setCellValue(varDetails.getSbcHavingBabyDeductible());
+					}
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetailsEs.getSbcHavingBabyDeductible())) {
+						cell.setCellValue(varDetailsEs.getSbcHavingBabyDeductible());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.copayment"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getSbcHavingBabyCopay())) {
+						cell.setCellValue(varDetails.getSbcHavingBabyCopay());
+					}
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetailsEs.getSbcHavingBabyCopay())) {
+						cell.setCellValue(varDetailsEs.getSbcHavingBabyCopay());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.coinsurance"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getSbcHavingBabyCoins())) {
+						cell.setCellValue(varDetails.getSbcHavingBabyCoins());
+					}
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetailsEs.getSbcHavingBabyCoins())) {
+						cell.setCellValue(varDetailsEs.getSbcHavingBabyCoins());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.limit"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getSbcHavingBabyLimit())) {
+						cell.setCellValue(varDetails.getSbcHavingBabyLimit());
+					}
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetailsEs.getSbcHavingBabyLimit())) {
+						cell.setCellValue(varDetailsEs.getSbcHavingBabyLimit());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.diabetes"));
+					cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.deductible"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getSbcDiabetesDeductible())) {
+						cell.setCellValue(varDetails.getSbcDiabetesDeductible());
+					}
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetailsEs.getSbcDiabetesDeductible())) {
+						cell.setCellValue(varDetailsEs.getSbcDiabetesDeductible());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.copayment"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getSbcDiabetesCopay())) {
+						cell.setCellValue(varDetails.getSbcDiabetesCopay());
+					}
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetailsEs.getSbcDiabetesCopay())) {
+						cell.setCellValue(varDetailsEs.getSbcDiabetesCopay());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.coinsurance"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getSbcDiabetesCoins())) {
+						cell.setCellValue(varDetails.getSbcDiabetesCoins());
+					}
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetailsEs.getSbcDiabetesCoins())) {
+						cell.setCellValue(varDetailsEs.getSbcDiabetesCoins());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.limit"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getSbcDiabetesLimit())) {
+						cell.setCellValue(varDetails.getSbcDiabetesLimit());
+					}
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetailsEs.getSbcDiabetesLimit())) {
+						cell.setCellValue(varDetailsEs.getSbcDiabetesLimit());
+					}
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getMoopMap().get("MPM"));
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier1Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier1Individual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier1Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_MED")
+								.getInNetworkTier1Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), "", "");
+					}
+
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier1Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier1Family())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier1Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier1Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier2Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier2Individual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier2Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_MED")
+								.getInNetworkTier2Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), "", "");
+					}
+
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier2Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier2Family())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier2Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier2Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getOutOfNetworkIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getOutOfNetworkIndividual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getOutOfNetworkIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_MED")
+								.getOutOfNetworkIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getOutOfNetworkFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getOutOfNetworkFamily())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getOutOfNetworkFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_MED").getOutOfNetworkFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getCombinedInoutIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getCombinedInoutIndividual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getCombinedInoutIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_MED")
+								.getCombinedInoutIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"), "", "");
+					}
+
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getCombinedInoutFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getCombinedInoutFamily())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getCombinedInoutFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_MED").getCombinedInoutFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getMoopMap().get("MPD"));
+					if (varDetails.getMoopDetails().get("MOOP_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Individual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_DRG")
+								.getInNetworkTier1Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (varDetails.getMoopDetails().get("MOOP_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Family())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Family(), valEs);
+					} else {
+
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (varDetails.getMoopDetails().get("MOOP_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_DRG").getInNetworkTier2Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_DRG").getInNetworkTier2Individual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_DRG").getInNetworkTier2Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_DRG")
+								.getInNetworkTier2Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), "", "");
+					}
+
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (varDetails.getMoopDetails().get("MOOP_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_DRG").getInNetworkTier2Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_DRG").getInNetworkTier2Family())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_DRG").getInNetworkTier2Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_DRG").getInNetworkTier2Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (varDetails.getMoopDetails().get("MOOP_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_DRG").getOutOfNetworkIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_DRG").getOutOfNetworkIndividual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_DRG").getOutOfNetworkIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_DRG")
+								.getOutOfNetworkIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), "", "");
+					}
+
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (varDetails.getMoopDetails().get("MOOP_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_DRG").getOutOfNetworkFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_DRG").getOutOfNetworkFamily())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_DRG").getOutOfNetworkFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_DRG").getOutOfNetworkFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (varDetails.getMoopDetails().get("MOOP_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_DRG").getCombinedInoutIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_DRG").getCombinedInoutIndividual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_DRG").getCombinedInoutIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_DRG")
+								.getCombinedInoutIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"), "", "");
+					}
+
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (varDetails.getMoopDetails().get("MOOP_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_DRG").getCombinedInoutFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_DRG").getCombinedInoutFamily())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_DRG").getCombinedInoutFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_DRG").getCombinedInoutFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getMoopMap().get("MMD"));
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier1Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier1Individual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier1Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_MED")
+								.getInNetworkTier1Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), "", "");
+					}
+
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier1Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier1Family())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier1Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier1Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier2Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier2Individual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier2Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_MED")
+								.getInNetworkTier2Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), "", "");
+					}
+
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier2Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier2Family())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier2Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier2Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getOutOfNetworkIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getOutOfNetworkIndividual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getOutOfNetworkIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_MED")
+								.getOutOfNetworkIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), "", "");
+					}
+
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getOutOfNetworkFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getOutOfNetworkFamily())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getOutOfNetworkFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_MED").getOutOfNetworkFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getCombinedInoutIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getCombinedInoutIndividual())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getCombinedInoutIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"), varDetails.getMoopDetails().get("MOOP_MED")
+								.getCombinedInoutIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgMaxOutOfPocketIntgFlg()) && varDetails.getMoopDetails().get("MOOP_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getMoopDetails().get("MOOP_MED").getCombinedInoutFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getMoopDetails().get("MOOP_MED").getCombinedInoutFamily())) {
+							valEs = varDetailsEs.getMoopDetails().get("MOOP_MED").getCombinedInoutFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getMoopDetails().get("MOOP_MED").getCombinedInoutFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getDeductibleMap().get("MED"));
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED")
+									.getInNetworkTier1Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1Individual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getInNetworkTier1Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier1Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1Family())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getInNetworkTier1Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier1DefaultCoins())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1DefaultCoins())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1DefaultCoins();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getInNetworkTier1DefaultCoins(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier2Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2Individual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), varDetails.getDeductibleDetails()
+								.get("DED_MED").getInNetworkTier2Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier2Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2Family())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getInNetworkTier2Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier2DefaultCoins())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2DefaultCoins())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2DefaultCoins();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getInNetworkTier2DefaultCoins(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getOutOfNetworkIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkIndividual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getOutOfNetworkIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getOutOfNetworkFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getCombinedInoutIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getCombinedInoutIndividual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getCombinedInoutIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"),
+								varDetails.getDeductibleDetails().get("DED_MED").getCombinedInoutIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getOutOfNetworkFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getDeductibleMap().get("DRD"));
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_DRG")
+									.getInNetworkTier1Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier1Individual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier1Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), varDetails.getDeductibleDetails().get("DED_DRG")
+								.getInNetworkTier1Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_DRG").getInNetworkTier1Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier1Family())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier1Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_DRG")
+								.getInNetworkTier1Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_DRG").getInNetworkTier1DefaultCoins())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier1DefaultCoins())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier1DefaultCoins();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), varDetails.getDeductibleDetails().get("DED_DRG")
+								.getInNetworkTier1DefaultCoins(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_DRG").getInNetworkTier2Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier2Individual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier2Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), varDetails.getDeductibleDetails()
+								.get("DED_DRG").getInNetworkTier2Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_DRG").getInNetworkTier2Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier2Family())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier2Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_DRG")
+								.getInNetworkTier2Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_DRG").getInNetworkTier2DefaultCoins())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier2DefaultCoins())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier2DefaultCoins();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), varDetails.getDeductibleDetails().get("DED_DRG")
+								.getInNetworkTier2DefaultCoins(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_DRG").getOutOfNetworkIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_DRG").getOutOfNetworkIndividual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_DRG").getOutOfNetworkIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), varDetails.getDeductibleDetails().get("DED_DRG")
+								.getOutOfNetworkIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_DRG").getOutOfNetworkFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_DRG").getOutOfNetworkFamily())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_DRG").getOutOfNetworkFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_DRG")
+								.getOutOfNetworkFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_DRG").getCombinedInoutIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_DRG").getCombinedInoutIndividual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_DRG").getCombinedInoutIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"),
+								varDetails.getDeductibleDetails().get("DED_DRG").getCombinedInoutIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if (!"Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_DRG") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_DRG").getOutOfNetworkFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_DRG").getOutOfNetworkFamily())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_DRG").getOutOfNetworkFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_DRG")
+								.getOutOfNetworkFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getDeductibleMap().get("CMD"));
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED")
+									.getInNetworkTier1Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1Individual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getInNetworkTier1Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier1Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1Family())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getInNetworkTier1Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier1DefaultCoins())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1DefaultCoins())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1DefaultCoins();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getInNetworkTier1DefaultCoins(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier2Individual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2Individual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2Individual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), varDetails.getDeductibleDetails()
+								.get("DED_MED").getInNetworkTier2Individual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.innetwork_2"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier2Family())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2Family())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2Family();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getInNetworkTier2Family(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier2DefaultCoins())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2DefaultCoins())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier2DefaultCoins();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getInNetworkTier2DefaultCoins(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.default_coins"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getOutOfNetworkIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkIndividual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getOutOfNetworkIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.outofnetwork"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getOutOfNetworkFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo++;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getCombinedInoutIndividual())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getCombinedInoutIndividual())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getCombinedInoutIndividual();
+						}
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"),
+								varDetails.getDeductibleDetails().get("DED_MED").getCombinedInoutIndividual(), valEs);
+					} else {
+						addVariantDetailCells(row, getText("txt.excel.combo_in_out"), getText("txt.excel.individual"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					if ("Yes".equalsIgnoreCase(varDetails.getMedAndDrgDeducIntgFlg()) && varDetails.getDeductibleDetails().get("DED_MED") != null
+							&& !StringUtils.isEmpty(varDetails.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily())) {
+						String valEs = "";
+						if(StringUtils.isNotEmpty(varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily())) {
+							valEs = varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily();
+						}
+						addVariantDetailCells(row, "", getText("txt.excel.family"), varDetails.getDeductibleDetails().get("DED_MED")
+								.getOutOfNetworkFamily(), valEs);
+					} else {
+						addVariantDetailCells(row, "", getText("txt.excel.family"), "", "");
+					}
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.hsa_detail"));
+					colNo++;
+					cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.hsa_elig"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getHsaEligibleFlag())) {
+						cell.setCellValue(varDetails.getHsaEligibleFlag());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.hsa_empcontrib"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getHsaEmplrContributionFlag())) {
+						cell.setCellValue(varDetails.getHsaEmplrContributionFlag());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.hsa_empcontrib_amt"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getHsaEmplrContributionNbr())) {
+						cell.setCellValue(varDetails.getHsaEmplrContributionNbr());
+					}
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.variant_url"));
+					colNo++;
+					cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.summaryurl"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getHsaBenefitCoverageUrlTxt())) {
+						cell.setCellValue(varDetails.getHsaBenefitCoverageUrlTxt());
+					}
+				} else if (rowNo == conditionCounter++) {
+					colNo += 2;
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.plan_brochure"));
+					cell = createCell(row);
+					if (!StringUtils.isEmpty(varDetails.getHsaPlanBrochureUrlTxt())) {
+						cell.setCellValue(varDetails.getHsaPlanBrochureUrlTxt());
+					}
+				} else {
+					createCopayCells(row, varDetails, varDetailsEs);
+				}
+			}
+			sheet.setColumnWidth(0, 10000);
+			sheet.setColumnWidth(1, 8000);
+			sheet.autoSizeColumn(2, true);
+			sheet.setColumnWidth(3, 12282);
+			sheet.autoSizeColumn(4, true);
+		}
+	}
+
+	private void mergeVariantCells(Sheet sheet) {
+		// Column 1
+		for (int mergeNo = 0; mergeNo < 4; mergeNo++) {
+			sheet.addMergedRegion(new CellRangeAddress(13 + (mergeNo * 8), 20 + (mergeNo * 8), 0, 0));
+		}
+		for (int mergeNo = 0; mergeNo < 3; mergeNo++) {
+			sheet.addMergedRegion(new CellRangeAddress(45 + (mergeNo * 10), 54 + (mergeNo * 10), 0, 0));
+		}
+		sheet.addMergedRegion(new CellRangeAddress(75, 77, 0, 0));
+		sheet.addMergedRegion(new CellRangeAddress(78, 79, 0, 0));
+		for (int mergeNo = 0; mergeNo < copayCodes.size(); mergeNo++) {
+			sheet.addMergedRegion(new CellRangeAddress(80 + (mergeNo * 6), 85 + (mergeNo * 6), 0, 0));
+		}
+		
+		//Column 2
+		sheet.addMergedRegion(new CellRangeAddress(1, 12, 1, 1));
+		sheet.addMergedRegion(new CellRangeAddress(13, 16, 1, 1));
+		sheet.addMergedRegion(new CellRangeAddress(17, 20, 1, 1));
+		for(int mergeNo = 21; mergeNo < 44; mergeNo += 2) {
+			sheet.addMergedRegion(new CellRangeAddress(mergeNo, mergeNo+1, 1, 1));
+		}
+		int counter = 1;
+		for(int mergeNo = 45; mergeNo < 74; mergeNo++) {
+			if(counter <= 2) {
+				sheet.addMergedRegion(new CellRangeAddress(mergeNo, mergeNo+2, 1, 1));
+				mergeNo += 2;
+				counter++;
+			} else {
+				sheet.addMergedRegion(new CellRangeAddress(mergeNo, mergeNo+1, 1, 1));
+				mergeNo++;
+				if(counter == 4) 
+					counter = 1;
+				else
+					counter++;
+			}
+		}
+		sheet.addMergedRegion(new CellRangeAddress(75, 77, 1, 1));
+		for(int mergeNo = 80; mergeNo < 548; mergeNo+=3) {
+			sheet.addMergedRegion(new CellRangeAddress(mergeNo, mergeNo+2, 1, 1));
+		}
+	}
+
+	private void addVariantDetailCells(Row row, String attrib, String type, String val, String valEs) {
+		Cell cell = createCell(row);
+		if (!StringUtils.isEmpty(attrib)) {
+			cell.setCellValue(attrib);
+			cell = createCell(row);
+		}
+		cell.setCellValue(type);
+		cell = createCell(row);
+		cell.setCellValue(val);
+		cell = createCell(row);
+		if(StringUtils.isNotEmpty(valEs)) {
+			cell.setCellValue(valEs);
+		}	
+	}
+	
+	private PlanVariantVO searchVariantKey(PlanVO plan, PlanVariantVO key) {
+		for (Map.Entry<PlanVariantVO, PlanVariantDetailsVO> entry : plan.getPlanBenefits().get(0).getPlanVariants()
+				.entrySet()) {
+			if(entry.getKey().getVarId().equalsIgnoreCase(key.getVarId())) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
+	
+	private void createPlanInfoSmallExcel(Row row, String displayText,String englishInfo, String spanishInfo, String code) {
+		colNo++;
+		Cell cell = createCell(row);
+		cell.setCellValue(displayText);
+		cell = createCell(row);
+		if(StringUtils.isNotEmpty(code)) {
+			cell.setCellValue(code);
+		}
+		cell = createCell(row);
+		if (StringUtils.isNotEmpty(englishInfo)) {
+			cell.setCellValue(englishInfo);
+		}
+		cell = createCell(row);
+		if (StringUtils.isNotEmpty(spanishInfo)) {
+			cell.setCellValue(spanishInfo);
+		}
+	}
+	
+	private void createSmallExcelSheets(PlanVO planEnglish, PlanVO planSpanish) throws IOException {
+		for (Map.Entry<PlanVariantVO, PlanVariantDetailsVO> entry : planEnglish.getPlanBenefits().get(0).getPlanVariants()
+				.entrySet()) {
+			PlanVariantVO varMaster = entry.getKey();
+			PlanVariantDetailsVO varDetails = entry.getValue();
+			PlanVariantVO varMasterEs = searchVariantKey(planEnglish, varMaster);
+			PlanVariantDetailsVO varDetailsEs = planSpanish.getPlanBenefits().get(0).getPlanVariants().get(varMasterEs);
+			Sheet sheet;
+			if(varMaster.getVarId().equalsIgnoreCase("00")) {
+				continue;
+			} else {
+				sheet = workbook.createSheet(varMaster.getVarTypTxt());
+			}
+			sheet.addMergedRegion(new CellRangeAddress(1, 12, 0, 0));
+			sheet.addMergedRegion(new CellRangeAddress(13, 57, 0, 0));
+			for (int rowNo = 0; rowNo < 58; rowNo++) {
+				if (rowNo % 100 == 0) {
+					((SXSSFSheet) sheet).flushRows(100);
+				}
+				colNo = 0;
+				conditionCounter = 0;
+				Row row = sheet.createRow(rowNo);
+				if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.screenname"));
+					cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.fieldname"));
+					cell = createCell(row);
+					cell.setCellValue("Code");
+					cell = createCell(row);
+					cell.setCellValue(getLanguages().get(Language.ENGLISH.getCode()));
+					cell = createCell(row);
+					cell.setCellValue(getLanguages().get(Language.SPANISH.getCode()));
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.planmanage.profile"));
+					cell = createCell(row);
+					cell.setCellValue(getText("txt.planmanage.coverageyear"));
+					cell = createCell(row);
+					cell = createCell(row);
+					if (StringUtils.isNotEmpty(planEnglish.getCoverageYear())) {
+						cell.setCellValue(planEnglish.getCoverageYear());
+					}
+					cell = createCell(row);
+					if (StringUtils.isNotEmpty(planSpanish.getCoverageYear())) {
+						cell.setCellValue(planSpanish.getCoverageYear());
+					}
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, getText("txt.planmanage.carriername"), planEnglish.getCarrierName(), planSpanish.getCarrierName(), "");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, getText("txt.planmanage.carrierid"), planEnglish.getCarrierId(), planSpanish.getCarrierId(), "");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, getText("txt.planmanage.planname"), planEnglish.getPlanName(), planSpanish.getPlanName(), "");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, getText("txt.planmanage.planid"), planEnglish.getPlanHiosId(), planSpanish.getPlanHiosId(), "");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, getText("txt.planmanage.plantype"), planEnglish.getPlanType(), planSpanish.getPlanType(), "");
+				} else if (rowNo == conditionCounter++) {
+					String englishInfo = "";
+					if (StringUtils.isNotEmpty(planEnglish.getMetalLevel())) {
+						for (LookupBean lookupBean : getLookups().get("MetalLevel")) {
+							if(lookupBean.getValue().equalsIgnoreCase(planEnglish.getMetalLevel())) {
+								englishInfo = lookupBean.getLabel();
+								break;
+							}
+						}
+					}
+					String spanishInfo = "";
+					if (StringUtils.isNotEmpty(planSpanish.getMetalLevel())) {
+						for (LookupBean lookupBean : getLookups().get("MetalLevel")) {
+							if(lookupBean.getValue().equalsIgnoreCase(planSpanish.getMetalLevel())) {
+								spanishInfo = lookupBean.getLabel();
+								break;
+							}
+						}
+					}
+					createPlanInfoSmallExcel(row, getText("txt.planmanage.metallevel"), englishInfo, spanishInfo, "");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, getText("txt.planmanage.networkurl"), planEnglish.getNetworkUrl().getNetworkURL(), planSpanish.getNetworkUrl().getNetworkURL(), "");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, getText("txt.planmanage.qualityrating"), planEnglish.getQualityRating(), planSpanish.getQualityRating(), "");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, getText("txt.planmanage.ehb"), planEnglish.getEhbPercentage(), planSpanish.getEhbPercentage(), "");
+				} else if (rowNo == conditionCounter++) {
+					String englishInfo = "";
+					if (StringUtils.isNotEmpty(planEnglish.getExchangeStatus())) {
+						for (LookupBean lookupBean : getLookups().get("ExchangeStatus")) {
+							if(lookupBean.getValue().equalsIgnoreCase(planEnglish.getExchangeStatus())) {
+								englishInfo = lookupBean.getLabel();
+								break;
+							}
+						}
+					}
+					String spanishInfo = "";
+					if (StringUtils.isNotEmpty(planSpanish.getExchangeStatus())) {
+						for (LookupBean lookupBean : getLookups().get("ExchangeStatus")) {
+							if(lookupBean.getValue().equalsIgnoreCase(planSpanish.getExchangeStatus())) {
+								spanishInfo = lookupBean.getLabel();
+								break;
+							}
+						}
+					}
+					createPlanInfoSmallExcel(row, getText("txt.planmanage.exchangestatus"), englishInfo, spanishInfo, "");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("PFS"), planEnglish.getCarrierFormularyVO().getFormularyUrlLink(), planSpanish.getCarrierFormularyVO().getFormularyUrlLink(), "");
+				} else if (rowNo == conditionCounter++) {
+					Cell cell = createCell(row);
+					cell.setCellValue(getText("txt.planmanage.benefits"));
+					cell = createCell(row);
+					cell.setCellValue(getText("txt.excel.planid") + " + " + getText("txt.excel.variantprefix"));
+					cell = createCell(row);
+					cell = createCell(row);
+					if (StringUtils.isNotEmpty(planEnglish.getCoverageYear()) && StringUtils.isNotEmpty(planEnglish.getPlanHiosId()) && StringUtils.isNotEmpty(varMaster.getVarId())) {
+						cell.setCellValue(planEnglish.getCoverageYear() + "-" + planEnglish.getPlanHiosId() + "-" + varMaster.getVarId());
+					}
+					cell = createCell(row);
+					if (StringUtils.isNotEmpty(planSpanish.getCoverageYear()) && StringUtils.isNotEmpty(planSpanish.getPlanHiosId()) && StringUtils.isNotEmpty(varMasterEs.getVarId())) {
+						cell.setCellValue(planSpanish.getCoverageYear() + "-" + planSpanish.getPlanHiosId() + "-" + varMasterEs.getVarId());
+					}
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, getText("txt.excel.variantname"), varMaster.getPlanSecondaryName(), varMasterEs.getPlanSecondaryName(), "");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("DEI")+", "+benefitsMap.get("INW"), varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier1Individual(), varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1Individual(), "DED_MED");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("DEI")+", "+benefitsMap.get("ONW"), varDetails.getDeductibleDetails().get("DED_MED").getOutOfNetworkIndividual(), varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkIndividual(), "DED_MED");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("DEF")+", "+benefitsMap.get("INW"), varDetails.getDeductibleDetails().get("DED_MED").getInNetworkTier1Family(), varDetailsEs.getDeductibleDetails().get("DED_MED").getInNetworkTier1Family(), "DED_MED");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("DEF")+", "+benefitsMap.get("ONW"), varDetails.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily(), varDetailsEs.getDeductibleDetails().get("DED_MED").getOutOfNetworkFamily(), "DED_MED");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("OOM") + " - " + benefitsMap.get("IND") +", "+benefitsMap.get("INW"), varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier1Individual(), varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier1Individual(), "MOOP_MED");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("OOM") + " - " + benefitsMap.get("IND") +", "+benefitsMap.get("ONW"), varDetails.getMoopDetails().get("MOOP_MED").getOutOfNetworkIndividual(), varDetailsEs.getMoopDetails().get("MOOP_MED").getOutOfNetworkIndividual(), "MOOP_MED");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("OOM") + " - " + benefitsMap.get("FAM") +", "+benefitsMap.get("INW"), varDetails.getMoopDetails().get("MOOP_MED").getInNetworkTier1Family(), varDetailsEs.getMoopDetails().get("MOOP_MED").getInNetworkTier1Family(), "MOOP_MED");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("OOM") + " - " + benefitsMap.get("FAM") +", "+benefitsMap.get("ONW"), varDetails.getMoopDetails().get("MOOP_MED").getOutOfNetworkFamily(), varDetailsEs.getMoopDetails().get("MOOP_MED").getOutOfNetworkFamily(), "MOOP_MED");
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("PSI").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PSI") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("PSI").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PSI").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("PSI").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PSI") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("PSI").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PSI").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("PSI").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PSI") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("PSI").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PSI").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("PSI").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PSI") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("PSI").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PSI").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("PCV").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PCV") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("PCV").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PCV").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("PCV").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PCV") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("PCV").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PCV").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("PCV").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PCV") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("PCV").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PCV").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("PCV").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PCV") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("PCV").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PCV").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("SPV").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("SPV") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("SPV").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("SPV").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("SPV").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("SPV") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("SPV").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("SPV").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("SPV").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("SPV") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("SPV").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("SPV").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("SPV").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("SPV") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("SPV").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("SPV").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("PDD")+", "+benefitsMap.get("INW"), varDetails.getDeductibleDetails().get("DED_DRG").getInNetworkTier1Individual(), varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier1Individual(), "DED_DRG");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("PDD")+", "+benefitsMap.get("ONW"), varDetails.getDeductibleDetails().get("DED_DRG").getOutOfNetworkIndividual(), varDetailsEs.getDeductibleDetails().get("DED_DRG").getOutOfNetworkIndividual(), "DED_DRG");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("PDF")+", "+benefitsMap.get("INW"), varDetails.getDeductibleDetails().get("DED_DRG").getInNetworkTier1Family(), varDetailsEs.getDeductibleDetails().get("DED_DRG").getInNetworkTier1Family(), "DED_DRG");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("PDF")+", "+benefitsMap.get("ONW"), varDetails.getDeductibleDetails().get("DED_DRG").getOutOfNetworkFamily(), varDetailsEs.getDeductibleDetails().get("DED_DRG").getOutOfNetworkFamily(), "DED_DRG");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("PDI")+", "+benefitsMap.get("INW"), varDetails.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Individual(), varDetailsEs.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Individual(), "MOOP_DRG");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("PDI")+", "+benefitsMap.get("ONW"), varDetails.getMoopDetails().get("MOOP_DRG").getOutOfNetworkIndividual(), varDetailsEs.getMoopDetails().get("MOOP_DRG").getOutOfNetworkIndividual(), "MOOP_DRG");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("OOF")+", "+benefitsMap.get("INW"), varDetails.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Family(), varDetailsEs.getMoopDetails().get("MOOP_DRG").getInNetworkTier1Family(), "MOOP_DRG");
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("OOF")+", "+benefitsMap.get("ONW"), varDetails.getMoopDetails().get("MOOP_DRG").getOutOfNetworkFamily(), varDetailsEs.getMoopDetails().get("MOOP_DRG").getOutOfNetworkFamily(), "MOOP_DRG");
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("GDG").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T1I"), varDetails.getCopayDetails().get("GDG").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("GDG").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("GDG").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T1I"), varDetails.getCopayDetails().get("GDG").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("GDG").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("GDG").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T1O"), varDetails.getCopayDetails().get("GDG").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("GDG").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("GDG").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T1O"), varDetails.getCopayDetails().get("GDG").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("GDG").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("PBD").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T2I"), varDetails.getCopayDetails().get("PBD").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PBD").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("PBD").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T2I"), varDetails.getCopayDetails().get("PBD").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PBD").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("PBD").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T2O"), varDetails.getCopayDetails().get("PBD").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PBD").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("PBD").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T2O"), varDetails.getCopayDetails().get("PBD").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("PBD").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("NBD").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T3I"), varDetails.getCopayDetails().get("NBD").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("NBD").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("NBD").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T3I"), varDetails.getCopayDetails().get("NBD").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("NBD").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("NBD").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T3O"), varDetails.getCopayDetails().get("NBD").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("NBD").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("NBD").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T3O"), varDetails.getCopayDetails().get("NBD").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("NBD").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("SDG").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T4I"), varDetails.getCopayDetails().get("SDG").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("SDG").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("SDG").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T4I"), varDetails.getCopayDetails().get("SDG").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("SDG").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("SDG").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T4O"), varDetails.getCopayDetails().get("SDG").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("SDG").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("SDG").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("PRP") +", "+benefitsMap.get("T4O"), varDetails.getCopayDetails().get("SDG").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("SDG").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("ERS").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("ERS") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("ERS").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("ERS").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("ERS").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("ERS") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("ERS").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("ERS").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("ERS").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("ERS") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("ERS").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("ERS").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("ERS").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("ERS") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("ERS").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("ERS").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("IHS").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("IHS") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("IHS").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("IHS").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("IHS").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("IHS") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("IHS").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("IHS").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("IHS").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("IHS") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("IHS").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("IHS").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("IHS").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("IHS") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("IHS").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("IHS").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("DCC").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("DAP") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("DCC").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("DCC").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("DCC").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("DAP") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("DCC").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("DCC").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("DCC").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("DAP") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("DCC").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("DCC").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("DCC").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("DAP") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("DCC").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("DCC").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("BDC").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("BSE") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("BDC").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("BDC").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("BDC").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("BSE") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("BDC").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("BDC").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("BDC").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("BSE") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("BDC").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("BDC").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("BDC").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("BSE") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("BDC").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("BDC").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("MDC").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("MSC") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("MDC").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("MDC").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("MDC").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("MSC") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("MDC").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("MDC").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("MDC").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("MSC") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("MDC").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("MDC").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("MDC").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("MSC") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("MDC").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("MDC").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("OCD").getInNetworkUpdateFieldName().equalsIgnoreCase("copayInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("ODS") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("OCD").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("OCD").getInNetworkDisplayValue(), APIConstants.COPAY_IN);
+					} else if(varDetails.getCopayDetails().get("OCD").getInNetworkUpdateFieldName().equalsIgnoreCase("coinsInNetworkTier1")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("ODS") +", "+benefitsMap.get("INW"), varDetails.getCopayDetails().get("OCD").getInNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("OCD").getInNetworkDisplayValue(), APIConstants.COINS_IN);
+					}
+				} else if (rowNo == conditionCounter++) {
+					if(varDetails.getCopayDetails().get("OCD").getOutNetworkUpdateFieldName().equalsIgnoreCase("copayOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("ODS") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("OCD").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("OCD").getOutNetworkDisplayValue(), APIConstants.COPAY_OUT);
+					} else if(varDetails.getCopayDetails().get("OCD").getOutNetworkUpdateFieldName().equalsIgnoreCase("coinsOutOfNetwork")) {
+						createPlanInfoSmallExcel(row, benefitsMap.get("ODS") +", "+benefitsMap.get("ONW"), varDetails.getCopayDetails().get("OCD").getOutNetworkDisplayValue(), varDetailsEs.getCopayDetails().get("OCD").getOutNetworkDisplayValue(), APIConstants.COINS_OUT);
+					}
+				} else if (rowNo == conditionCounter++) {
+					createPlanInfoSmallExcel(row, benefitsMap.get("SBC"), varDetails.getHsaBenefitCoverageUrlTxt(), varDetailsEs.getHsaBenefitCoverageUrlTxt(), "");
+				}
+			}
+			for(int i=0; i<5; i++) {
+				sheet.autoSizeColumn(i, true);
+			}
+		}
+	}
+	
+	
+	public String writeExcel() throws Exception {
+		setLookups();
+		PlanVO plan = ServiceLocator.getInstance().getService(PlanManagerService.class).retrievePlan(ConversionUtil.toLong(planId), Language.ENGLISH);
+		PlanVO planSpanish = ServiceLocator.getInstance().getService(PlanManagerService.class).retrievePlan(ConversionUtil.toLong(planId), Language.SPANISH);
+		workbook = new SXSSFWorkbook(200);
+		createMainSheet(plan, planSpanish);
+		createVariants(plan, planSpanish);
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		try {
+			workbook.write(bos);
+			byte[] excelBytes = bos.toByteArray();
+			excelFileLength = excelBytes.length;
+			excelFileName = plan.getPlanHiosId() + ".xlsx";
+			excelInputStream = new ByteArrayInputStream(excelBytes);
+		} finally {
+			bos.close();
+		}
+		workbook.close();
+		workbook.dispose();
+		return "download";
+	}
+	
+	public String writeSmallExcel() throws Exception {
+		setLookups();
+		PlanVO planEnglish = ServiceLocator.getInstance().getService(PlanManagerService.class).retrievePlan(ConversionUtil.toLong(planId), Language.ENGLISH);
+		PlanVO planSpanish = ServiceLocator.getInstance().getService(PlanManagerService.class).retrievePlan(ConversionUtil.toLong(planId), Language.SPANISH);
+		smallExcelFlag = true;
+		workbook = new SXSSFWorkbook(200);
+		createSmallExcelSheets(planEnglish, planSpanish);
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		try {
+			workbook.write(bos);
+			byte[] excelBytes = bos.toByteArray();
+			excelFileLength = excelBytes.length;
+			excelFileName = planEnglish.getPlanHiosId() + "_" + "Translation" + ".xlsx";
+			excelInputStream = new ByteArrayInputStream(excelBytes);
+		} finally {
+			bos.close();
+		}
+		workbook.close();
+		workbook.dispose();
+		return "download";
+	}
+
+	public File getUploadedExcel() {
+		return uploadedExcel;
+	}
+
+	public void setUploadedExcel(File uploadedExcel) {
+		this.uploadedExcel = uploadedExcel;
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+	public InputStream getExcelInputStream() {
+		return excelInputStream;
+	}
+
+	public void setExcelInputStream(InputStream fileInputStream) {
+		this.excelInputStream = fileInputStream;
+	}
+
+	public Map<String, String> getMoopMap() {
+		if (moopMap == null) {
+			moopMap = new HashMap<String, String>();
+		}
+		return moopMap;
+	}
+
+	public void setMoopMap(Map<String, String> moopMap) {
+		this.moopMap = moopMap;
+	}
+
+	public Map<String, String> getDeductibleMap() {
+		if (deductibleMap == null) {
+			deductibleMap = new HashMap<String, String>();
+		}
+		return deductibleMap;
+	}
+
+	public void setDeductibleMap(Map<String, String> deductibleMap) {
+		this.deductibleMap = deductibleMap;
+	}
+
+	public Map<String, String> getCopayMap() {
+		if (copayMap == null) {
+			copayMap = new HashMap<String, String>();
+		}
+		return copayMap;
+	}
+
+	public void setCopayMap(Map<String, String> copayMap) {
+		this.copayMap = copayMap;
+	}
+
+	public Map<String, String> getLanguages() {
+		if (languages == null) {
+			languages = new HashMap<String, String>();
+		}
+		return languages;
+	}
+
+	public void setLanguages(Map<String, String> languages) {
+		this.languages = languages;
+	}
+
+	public String getPlanId() {
+		return planId;
+	}
+
+	public void setPlanId(String planId) {
+		this.planId = planId;
+	}
+
+	public PlanVO getReadPlan() {
+		return readPlan;
+	}
+
+	public void setReadPlan(PlanVO readPlan) {
+		this.readPlan = readPlan;
+	}
+
+	public SXSSFWorkbook getWorkbook() {
+		return workbook;
+	}
+
+	public void setWorkbook(SXSSFWorkbook workbook) {
+		this.workbook = workbook;
+	}
+
+	public int getColNo() {
+		return colNo;
+	}
+
+	public void setColNo(int colNo) {
+		this.colNo = colNo;
+	}
+
+	public int getExcelFileLength() {
+		return excelFileLength;
+	}
+
+	public void setExcelFileLength(int excelFileLength) {
+		this.excelFileLength = excelFileLength;
+	}
+
+	public String getExcelFileName() {
+		return excelFileName;
+	}
+
+	public void setExcelFileName(String excelFileName) {
+		this.excelFileName = excelFileName;
+	}
+
+	public Map<String, String> getBenefitsMap() {
+		if (benefitsMap == null) {
+			benefitsMap = new HashMap<String, String>();
+		}
+		return benefitsMap;
+	}
+
+	public void setBenefitsMap(Map<String, String> benefitsMap) {
+		this.benefitsMap = benefitsMap;
+	}
+
+}

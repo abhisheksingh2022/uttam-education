@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 29, 2015 6:45:01 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.TPlanIndivRtStg" table="T_PLAN_INDIV_RT_STG" optimistic-lock="version">
+        <id name="planIndivRtId" type="java.lang.Long">
+            <column name="PLAN_INDIV_RT_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_T_PLAN_INDIV_RT_STG_SEQ</param>
+    		</generator>
+        </id>
+        <property name="hlthPlanId" type="java.lang.Long">
+            <column name="HLTH_PLAN_ID" precision="12" scale="0" />
+        </property>
+        <property name="age" type="string">
+            <column name="AGE" length="12">
+                <comment>Represents age.</comment>
+            </column>
+        </property>
+        <property name="planRtNb" type="java.lang.Double">
+            <column name="PLAN_RT_NB" precision="12" />
+        </property>
+        <property name="tobcoUseTx" type="string">
+            <column name="TOBCO_USE_TX" length="20" />
+        </property>
+        <property name="ratingAreaId" type="string">
+            <column name="RATING_AREA_ID" length="20">
+                <comment>Represents rating area id.</comment>
+            </column>
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

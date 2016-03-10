@@ -1,0 +1,85 @@
+package com.hixapi.ahct.cds.struts;
+
+import com.hixapi.ahct.cds.model.plan.PlanContainer;
+import com.hixapi.ahct.cds.model.plan.PlanDetailsFinder;
+import com.hixapi.ahct.cds.service.CDSService;
+import com.hixapi.web.framework.common.UserMessage;
+import com.hixapi.web.framework.service.ServiceLocator;
+import com.hixapi.web.framework.struts.BaseAction;
+
+public class PlanDetailsAction extends BaseAction {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3189615713902880462L;
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager
+			.getLogger(AllPlanGridAction.class);
+
+	private String planDetailsDisplayId;
+	private String premiumAmt;
+	private PlanContainer planContainer;
+
+	public PlanContainer getPlanContainer() {
+		return planContainer;
+	}
+
+	public void setPlanContainer(PlanContainer planContainer) {
+		this.planContainer = planContainer;
+	}
+
+	public String getPlanDetailsDisplayId() {
+		return planDetailsDisplayId;
+	}
+
+	public void setPlanDetailsDisplayId(String planDetailsDisplayId) {
+		this.planDetailsDisplayId = planDetailsDisplayId;
+	}
+
+	public String getPremiumAmt() {
+		return premiumAmt;
+	}
+
+	public void setPremiumAmt(String premiumAmt) {
+		this.premiumAmt = premiumAmt;
+	}
+
+	public String goBack() {
+		log.debug("IN GOBACK PLAN DETAILS");
+		return BACK;
+	}
+
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		// TODO Auto-generated method stub
+		// System.out.println("****************************");
+		PlanDetailsFinder detailsFinder = new PlanDetailsFinder();
+		detailsFinder.setPlanDetailsDisplayId(planDetailsDisplayId);
+		detailsFinder.setPremiumAmt(premiumAmt);
+		setPlanContainer(ServiceLocator.getInstance().getService(CDSService.class).retrievePlan(detailsFinder));
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		// TODO Auto-generated method stub
+		if (System.currentTimeMillis() % 2 == 0) {
+			super.addBusinessMessage(new UserMessage(
+					1,
+					"This is random error message that will come once in a  while",
+					null, null));
+			return FLASH;
+		}
+		return PAGE;
+	}
+
+	/*
+	 * Empty method to allow the user to ping the server to refresh the session
+	 * timeout clock.
+	 */
+	public String pingSession() {
+		// do nothing
+
+		return SUCCESS;
+	}
+
+}

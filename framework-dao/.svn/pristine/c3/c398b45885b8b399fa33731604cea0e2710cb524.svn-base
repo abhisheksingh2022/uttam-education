@@ -1,0 +1,33 @@
+package com.hixapi.pmp.dao.user;
+
+import java.util.List;
+
+import com.hixapi.pmp.api.model.criteria.CarrierUserSearchCriteria;
+import com.hixapi.pmp.api.model.criteria.LoginHistorySearchCriteria;
+import com.hixapi.pmp.entity.model.CarrierUser;
+import com.hixapi.pmp.entity.model.RoleMstr;
+import com.hixapi.pmp.entity.model.UsrLoginHistory;
+
+public interface UserDAO {
+
+	CarrierUser retrieveUserByLoginId(String loginId);
+
+	CarrierUser retrieveUserById(Long id);
+
+	void saveCarrierUser(CarrierUser carrierUser);
+	
+	void updateCarrierUser(CarrierUser carrierUser);
+	
+	void deleteCarrierUser(CarrierUser carrierUser);
+
+	List<RoleMstr> retrieveAvailableRoles();
+	
+	List<CarrierUser> searchCarrierUsers(CarrierUserSearchCriteria criteria);
+
+	void saveLoginHistory(UsrLoginHistory record);
+	
+	public List<Object[]> retrieveLoginHistory(LoginHistorySearchCriteria criteria);
+
+	boolean checkIfPlanAccessibleToCurrentUser(Long planIdNbr);
+	boolean checkIfPlanAccessibleToCurrentUser(String planHiosId);
+}

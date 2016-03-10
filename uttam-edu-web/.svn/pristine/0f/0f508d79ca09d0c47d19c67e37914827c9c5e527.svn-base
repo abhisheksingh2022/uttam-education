@@ -1,0 +1,3 @@
+application.systemid = PMP
+errordescription.ERR001 = Unexpected error from business service
+errordescription.ERRWS1 = Connectivity Issue with ISIM

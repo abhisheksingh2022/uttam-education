@@ -1,0 +1,112 @@
+package com.hixapi.pmp.api.model;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.hixapi.pmp.api.model.APICodeConstants.PreferenceType;
+import com.hixapi.pmp.api.model.APICodeConstants.PreferenceValue;
+
+public class UserVO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private String loginId;
+	private String organizationName;
+	private String organizationId;
+	private Long userId;
+
+	private String firstName;
+	private String lastName;
+	private String middleInitial;
+	private String statusCode;
+	
+	private List<String> roles;
+	
+	private Map<PreferenceType, PreferenceValue> preferences = new HashMap<PreferenceType, PreferenceValue>();
+
+	public String getLoginId() {
+		return loginId;
+	}
+
+	public void setLoginId(String loginId) {
+		this.loginId = loginId;
+	}
+
+	public String getOrganizationName() {
+		return organizationName;
+	}
+
+	public void setOrganizationName(String organizationName) {
+		this.organizationName = organizationName;
+	}
+
+	public String getOrganizationId() {
+		return organizationId;
+	}
+
+	public void setOrganizationId(String organizationId) {
+		this.organizationId = organizationId;
+	}
+
+	public Long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public String getLastName() {
+		return lastName;
+	}
+
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
+	public String getMiddleInitial() {
+		return middleInitial;
+	}
+
+	public void setMiddleInitial(String middleInitial) {
+		this.middleInitial = middleInitial;
+	}
+
+	public String getStatusCode() {
+		return statusCode;
+	}
+
+	public void setStatusCode(String statusCode) {
+		this.statusCode = statusCode;
+	}
+
+	public Map<PreferenceType, PreferenceValue> getPreferences() {
+		return preferences;
+	}
+
+	public void setPreferences(Map<PreferenceType, PreferenceValue> preferences) {
+		this.preferences = preferences;
+	}
+
+	public List<String> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(List<String> roles) {
+		this.roles = roles;
+	}
+
+}

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	
+	http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+	http://www.springframework.org/schema/jee
+	http://www.springframework.org/schema/jee/spring-jee-4.1.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx-4.1.xsd
+	http://www.springframework.org/schema/util 
+	http://www.springframework.org/schema/util/spring-util.xsd">
+
+
+
+	<bean id="dbEnvironmentProvider" class="com.hixapi.framework.dao.env.DatabaseEnvProvider" init-method="reload">
+		<property name="dataSource" ref="hixDataSource" />
+		<property name="applicationId">
+			<value>${application.systemid}</value>
+		</property>
+	</bean>
+
+	<bean id="resourceBundleDao" class="com.uttam.framework.dao.i18n.ResourceBundleDAO">
+		<property name="template" ref="simpleJdbcTemplate" />
+		<property name="applicationId">
+			<value>${application.systemid}</value>
+		</property>
+	</bean>
+
+	<bean class="org.springframework.jdbc.core.JdbcTemplate" id="simpleJdbcTemplate">
+		<property name="dataSource" ref="hixDataSource"></property>
+	</bean>
+
+
+	<jee:jndi-lookup id="hixDataSource" jndi-name="jdbc/pmpdb" expected-type="javax.sql.DataSource" />
+
+
+	<!--Bean settings for session factory starts -->
+	<bean id="hibernateTemplate" class="org.springframework.orm.hibernate4.HibernateTemplate">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<!-- Configure Hibernate 4 Session Facotry -->
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+
+		<property name="dataSource">
+			<ref bean="hixDataSource" />
+		</property>
+
+		<property name="configLocation">
+			<value>classpath:hibernate/hibernate.cfg.xml</value>
+		</property>
+		<property name="entityInterceptor">
+			<bean class="com.hixapi.framework.dao.interceptor.AuditLogInterceptor" />
+		</property>
+	</bean>
+
+	
+
+
+
+	<bean id="userDAO" class="com.hixapi.pmp.dao.user.impl.UserDAOImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+		<property name="carrierDAO" ref="carrierDAO" />
+	</bean>
+	<bean id="carrierDAO" class="com.hixapi.pmp.dao.carrier.impl.CarrierDAOImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<bean id="planDAO" class="com.hixapi.pmp.dao.plan.impl.PlanDAOImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+		<property name="queryUtilDAO" ref="queryUtilDAO" />
+		<property name="carrierDAO" ref="carrierDAO" />
+	</bean>
+	
+	<bean id="queryUtilDAO" class="com.hixapi.framework.dao.helper.QueryUtilDAO">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<bean id="systemAdinistrationDAO" class="com.hixapi.pmp.dao.admin.impl.SystemAdministrationDAOImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<bean id="planUploadSupportDAO" class="com.hixapi.pmp.dao.plan.impl.PlanUploadSupportDAOImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<bean id="eligibilityDAO" class="com.hixapi.pmp.dao.prescreen.impl.EligibilityDAOImpl">
+	   <property name="sessionFactory" ref="sessionFactory" />
+	</bean>   
+	
+	
+
+
+</beans>

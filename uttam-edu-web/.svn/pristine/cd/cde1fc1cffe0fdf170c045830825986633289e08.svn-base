@@ -1,0 +1,191 @@
+package com.hixapi.web.framework.struts;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.servlet.http.Cookie;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
+import org.apache.struts2.ServletActionContext;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.EncryptionUtil;
+import com.hixapi.framework.common.context.ContextKeyEnum;
+import com.hixapi.framework.common.context.ContextProvider;
+import com.hixapi.framework.common.context.MetricEvent;
+import com.hixapi.framework.common.context.MetricKeyEnum;
+import com.hixapi.framework.common.env.IEnvironmentProvider;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.exception.UnauthorizedAccessException;
+import com.hixapi.framework.common.model.UserIdentity;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.UserVO;
+import com.hixapi.pmp.service.user.UserService;
+import com.opensymphony.xwork2.ActionContext;
+import com.opensymphony.xwork2.ActionInvocation;
+import com.opensymphony.xwork2.interceptor.Interceptor;
+
+public class SecurityInterceptor implements Interceptor {
+
+	private static final Logger _log = LogManager.getLogger(SecurityInterceptor.class);
+
+	private static final long serialVersionUID = 8913873567138694339L;
+
+	public static final String HTTP_WEBSEC_USERID = "iv-user";
+	public static final String HTTP_WEBSEC_USER_ROLES = "iv-groups";
+
+	private static final String RESULT_UNAUTHORIZED = "unauthorized";
+
+	public void destroy() {
+
+	}
+
+	public void init() {
+	}
+
+	public String intercept(ActionInvocation invocation) throws Exception {
+		_log.debug("Entry");
+		Object action = ActionContext.getContext().getActionInvocation().getAction();
+		boolean isSecureAction = (action instanceof ISecureAction);
+		if (isSecureAction) {
+			_log.debug("Secure Action being invoked : " + action.getClass().getName());
+			boolean authRequired = true;
+			final IEnvironmentProvider envService = ServiceLocator.getInstance().getService(IEnvironmentProvider.class);
+			if (!envService.isProduction()) {
+				authRequired = envService.getProperty("global.authrequired", Boolean.class, true);
+				if(!authRequired){
+					_log.info("Byepassing security in test environment, ignoring security headers and using cookies");
+				}
+			}
+
+			String userId = "";
+			List<String> userRoles = Collections.emptyList();
+			if (authRequired) {
+				// From ISAM header if security is enabled
+				userId = readHeader(HTTP_WEBSEC_USERID);
+				String roles = readHeader(HTTP_WEBSEC_USER_ROLES);
+				if (StringUtils.isNotBlank(roles)) {
+					userRoles = buildRoles(roles);
+				}
+			} else {
+				// From dev cookie if security is not enabled
+				userId = EncryptionUtil.decrypt(readCookie(HTTP_WEBSEC_USERID));
+				String roles = EncryptionUtil.decrypt(readCookie(HTTP_WEBSEC_USER_ROLES));
+				if (StringUtils.isNotBlank(roles)) {
+					userRoles = buildRoles(roles);
+				}
+			}
+			_log.debug("User Id : " + userId);
+			_log.debug("Roles: " + userRoles);
+			// Check if user id is found
+			if (StringUtils.isBlank(userId) || (userRoles == null || userRoles.isEmpty())) {
+				_log.error(APIConstants.ERRORCODE_SESSION_INVALID + ": User Id / Roles not provided");
+				return RESULT_UNAUTHORIZED;
+			}
+
+			// User id is found - Get user information and set the context
+			// variable
+			UserIdentity sessionUser = SessionController.getUser();
+			if (sessionUser == null || !StringUtils.equals(sessionUser.getLoginId(), userId)) {
+				try {
+					sessionUser = setUserInformation(action, userId, userRoles);
+				} catch (UnauthorizedAccessException ue) {
+					return RESULT_UNAUTHORIZED;
+				}
+			}
+			((ISecureAction) action).setUser(sessionUser);
+			ContextProvider.setContextField(ContextKeyEnum.REQUEST_USER, sessionUser);
+			ThreadContext.put("USER_ID", userId);
+
+			ISecureAction secureAction = (ISecureAction) action;
+			if (!secureAction.shouldAllowCurrentUserAccess()) {
+				_log.error("Denied {} access to {} ", userId, ActionContext.getContext().getActionInvocation().getProxy()
+						.getActionName());
+				return RESULT_UNAUTHORIZED;
+			}
+
+		} else {
+			_log.debug("Action not marked as security required, no-op : " + action.getClass().getName());
+		}
+		String result = invocation.invoke();
+		_log.debug("Exit");
+		return result;
+	}
+
+	private UserIdentity setUserInformation(Object action, String userId, List<String> userRoles)
+			throws BusinessServiceException {
+		UserIdentity u = new UserIdentity();
+		u.setLoginId(userId);
+		u.setRoles(userRoles);
+		_log.debug("Setting user {} in session with roles {}", userId, userRoles);
+		SessionController.setUser(u);
+		UserVO vo = ServiceLocator.getInstance().getService(UserService.class).retrieveUserByLoginId(userId, userRoles);
+		
+		if (vo == null) {
+			MetricEvent event = new MetricEvent(MetricKeyEnum.LOGIN, false);
+			event.addDetail("id", userId);
+			event.log();
+			UnauthorizedAccessException ex = new UnauthorizedAccessException();
+			ex.setErrorCode(APIConstants.ERRORCODE_ACCESS_DENIED);
+			_log.error("UnauthorizedAccessException - user not found: " + userId);
+			throw ex;
+		}
+		MetricEvent event = new MetricEvent(MetricKeyEnum.LOGIN, true);
+		event.addDetail("id", userId);
+		event.log();
+		u.setOrgId(ConversionUtil.toLong(vo.getOrganizationId()));
+		u.setOrgName(vo.getOrganizationName());
+		u.setPreferences(vo.getPreferences());
+		u.setFirstName(vo.getFirstName());
+		u.setLastName(vo.getLastName());
+		u.setMiddleInitial(vo.getMiddleInitial());
+		ServiceLocator.getInstance().getService(UserService.class).saveLoginHistory(userId);
+		_log.debug("Set User Identity on Session");
+
+		return u;
+	}
+
+	private List<String> buildRoles(String roles) {
+		String[] loggedInUserRoles = null;
+		roles = roles.replace("\"", "");
+		loggedInUserRoles = roles.split(",");
+		List<String> result = new ArrayList<String>();
+		for (String role : loggedInUserRoles) {
+			if (StringUtils.isNotBlank(role)) {
+				result.add(StringUtils.trimToEmpty(role));
+			}
+		}
+		return result;
+	}
+
+	private String readCookie(String paramName) {
+		Validate.notNull(paramName, "Cookie Name");
+		_log.debug("Finding cookie " + paramName);
+		String paramValue = null;
+		Cookie[] cookies = ServletActionContext.getRequest().getCookies();
+		if (cookies != null) {
+			for (Cookie c : cookies) {
+				_log.debug("Comparing cookie  name : " + c.getName() + " >  " + paramName);
+				if (c.getName().equals(paramName)) {
+					paramValue = c.getValue();
+					break;
+				}
+			}
+		}
+		return paramValue;
+	}
+
+	private String readHeader(String paramName) {
+		Validate.notNull(paramName, "Header Name");
+		_log.debug("Finding Header " + paramName);
+		String paramValue = ServletActionContext.getRequest().getHeader(paramName);
+		return paramValue;
+	}
+
+}

@@ -1,0 +1,198 @@
+package com.hixapi.pmp.service.plan.mapping;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.pmp.api.model.PlanVariantDetailsCopayVO;
+import com.hixapi.pmp.entity.model.PlanVariantDtl;
+import com.hixapi.pmp.entity.model.PlanVariantDtlCopayCoins;
+import com.hixapi.pmp.entity.model.PlanVariantDtlDeductible;
+import com.hixapi.pmp.entity.model.PlanVariantDtlMaxOop;
+
+public class HIXBenefitFieldIdentifier {
+
+	private static final Logger log = LogManager.getLogger(HIXBenefitFieldIdentifier.class);
+
+	public PlanVariantDtlDeductible findDeductibleForMedical(PlanVariantDtl variant) {
+		PlanVariantDtlDeductible result = null;
+
+		log.debug("Finding Medical Deductible");
+		String integrated = variant.getMedAndDrgDeducIntgFlg();
+		String key = null;
+		final String hiosId = variant.getVariantHiosId();
+		if ("Yes".equalsIgnoreCase(integrated)) {
+			log.debug("For variant {}, med/drug integrated deductible (CMD)", hiosId);
+			key = "CMD"; //PLAN_LKUP_DEDUCTIBLE_TYPE_CD
+		} else {
+			log.debug("For variant {}, med/drug not integrated deductible (MED)", hiosId);
+			key = "MED"; // PLAN_LKUP_DEDUCTIBLE_TYPE_CD
+		}
+
+		if (CollectionUtils.isNotEmpty(variant.getPlanVariantDtlDeductibles())) {
+			for (PlanVariantDtlDeductible ded : variant.getPlanVariantDtlDeductibles()) {
+				if (key.equals(ded.getLkPlanVariantDtlDeductibleCd())) {
+					result = ded;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.info("Did not find an entry for deductible type {}, for variant {}", key, hiosId);
+		}
+		return result;
+	}
+
+	public PlanVariantDtlDeductible findDeductibleForDrug(PlanVariantDtl variant) {
+		PlanVariantDtlDeductible result = null;
+
+		log.debug("Finding Drug Deductible");
+		//String integrated = variant.getMedAndDrgDeducIntgFlg();
+		String key = "DRD"; //Drug is always DRD, it will be set as "Included in Deductible if INtegrated (Consistent Text Mapper)"
+		final String hiosId = variant.getVariantHiosId();
+		//		if("Yes".equalsIgnoreCase(integrated)){
+		//			log.debug("For variant {}, med/drug integrated deductible (CMD)", hiosId);
+		//			key = "CMD"; //PLAN_LKUP_DEDUCTIBLE_TYPE_CD
+		//		}else{
+		//			log.debug("For variant {}, med/drug not integrated deductible (DRD)", hiosId);
+		//			key = "DRD"; // PLAN_LKUP_DEDUCTIBLE_TYPE_CD
+		//		}
+		//		
+		if (CollectionUtils.isNotEmpty(variant.getPlanVariantDtlDeductibles())) {
+			for (PlanVariantDtlDeductible ded : variant.getPlanVariantDtlDeductibles()) {
+				if (key.equals(ded.getLkPlanVariantDtlDeductibleCd())) {
+					result = ded;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.info("Did not find an entry for deductible type {}, for variant {}", key, hiosId);
+		}
+		return result;
+	}
+
+	public PlanVariantDtlMaxOop findMoopForMedical(PlanVariantDtl variant) {
+		PlanVariantDtlMaxOop result = null;
+
+		log.debug("Finding Medical Moop");
+		String integrated = variant.getMedAndDrgMaxOutOfPocketIntgFlg();
+		String key = null;
+		final String hiosId = variant.getVariantHiosId();
+		if ("Yes".equalsIgnoreCase(integrated)) {
+			log.debug("For variant {}, med/drug integrated moop (MMD)", hiosId);
+			key = "MMD"; //PLAN_LKUP_MAXOOP_TYPE_CD
+		} else {
+			log.debug("For variant {}, med/drug not integrated deductible (MPM)", hiosId);
+			key = "MPM"; // PLAN_LKUP_DEDUCTIBLE_TYPE_CD
+		}
+
+		if (CollectionUtils.isNotEmpty(variant.getPlanVariantDtlMaxOops())) {
+			for (PlanVariantDtlMaxOop ded : variant.getPlanVariantDtlMaxOops()) {
+				if (key.equals(ded.getLkPlanVariantDtlMaxOopCd())) {
+					result = ded;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.info("Did not find an entry for moop type {}, for variant {}", key, hiosId);
+		}
+		return result;
+	}
+
+	public PlanVariantDtlMaxOop findMoopForDrug(PlanVariantDtl variant) {
+		PlanVariantDtlMaxOop result = null;
+
+		log.debug("Finding PlanVariantDtlMaxOop Drug");
+		String key = "MPD"; //Drug is always MPD, it will be set as "Included in Deductible if Integrated (ConsistentTextMapper)"
+		final String hiosId = variant.getVariantHiosId();
+		if (CollectionUtils.isNotEmpty(variant.getPlanVariantDtlMaxOops())) {
+			for (PlanVariantDtlMaxOop ded : variant.getPlanVariantDtlMaxOops()) {
+				if (key.equals(ded.getLkPlanVariantDtlMaxOopCd())) {
+					result = ded;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.info("Did not find an entry for moop type {}, for variant {}", key, hiosId);
+		}
+		return result;
+	}
+
+	public String findInNetworkDisplayValue(PlanVariantDtlCopayCoins vo) {
+		String result = null;
+		log.debug("findInNetworkDisplayValue for CPCI - {}, Copay INNW: {}, Coins INNW: {}, Copay ONW: {}, Coins ONW:{}",
+				vo.getLkCopayCoinsTypeCd(), vo.getCopayInNetworkTier1(), vo.getCoinsInNetworkTier1(), vo.getCopayOutOfNetwork(),
+				vo.getCoinsOutOfNetwork());
+		if ((StringUtils.isBlank(vo.getCopayInNetworkTier1()) || APIConstants.NOT_APPLICABLE.equalsIgnoreCase(vo
+				.getCopayInNetworkTier1()))
+				&& (StringUtils.isNotBlank(vo.getCoinsInNetworkTier1()) && !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(vo
+						.getCoinsInNetworkTier1()))) {
+			result = vo.getCoinsInNetworkTier1();
+
+		} else {
+			result = vo.getCopayInNetworkTier1();
+		}
+
+		return result;
+	}
+
+	public String findOutNetworkDisplayValue(PlanVariantDtlCopayCoins vo) {
+		String result = null;
+		log.debug("findOutNetworkDisplayValue for CPCI - {}, Copay INNW: {}, Coins INNW: {}, Copay ONW: {}, Coins ONW:{}",
+				vo.getLkCopayCoinsTypeCd(), vo.getCopayInNetworkTier1(), vo.getCoinsInNetworkTier1(), vo.getCopayOutOfNetwork(),
+				vo.getCoinsOutOfNetwork());
+		if ((StringUtils.isBlank(vo.getCoinsOutOfNetwork()) || APIConstants.NOT_APPLICABLE.equalsIgnoreCase(vo
+				.getCoinsOutOfNetwork()))
+				&& (StringUtils.isNotBlank(vo.getCopayOutOfNetwork()) && !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(vo
+						.getCopayOutOfNetwork()))) {
+			result = vo.getCopayOutOfNetwork();
+
+		} else {
+			result = vo.getCoinsOutOfNetwork();
+		}
+
+		return result;
+	}
+
+	
+	
+	/**
+	 * Does the following a) Check if innw copay is "Not Applicable", and innw coins is present,set displayValue as coins and
+	 * set the update field b) Same for onw
+	 * 
+	 * @param vo
+	 */
+	public void setControlFieldsForCopay(PlanVariantDetailsCopayVO vo) {
+		log.debug("Checking control fields for CPCI - {}, Copay INNW: {}, Coins INNW: {}, Copay ONW: {}, Coins ONW:{}",
+				vo.getCopayId(), vo.getCopayInNetworkTier1(), vo.getCoinsInNetworkTier1(), vo.getCopayOutOfNetwork(),
+				vo.getCoinsOutOfNetwork());
+		if ((StringUtils.isBlank(vo.getCopayInNetworkTier1()) || APIConstants.NOT_APPLICABLE.equalsIgnoreCase(vo
+				.getCopayInNetworkTier1()))
+				&& (StringUtils.isNotBlank(vo.getCoinsInNetworkTier1()) && !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(vo
+						.getCoinsInNetworkTier1()))) {
+			vo.setInNetworkDisplayValue(vo.getCoinsInNetworkTier1());
+			vo.setInNetworkUpdateFieldName("coinsInNetworkTier1");
+		} else {
+			vo.setInNetworkDisplayValue(vo.getCopayInNetworkTier1());
+			vo.setInNetworkUpdateFieldName("copayInNetworkTier1");
+		}
+
+		if ((StringUtils.isBlank(vo.getCoinsOutOfNetwork()) || APIConstants.NOT_APPLICABLE.equalsIgnoreCase(vo
+				.getCoinsOutOfNetwork()))
+				&& (StringUtils.isNotBlank(vo.getCopayOutOfNetwork()) && !APIConstants.NOT_APPLICABLE.equalsIgnoreCase(vo
+						.getCopayOutOfNetwork()))) {
+			vo.setOutNetworkDisplayValue(vo.getCopayOutOfNetwork());
+			vo.setOutNetworkUpdateFieldName("copayOutOfNetwork");
+		} else {
+			vo.setOutNetworkDisplayValue(vo.getCoinsOutOfNetwork());
+			vo.setOutNetworkUpdateFieldName("coinsOutOfNetwork");
+		}
+
+	}
+
+}

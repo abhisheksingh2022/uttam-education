@@ -1,0 +1,924 @@
+/**
+ * @author ujjalb
+ * Jul 21, 2015 2015
+ */
+package com.hixapi.pmp.service.plan.mapping;
+
+import gov.hhs.cms.ffe.pbt.vo.BenefitAttributeVO;
+import gov.hhs.cms.ffe.pbt.vo.BenefitsListVO;
+import gov.hhs.cms.ffe.pbt.vo.CostShareVarianceVO;
+import gov.hhs.cms.ffe.pbt.vo.CostShareVariancesListVO;
+import gov.hhs.cms.ffe.pbt.vo.ExcelCellVO;
+import gov.hhs.cms.ffe.pbt.vo.MoopVO;
+import gov.hhs.cms.ffe.pbt.vo.PlanAndBenefitsPackageVO;
+import gov.hhs.cms.ffe.pbt.vo.PlanAndBenefitsVO;
+import gov.hhs.cms.ffe.pbt.vo.PlanBenefitTemplateVO;
+import gov.hhs.cms.ffe.pbt.vo.PlanDeductibleVO;
+import gov.hhs.cms.ffe.pbt.vo.ServiceVisitVO;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.env.IEnvironmentProvider;
+import com.hixapi.framework.common.model.LookupBean;
+import com.hixapi.framework.dao.LookupManager;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanStatus;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanVariant;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.entity.model.CarrierAdminInfo;
+import com.hixapi.pmp.entity.model.CarrierFormularyInfo;
+import com.hixapi.pmp.entity.model.CarrierNetwork;
+import com.hixapi.pmp.entity.model.PlanBenefitDetail;
+import com.hixapi.pmp.entity.model.PlanBenefitMstr;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanVariantDtl;
+import com.hixapi.pmp.entity.model.PlanVariantDtlCopayCoins;
+import com.hixapi.pmp.entity.model.PlanVariantDtlDeductible;
+import com.hixapi.pmp.entity.model.PlanVariantDtlMaxOop;
+
+/**
+ * @author ujjalb
+ *
+ */
+public class PlanBenefitsTemplateMapping extends BaseMapper {
+
+	private static final Logger log = LogManager.getLogger(PlanBenefitsTemplateMapping.class);
+
+	private Set<String> allDedTypes = new TreeSet<String>();
+	private Set<String> allCopayTypes = new TreeSet<String>();
+	private Set<String> allMoopTypes = new TreeSet<String>();
+
+	private Set<PlanMstr> updatedPlans = new LinkedHashSet<PlanMstr>();
+
+	public PlanBenefitsTemplateMapping() {
+		List<LookupBean> dedTypes = LookupManager.getLocaleSpecificLookups(APIConstants.LOCALE_EN, "DeductibleCd");
+		List<LookupBean> moopTypes = LookupManager.getLocaleSpecificLookups(APIConstants.LOCALE_EN, "DtlMaxOop");
+		List<LookupBean> copayTypes = LookupManager.getLocaleSpecificLookups(APIConstants.LOCALE_EN, "DtlCopayCoins");
+		if (dedTypes != null) {
+			for (LookupBean dedType : dedTypes) {
+				allDedTypes.add(dedType.getValue());
+			}
+		}
+		if (moopTypes != null) {
+			for (LookupBean moopType : moopTypes) {
+				allMoopTypes.add(moopType.getValue());
+			}
+		}
+		if (copayTypes != null) {
+			for (LookupBean copayType : copayTypes) {
+				allCopayTypes.add(copayType.getValue());
+			}
+		}
+	}
+
+	public void populatePlanEntities(PlanBenefitTemplateVO pbtVO, Collection<PlanMstr> existing,
+			CarrierAdminInfo carrierAdminInfo, List<CarrierNetwork> networks, List<CarrierFormularyInfo> rxes) {
+
+		if (pbtVO == null || pbtVO.getPackagesList() == null) {
+			log.debug("pbtVO or PackageList is null");
+			//throw Exception
+		}
+		List<PlanAndBenefitsPackageVO> packageList = pbtVO.getPackagesList().getPackages();
+		if (CollectionUtils.isNotEmpty(packageList)) {
+			Set<PlanMstr> covered = new HashSet<PlanMstr>();
+			Set<PlanMstr> toAdd = new HashSet<PlanMstr>();
+			for (PlanAndBenefitsPackageVO packageVO : packageList) {
+				BenefitsListVO benefitListVO = packageVO.getBenefitsList();
+				List<BenefitAttributeVO> benefitAttributeVOList = benefitListVO.getBenefits();
+				List<PlanBenefitDetail> pbDetailEntityList = Collections.emptyList();
+				//HeaderVO packageHeader = packageVO.getHeader();
+
+				if (CollectionUtils.isNotEmpty(benefitAttributeVOList)) {
+					pbDetailEntityList = buildPlanBenefitDetailEntities(benefitAttributeVOList);
+				}
+
+				if (packageVO.getPlansList() != null && CollectionUtils.isNotEmpty(packageVO.getPlansList().getPlans())) {
+					for (PlanAndBenefitsVO vo : packageVO.getPlansList().getPlans()) {
+						PlanMstr planEntity = findPlanEntity(vo, existing);
+						if (planEntity == null) {
+							planEntity = new PlanMstr();
+							planEntity.setCvgYr(carrierAdminInfo.getCoverageYear());
+							planEntity.setCarrierAdminInfo(carrierAdminInfo);
+							planEntity.setDeletedIndicator(APIConstants.INDICATOR_NO);
+							planEntity.setCarrierUpdatesAllowedInd(APIConstants.INDICATOR_NO);
+							toAdd.add(planEntity);
+
+						} else {
+							PlanStatus status = planEntity.getCurrentPlanStatus();
+							if (status != null && status == PlanStatus.ACTIVATED) {
+								List<Object> subs = new ArrayList<Object>();
+								subs.add(planEntity.getPlanHiosId());
+								addError("msg.planupload.plan_activated_status", Severity.ERROR, subs);
+								continue;
+							}
+							covered.add(planEntity);
+						}
+						if (!isValidCoverageYear(vo, carrierAdminInfo.getCoverageYear())) {
+							List<Object> subs = new ArrayList<Object>();
+							subs.add(carrierAdminInfo.getCoverageYear());
+							subs.add(planEntity.getPlanHiosId());
+							addError("msg.planupload.plan_year_mismatch", Severity.ERROR, subs);
+							break;
+						}
+						updatedPlans.add(planEntity);
+
+						//Defaulting QUality rating
+						Short defaultQualtyRating = ServiceLocator
+								.getInstance()
+								.getService(IEnvironmentProvider.class)
+								.getPropertyInGroup(
+										APIConstants.PROPGROUP_PLAN_UPLOAD,
+										APIConstants.PROP_KEY_PREFIX_PLAN_QLTY_RATING
+												+ carrierAdminInfo.getCarrierMstr().getCarrierId(), Short.class, (short) 0);
+						planEntity.setQltyRating(defaultQualtyRating);
+
+						populatePlanMstr(planEntity, pbDetailEntityList, vo);
+						String networkId = planEntity.getNtwrkId();
+						String formularyId = planEntity.getFrmltryId();
+						if(!isNetworkIdValid(networkId, networks)){
+							List<Object> subs = new ArrayList<Object>();
+							subs.add(planEntity.getPlanHiosId());
+							subs.add(networkId);
+							addError("msg.planupload.network_id_not_found", Severity.ERROR, subs);
+						}
+						if(!isFormularyIdValid(formularyId, rxes)){
+							List<Object> subs = new ArrayList<Object>();
+							subs.add(planEntity.getPlanHiosId());
+							subs.add(formularyId);
+							addError("msg.planupload.formulary_id_not_found", Severity.ERROR, subs);
+						}
+					}
+
+				} else {
+					log.error("No plans available in package");
+				}
+			}
+
+			Iterator<PlanMstr> iter = existing.iterator();
+			while (iter.hasNext()) {
+				PlanMstr obj = iter.next(); // must be called before you can call i.remove()
+				boolean isCovered = false;
+				for (PlanMstr coveredObj : covered) {
+					if (coveredObj.getPlanHiosId().equals(obj.getPlanHiosId())) {
+						isCovered = true;
+						break;
+					}
+				}
+				if (!isCovered) {
+					log.debug("Template does not contain plan of id {}, ignoring", obj.getPlanHiosId());
+				}
+
+			}
+			existing.addAll(toAdd);
+		} else {
+			log.error("Empty package list is supplied, no updates will be performed");
+		}
+
+	}
+
+	private boolean isNetworkIdValid(String networkId, List<CarrierNetwork> networks) {
+		boolean result = false;
+		if(CollectionUtils.isNotEmpty(networks)){
+			for(CarrierNetwork network : networks){
+				if(network.getNetworkId().equals(networkId)){
+					result = true;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+	
+	private boolean isFormularyIdValid(String formularyId, List<CarrierFormularyInfo> rxes) {
+		boolean result = false;
+		if(CollectionUtils.isNotEmpty(rxes)){
+			for(CarrierFormularyInfo rx : rxes){
+				if(rx.getFormularyId().equals(formularyId)){
+					result = true;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	private boolean isValidCoverageYear(PlanAndBenefitsVO vo, int coverageYear) {
+		boolean result = false;
+		String effDt = getString(vo.getPlanAttributes().getPlanEffectiveDate(), 20);
+		Date dt = stringToDate(effDt);
+		if (dt != null) {
+			Calendar cal = Calendar.getInstance();
+			cal.setLenient(false);
+			cal.setTime(dt);
+			if (cal.get(Calendar.YEAR) == coverageYear) {
+				result = true;
+			}
+		}
+		return result;
+	}
+
+	private void populatePlanMstr(PlanMstr planEntity, List<PlanBenefitDetail> pbDetailEntityList, PlanAndBenefitsVO vo) {
+		handleLanguage(ENGLISH.toString(), planEntity, pbDetailEntityList, vo);
+		handleLanguage(SPANISH.toString(), planEntity, pbDetailEntityList, vo);
+
+	}
+
+	private void handleLanguage(String lang, PlanMstr planEntity, List<PlanBenefitDetail> pbDetailEntityList,
+			PlanAndBenefitsVO vo) {
+		PlanBenefitMstr pbMstr;
+		pbMstr = findPlanBenefitMstr(planEntity, lang);
+		if (pbMstr == null) {
+			pbMstr = new PlanBenefitMstr();
+			pbMstr.setLanguageCd(lang);
+
+			pbMstr.setPlanMstr(planEntity);
+			planEntity.getPlanBenefitMstrs().add(pbMstr);
+		}
+		if (vo.getPlanAttributes() != null) {
+			seFieldsOnPlanEntity(planEntity, vo, pbMstr);
+		}
+		populatePlanBenefitDetails(pbDetailEntityList, pbMstr);
+
+		populatePlanVariantEntities(vo, pbMstr);
+	}
+
+	private void populatePlanVariantEntities(PlanAndBenefitsVO vo, PlanBenefitMstr pbMstr) {
+		Set<PlanVariantDtl> existingVariants = pbMstr.getPlanVariantDtls();
+		CostShareVariancesListVO variancesListVO = vo.getCostShareVariancesList();
+		Set<PlanVariantDtl> covered = new HashSet<PlanVariantDtl>();
+		Set<PlanVariantDtl> toAdd = new HashSet<PlanVariantDtl>();
+
+		if (CollectionUtils.isNotEmpty(variancesListVO.getCostShareVariance())) {
+			for (CostShareVarianceVO csrVariantVO : variancesListVO.getCostShareVariance()) {
+				final String variantType = getVariantType(getString(csrVariantVO.getPlanId()));
+				PlanVariantDtl matching = findMatchinPlanVariantDtl(existingVariants, csrVariantVO);
+				if (matching == null) {
+					matching = new PlanVariantDtl();
+					matching.setPlanBenefitMstr(pbMstr);
+					matching.setVarId(variantType);
+					toAdd.add(matching);
+				} else {
+					covered.add(matching);
+				}
+
+				setFieldsOnPlanVariant(matching, csrVariantVO);
+				populateMoopList(matching, csrVariantVO);
+				populateDeductibleList(matching, csrVariantVO);
+				populateCopayCoinsList(matching, csrVariantVO);
+			}
+		}
+		Iterator<PlanVariantDtl> iter = existingVariants.iterator();
+		while (iter.hasNext()) {
+			PlanVariantDtl obj = iter.next(); // must be called before you can call i.remove()
+			boolean isCovered = false;
+			for (PlanVariantDtl coveredObj : covered) {
+				if (coveredObj.getVarId().equals(obj.getVarId())) {
+					isCovered = true;
+					break;
+				}
+			}
+			if (!isCovered) {
+				iter.remove();
+			}
+
+		}
+		existingVariants.addAll(toAdd);
+
+	}
+
+	private void populateCopayCoinsList(PlanVariantDtl entity, CostShareVarianceVO vo) {
+		Set<PlanVariantDtlCopayCoins> existing = entity.getPlanVariantDtlCopayCoinses();
+		Set<String> coveredServiceTypes = new HashSet<String>();
+		Set<PlanVariantDtlCopayCoins> covered = new HashSet<PlanVariantDtlCopayCoins>();
+		Set<PlanVariantDtlCopayCoins> toAdd = new HashSet<PlanVariantDtlCopayCoins>();
+		if (vo.getServiceVisitList() != null && CollectionUtils.isNotEmpty(vo.getServiceVisitList().getServiceVisit())) {
+			List<ServiceVisitVO> voList = vo.getServiceVisitList().getServiceVisit();
+			for (ServiceVisitVO entryVO : voList) {
+				String visitType = getLookupCode("DtlCopayCoins", getString(entryVO.getVisitType()));
+				if (StringUtils.isBlank(visitType)) {
+					List<Object> subs = new ArrayList<Object>();
+					subs.add(getString(entryVO.getVisitType()));
+					//addError("msg.uploadplan.unknown_service_type", Severity.WARNING, subs);
+					//					visitType = "???";
+				} else {
+					PlanVariantDtlCopayCoins matching = findMatchingCopayCoinsEntry(existing, visitType);
+					if (matching == null) {
+						matching = new PlanVariantDtlCopayCoins();
+						matching.setPlanVariantDtl(entity);
+						matching.setLkCopayCoinsTypeCd(visitType);
+						toAdd.add(matching);
+					} else {
+						covered.add(matching);
+					}
+					coveredServiceTypes.add(visitType);
+					matching.setCoinsInNetworkTier1(getString(entryVO.getCoInsuranceInNetworkTier1(), 200));
+					matching.setCoinsInNetworkTier2(getString(entryVO.getCoInsuranceInNetworkTier2(), 200));
+					matching.setCoinsOutOfNetwork(getString(entryVO.getCoInsuranceOutOfNetwork(), 200));
+					matching.setCopayInNetworkTier1(getString(entryVO.getCopayInNetworkTier1(), 200));
+					matching.setCopayInNetworkTier2(getString(entryVO.getCopayInNetworkTier2(), 200));
+					matching.setCopayOutOfNetwork(getString(entryVO.getCopayOutOfNetwork(), 200));
+				}
+
+			}
+		}
+		Iterator<PlanVariantDtlCopayCoins> iter = existing.iterator();
+		while (iter.hasNext()) {
+			PlanVariantDtlCopayCoins obj = iter.next(); // must be called before you can call i.remove()
+
+			if (!coveredServiceTypes.contains(obj.getLkCopayCoinsTypeCd())) {
+				obj.setCoinsInNetworkTier1("");
+				obj.setCoinsInNetworkTier2("");
+				obj.setCoinsOutOfNetwork("");
+				obj.setCopayInNetworkTier1("");
+				obj.setCopayInNetworkTier2("");
+				obj.setCopayOutOfNetwork("");
+				coveredServiceTypes.add(obj.getLkCopayCoinsTypeCd());
+			}
+		}
+		log.debug("Following Service Types are covered: {}", coveredServiceTypes);
+		Set<String> filtered = new HashSet<String>(allCopayTypes);
+		filtered.removeAll(getExistingCopayCoinsList(existing));
+		for (String type : filtered) {
+			if (!coveredServiceTypes.contains(type)) {
+				PlanVariantDtlCopayCoins missing = new PlanVariantDtlCopayCoins();
+				missing.setPlanVariantDtl(entity);
+				missing.setLkCopayCoinsTypeCd(type);
+				toAdd.add(missing);
+			}
+		}
+		existing.addAll(toAdd);
+
+	}
+
+	private void populateDeductibleList(PlanVariantDtl entity, CostShareVarianceVO vo) {
+		Set<PlanVariantDtlDeductible> existing = entity.getPlanVariantDtlDeductibles();
+		Set<String> coveredDedTypes = new HashSet<String>();
+		Set<PlanVariantDtlDeductible> covered = new HashSet<PlanVariantDtlDeductible>();
+		Set<PlanVariantDtlDeductible> toAdd = new HashSet<PlanVariantDtlDeductible>();
+		if (vo.getPlanDeductibleList() != null && CollectionUtils.isNotEmpty(vo.getPlanDeductibleList().getPlanDeductible())) {
+			List<PlanDeductibleVO> voList = vo.getPlanDeductibleList().getPlanDeductible();
+			for (PlanDeductibleVO entryVO : voList) {
+				String dedType = getLookupCode("DeductibleCd", getString(entryVO.getDeductibleType()));
+				if (StringUtils.isBlank(dedType)) {
+					List<Object> subs = new ArrayList<Object>();
+					subs.add(getString(entryVO.getDeductibleType()));
+					//					addError("msg.uploadplan.unknown_deductibe_type", Severity.WARNING, subs);
+				} else {
+					PlanVariantDtlDeductible matching = findMatchingDeductibleEntry(existing, dedType);
+					if (matching == null) {
+						matching = new PlanVariantDtlDeductible();
+						matching.setPlanVariantDtl(entity);
+						matching.setLkPlanVariantDtlDeductibleCd(dedType);
+						toAdd.add(matching);
+					} else {
+						covered.add(matching);
+					}
+					coveredDedTypes.add(dedType);
+					matching.setCombinedInoutFamily(getString(entryVO.getCombinedInOrOutNetworkFamily(), 200));
+					matching.setCombinedInoutIndv(getString(entryVO.getCombinedInOrOutNetworkIndividual(), 200));
+					matching.setInNetworkFamily(getString(entryVO.getInNetworkTier1Family(), 200));
+					matching.setInNetworkIndv(getString(entryVO.getInNetworkTier1Individual(), 200));
+					matching.setInNetworkTier2Family(getString(entryVO.getInNetworkTierTwoFamily(), 200));
+					matching.setInNetworkTier2Indv(getString(entryVO.getInNetworkTierTwoIndividual(), 200));
+					matching.setOutOfNetworkFamily(getString(entryVO.getOutOfNetworkFamily(), 200));
+					matching.setOutOfNetworkIndv(getString(entryVO.getOutOfNetworkIndividual(), 200));
+					//matching.setcInNetworkDfltCoins(getString(entryVO.getOutOfNetworkIndividual(), 200)); //TODO NOT FOUND
+				}
+			}
+		}
+		Iterator<PlanVariantDtlDeductible> iter = existing.iterator();
+		while (iter.hasNext()) {
+			PlanVariantDtlDeductible obj = iter.next(); // must be called before you can call i.remove()
+			if (!coveredDedTypes.contains(obj.getLkPlanVariantDtlDeductibleCd())) {
+
+				obj.setCombinedInoutFamily("");
+				obj.setCombinedInoutIndv("");
+				obj.setInNetworkFamily("");
+				obj.setInNetworkIndv("");
+				obj.setInNetworkTier2Family("");
+				obj.setInNetworkTier2Indv("");
+				obj.setOutOfNetworkFamily("");
+				obj.setOutOfNetworkIndv("");
+				coveredDedTypes.add(obj.getLkPlanVariantDtlDeductibleCd());
+			}
+		}
+
+		log.debug("Following Ded Types are covered: {}", coveredDedTypes);
+		Set<String> filtered = new HashSet<String>(allDedTypes);
+		filtered.removeAll(getExistingDeductibleList(existing));
+		for (String type : filtered) {
+			if (!coveredDedTypes.contains(type)) {
+				PlanVariantDtlDeductible missing = new PlanVariantDtlDeductible();
+				missing.setPlanVariantDtl(entity);
+				missing.setLkPlanVariantDtlDeductibleCd(type);
+				toAdd.add(missing);
+			}
+		}
+
+		existing.addAll(toAdd);
+	}
+
+	private void setFieldsOnPlanVariant(PlanVariantDtl entity, CostShareVarianceVO vo) {
+		entity.setVariantHiosId(getString(vo.getPlanId(), 50));
+		entity.setVarTypTxt(getString(vo.getCsrVariationType(), 100));
+		entity.setIssuerActVal(ConversionUtil.toBigDecimal(StringUtils.remove(getString(vo.getIssuerActuarialValue(), 10),
+				'%')));
+		entity.setAvCalcOutputNum(getString(vo.getAvCalculatorOutputNumber(), 5));
+		entity.setMedAndDrgDeducIntgFlg(getString(vo.getMedicalAndDrugDeductiblesIntegrated(), 10));
+		entity.setMedAndDrgMaxOutOfPocketIntgFlg(getString(vo.getMedicalAndDrugMaxOutOfPocketIntegrated(), 10));
+		entity.setMultipleInNetworkTierIndicator(getString(vo.getMultipleProviderTiers(), 10));
+		entity.setTierUtilization1(getString(vo.getFirstTierUtilization(), 5));
+		entity.setTierUtilization2(getString(vo.getSecondTierUtilization(), 5));
+		if (PlanVariant.VAR_02.getCode().equals(entity.getVarId())) {
+			entity.setPlanSecondaryName("(ZCSR)");
+		} else if (PlanVariant.VAR_03.getCode().equals(entity.getVarId())) {
+			entity.setPlanSecondaryName("(LCSR)");
+		} else if (PlanVariant.VAR_04.getCode().equals(entity.getVarId())) {
+			entity.setPlanSecondaryName("(73% CSR)");
+		} else if (PlanVariant.VAR_05.getCode().equals(entity.getVarId())) {
+			entity.setPlanSecondaryName("(87% CSR)");
+		} else if (PlanVariant.VAR_06.getCode().equals(entity.getVarId())) {
+			entity.setPlanSecondaryName("(94% CSR)");
+		}
+		if (vo.getUrl() != null) {
+			//log.debug("Setting benefit URL as : {}", vo.getUrl().getSummaryBenefitAndCoverageURL());
+			entity.setHsaBenifitCoverageUrlTxt(getString(vo.getUrl().getSummaryBenefitAndCoverageURL(), 1000));
+			entity.setHsaPlanBrochureUrlTxt(getString(vo.getUrl().getPlanBrochure(), 1000));
+		} else {
+			entity.setHsaBenifitCoverageUrlTxt("");
+			entity.setHsaPlanBrochureUrlTxt("");
+		}
+		if (vo.getSbc() != null) {
+			entity.setSbcHavingBabyDeductible(getString(vo.getSbc().getHavingBabyDeductible(), 200));
+			entity.setSbcHavingBabyCoins(getString(vo.getSbc().getHavingBabyCoInsurance(), 200));
+			entity.setSbcHavingBabyCopay(getString(vo.getSbc().getHavingBabyCoPayment(), 200));
+			entity.setSbcHavingBabyLimit(getString(vo.getSbc().getHavingBabyLimit(), 200));
+			entity.setSbcDiabetesCoins(getString(vo.getSbc().getHavingDiabetesCoInsurance(), 200));
+			entity.setSbcDiabetesCopay(getString(vo.getSbc().getHavingDiabetesCopay(), 200));
+			entity.setSbcDiabetesDeductible(getString(vo.getSbc().getHavingDiabetesDeductible(), 200));
+			entity.setSbcDiabetesLimit(getString(vo.getSbc().getHavingDiabetesLimit(), 200));
+		} else {
+			entity.setSbcDiabetesCoins("");
+			entity.setSbcDiabetesCopay("");
+			entity.setSbcDiabetesDeductible("");
+			entity.setSbcDiabetesLimit("");
+			entity.setSbcHavingBabyCoins("");
+			entity.setSbcHavingBabyCopay("");
+			entity.setSbcHavingBabyDeductible("");
+			entity.setSbcHavingBabyLimit("");
+		}
+
+		if (vo.getHsa() != null) {
+			entity.setHsaEmplrContributionFlag(getString(vo.getHsa().getEmployerHSAHRAContributionIndicator(), 10));
+			entity.setHsaEmplrContributionNbr(getString(vo.getHsa().getEmpContributionAmountForHSAOrHRA(), 200));
+			entity.setHsaEligibleFlag(getString(vo.getHsa().getHsaEligibility(), 10));
+
+		} else {
+			entity.setHsaEmplrContributionFlag("");
+			entity.setHsaEmplrContributionNbr("");
+			entity.setHsaEligibleFlag("");
+		}
+	}
+
+	private void populateMoopList(PlanVariantDtl entity, CostShareVarianceVO vo) {
+		Set<PlanVariantDtlMaxOop> existing = entity.getPlanVariantDtlMaxOops();
+		Set<String> coveredMoopTypes = new HashSet<String>();
+
+		Set<PlanVariantDtlMaxOop> covered = new HashSet<PlanVariantDtlMaxOop>();
+		Set<PlanVariantDtlMaxOop> toAdd = new HashSet<PlanVariantDtlMaxOop>();
+		if (vo.getMoopList() != null && CollectionUtils.isNotEmpty(vo.getMoopList().getMoop())) {
+			List<MoopVO> voList = vo.getMoopList().getMoop();
+			for (MoopVO entryVO : voList) {
+				String moopType = getLookupCode("DtlMaxOop", getString(entryVO.getName()));
+				if (StringUtils.isBlank(moopType)) {
+					List<Object> subs = new ArrayList<Object>();
+					subs.add(getString(entryVO.getName()));
+					//					addError("msg.uploadplan.unknown_deductibe_type", Severity.WARNING, subs);
+				} else {
+					PlanVariantDtlMaxOop matching = findMatchingMoopEntry(existing, moopType);
+					if (matching == null) {
+						matching = new PlanVariantDtlMaxOop();
+						matching.setPlanVariantDtl(entity);
+						matching.setLkPlanVariantDtlMaxOopCd(moopType);
+						toAdd.add(matching);
+					} else {
+						covered.add(matching);
+					}
+
+					matching.setCombinedInoutFamily(getString(entryVO.getCombinedInOutNetworkFamilyAmount(), 200));
+					matching.setCombinedInoutIndv(getString(entryVO.getCombinedInOutNetworkIndividualAmount(), 200));
+					matching.setInNetworkTier1Family(getString(entryVO.getInNetworkTier1FamilyAmount(), 200));
+					matching.setInNetworkTier1Indv(getString(entryVO.getInNetworkTier1IndividualAmount(), 200));
+					matching.setInNetworkTier2Family(getString(entryVO.getInNetworkTier2FamilyAmount(), 200));
+					matching.setInNetworkTier2Indv(getString(entryVO.getInNetworkTier2IndividualAmount(), 200));
+					matching.setOutOfNetworkFamily(getString(entryVO.getOutOfNetworkFamilyAmount(), 200));
+					matching.setOutOfNetworkIndv(getString(entryVO.getOutOfNetworkIndividualAmount(), 200));
+
+					coveredMoopTypes.add(moopType);
+				}
+			}
+		}
+		Iterator<PlanVariantDtlMaxOop> iter = existing.iterator();
+		while (iter.hasNext()) {
+			PlanVariantDtlMaxOop obj = iter.next(); // must be called before you can call i.remove()
+			if (!coveredMoopTypes.contains(obj.getLkPlanVariantDtlMaxOopCd())) {
+				obj.setCombinedInoutFamily("");
+				obj.setCombinedInoutIndv("");
+				obj.setInNetworkTier1Family("");
+				obj.setInNetworkTier1Indv("");
+				obj.setInNetworkTier2Indv("");
+				obj.setInNetworkTier2Family("");
+				obj.setOutOfNetworkFamily("");
+				obj.setOutOfNetworkIndv("");
+				coveredMoopTypes.add(obj.getLkPlanVariantDtlMaxOopCd());
+			}
+		}
+
+		log.debug("Following Moop Types are covered: {}", coveredMoopTypes);
+		Set<String> filtered = new HashSet<String>(allMoopTypes);
+		filtered.removeAll(getExistingMoopList(existing));
+		for (String moopType : filtered) {
+			if (!coveredMoopTypes.contains(moopType)) {
+				PlanVariantDtlMaxOop missing = new PlanVariantDtlMaxOop();
+				missing.setPlanVariantDtl(entity);
+				missing.setLkPlanVariantDtlMaxOopCd(moopType);
+				toAdd.add(missing);
+			}
+		}
+		existing.addAll(toAdd);
+	}
+
+	private Set<String> getExistingMoopList(Set<PlanVariantDtlMaxOop> existing) {
+		Set<String> result = new HashSet<String>();
+		if (existing != null) {
+			for (PlanVariantDtlMaxOop entry : existing) {
+				result.add(entry.getLkPlanVariantDtlMaxOopCd());
+			}
+		}
+		return result;
+	}
+
+	private Set<String> getExistingDeductibleList(Set<PlanVariantDtlDeductible> existing) {
+		Set<String> result = new HashSet<String>();
+		if (existing != null) {
+			for (PlanVariantDtlDeductible entry : existing) {
+				result.add(entry.getLkPlanVariantDtlDeductibleCd());
+			}
+		}
+		return result;
+	}
+
+	private Set<String> getExistingCopayCoinsList(Set<PlanVariantDtlCopayCoins> existing) {
+		Set<String> result = new HashSet<String>();
+		if (existing != null) {
+			for (PlanVariantDtlCopayCoins entry : existing) {
+				result.add(entry.getLkCopayCoinsTypeCd());
+			}
+		}
+		return result;
+	}
+
+	private PlanVariantDtlMaxOop findMatchingMoopEntry(Set<PlanVariantDtlMaxOop> list, String code) {
+		PlanVariantDtlMaxOop result = null;
+		if (CollectionUtils.isNotEmpty(list)) {
+			for (PlanVariantDtlMaxOop entity : list) {
+
+				if (code.equalsIgnoreCase(entity.getLkPlanVariantDtlMaxOopCd())) {
+					result = entity;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.debug("Moop Entry with type {} not found in entity list", code);
+
+		}
+
+		return result;
+	}
+
+	private PlanVariantDtlDeductible findMatchingDeductibleEntry(Set<PlanVariantDtlDeductible> list, String code) {
+		PlanVariantDtlDeductible result = null;
+		if (CollectionUtils.isNotEmpty(list)) {
+			for (PlanVariantDtlDeductible entity : list) {
+
+				if (code.equalsIgnoreCase(entity.getLkPlanVariantDtlDeductibleCd())) {
+					result = entity;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.debug("PlanVariantDtlDeductible Entry with type {} not found in entity list", code);
+
+		}
+
+		return result;
+	}
+
+	private PlanVariantDtlCopayCoins findMatchingCopayCoinsEntry(Set<PlanVariantDtlCopayCoins> list, String code) {
+		PlanVariantDtlCopayCoins result = null;
+		if (CollectionUtils.isNotEmpty(list)) {
+			for (PlanVariantDtlCopayCoins entity : list) {
+
+				if (code.equalsIgnoreCase(entity.getLkCopayCoinsTypeCd())) {
+					result = entity;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.debug("PlanVariantDtlCopayCoins Entry with type {} not found in entity list", code);
+
+		}
+
+		return result;
+	}
+
+	private PlanVariantDtl findMatchinPlanVariantDtl(Set<PlanVariantDtl> existingVariants, CostShareVarianceVO csrVariantVO) {
+		PlanVariantDtl result = null;
+		final String variantType = getVariantType(getString(csrVariantVO.getPlanId()));
+		if (CollectionUtils.isNotEmpty(existingVariants)) {
+			for (PlanVariantDtl entity : existingVariants) {
+
+				if (variantType.equalsIgnoreCase(entity.getVarId())) {
+					result = entity;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.debug("Plan Variant Detail with type {} not found in entity list", variantType);
+
+		}
+
+		return result;
+	}
+
+	private String getVariantType(String planId) {
+		int index = planId.lastIndexOf('-');
+		String variant = "";
+		if (index != -1) {
+			final String varType = planId.substring(index + 1);
+			PlanVariant matching = PlanVariant.getEnum(varType);
+			if (matching == null) {
+				log.error("Unknown plan variant type {} for plan id {}", varType, planId);
+				addError("msg.planupload.unknown_variant_type", Severity.ERROR, Arrays.asList(new Object[] { planId }));
+			}
+			variant = matching.getCode();
+			log.debug("Plan variant : {}", variant);
+		}
+		if (StringUtils.isBlank(variant)) {
+			log.error("Unknown plan variant typein plan id {}", planId);
+			addError("msg.planupload.unknown_variant_type", Severity.ERROR, Arrays.asList(new Object[] { planId }));
+		}
+		return variant;
+	}
+
+	private void populatePlanBenefitDetails(List<PlanBenefitDetail> pbDetailEntityList, PlanBenefitMstr pbMstr) {
+		Set<PlanBenefitDetail> existingPbDetails = pbMstr.getPlanBenefitDetails();
+		Set<PlanBenefitDetail> covered = new HashSet<PlanBenefitDetail>();
+		Set<PlanBenefitDetail> toAdd = new HashSet<PlanBenefitDetail>();
+		for (PlanBenefitDetail pbDetail : pbDetailEntityList) {
+			PlanBenefitDetail matching = findMatchingPlanBenefitDetail(existingPbDetails, pbDetail.getLkBnftId());
+			if (matching == null) {
+				matching = new PlanBenefitDetail();
+				matching.setPlanBenefitMstr(pbMstr);
+				toAdd.add(matching);
+			} else {
+				covered.add(matching);
+			}
+			pbDetail.setBenefitDetailId(matching.getBenefitDetailId());
+			pbDetail.setPlanBenefitMstr(matching.getPlanBenefitMstr());
+			pbDetail.setCreateUsrId(matching.getCreateUsrId());
+			pbDetail.setCrtdDt(matching.getCrtdDt());
+			pbDetail.setUpdtDt(matching.getUpdtDt());
+			pbDetail.setUpdtUserId(matching.getUpdtUserId());
+			ConversionUtil.shallowCopyMatchingFields(pbDetail, matching);
+
+		}
+
+		Iterator<PlanBenefitDetail> iter = existingPbDetails.iterator();
+		while (iter.hasNext()) {
+			PlanBenefitDetail obj = iter.next(); // must be called before you can call i.remove()
+			boolean isCovered = false;
+			for (PlanBenefitDetail coveredObj : covered) {
+				if (coveredObj.getLkBnftId().equals(obj.getLkBnftId())) {
+					isCovered = true;
+					break;
+				}
+			}
+			if (!isCovered) {
+				iter.remove();
+			}
+
+		}
+		existingPbDetails.addAll(toAdd);
+	}
+
+	private PlanBenefitDetail findMatchingPlanBenefitDetail(Set<PlanBenefitDetail> existingPbDetails, String lkBnftId) {
+		PlanBenefitDetail result = null;
+		if (CollectionUtils.isNotEmpty(existingPbDetails)) {
+			for (PlanBenefitDetail entity : existingPbDetails) {
+				if (lkBnftId.equalsIgnoreCase(entity.getLkBnftId())) {
+					result = entity;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.debug("Plan Benefit Detail with benefit type {} not found in entity list", lkBnftId);
+
+		}
+
+		return result;
+	}
+
+	private void seFieldsOnPlanEntity(PlanMstr planEntity, PlanAndBenefitsVO vo, PlanBenefitMstr pbMstr) {
+		pbMstr.setMetalLevelTxt(getString(vo.getPlanAttributes().getMetalLevel(), 50));
+		pbMstr.setPlanNameTxt(getString(vo.getPlanAttributes().getPlanMarketingName(), 200));
+		pbMstr.setPlanTypeTxt(getString(vo.getPlanAttributes().getPlanType(), 30));
+
+		planEntity.setBeginCoinsAfterCopaysNbr(getString(vo.getPlanAttributes()
+				.getBeginPrimaryCareDeductibleOrCoinsuranceAfterSetNumberCopays(), 10));
+		planEntity.setBeginCostSharingAfetrVisitNbr(getString(vo.getPlanAttributes()
+				.getBeginPrimaryCareCostSharingAfterSetNumberVisits(), 30));
+		planEntity.setChldOnlyPlanId(getString(vo.getPlanAttributes().getChildOnlyPlanID(), 32));
+		//planEntity.setCompositeRatingFlg(getString(vo.getPlanAttributes().getoPlanType(), 30)); //TODO not found
+		planEntity.setHpid(getString(vo.getPlanAttributes().getHpid(), 5));
+		planEntity.setNtwrkId(getString(vo.getPlanAttributes().getNetworkID(), 10));
+		planEntity.setSvcAreaId(getString(vo.getPlanAttributes().getServiceAreaID(), 10));
+		planEntity.setPlanMktngName(getString(vo.getPlanAttributes().getPlanMarketingName(), 200));
+		planEntity.setFrmltryId(getString(vo.getPlanAttributes().getFormularyID(), 15));
+		planEntity.setNewPlanFlg(YES_CHAR.equals(getChar(vo.getPlanAttributes().getIsNewPlan())) ? 'Y' : 'N');
+		planEntity.setPlanHiosId(getString(vo.getPlanAttributes().getStandardComponentID(), 32));
+		planEntity.setPlanTypCd(getString(vo.getPlanAttributes().getPlanType(), 5));
+		//TODO - Ankit - Populate remaining fields on PlanMstr entity, look at db length, also values in xml
+		planEntity.setProductId(getString(vo.getPlanAttributes().getHiosProductID(), 32));
+		final String coverageCode = getLookupCode("MetalLevel", getString(vo.getPlanAttributes().getMetalLevel()));
+		if (StringUtils.isNotBlank(coverageCode)) {
+			planEntity.setLvlCvgCd(coverageCode.charAt(0));
+		}
+		planEntity.setUnqPlanFlg(getChar(vo.getPlanAttributes().getUniquePlanDesign()));
+		planEntity.setQhpCd(getString(vo.getPlanAttributes().getQhpOrNonQhp(), 30));
+		planEntity.setNoticePrgncyFlg(getChar(vo.getPlanAttributes().getInsurancePlanPregnancyNoticeReqInd()));
+		planEntity.setRfrlRqdForSpecialistFlg(getChar(vo.getPlanAttributes().getIsSpecialistReferralRequired()));
+		planEntity
+				.setSpecialistRequiringRfrlTxt(getString(vo.getPlanAttributes().getHealthCareSpecialistReferralType(), 30));
+		planEntity.setPlanLvlExclTxt(getString(vo.getPlanAttributes().getInsurancePlanBenefitExclusionText(), 5));
+		planEntity.setLkChldOnlyOffrngCd(getString(vo.getPlanAttributes().getChildOnlyOffering(), 3));
+		planEntity.setTobaccoWellnessFlg(getChar(vo.getPlanAttributes().getIsWellnessProgramOffered()));
+		planEntity.setDisMgmtPgmOffrdTxt(getString(vo.getPlanAttributes().getIsDiseaseMgmtProgramsOffered(), 200));
+		planEntity.setEhbApptmnt(getString(vo.getPlanAttributes().getEhbApportionmentForPediatricDental(), 45));
+		final String ehbPercent = getString(vo.getPlanAttributes().getEhbPercentPremium());
+		if (NumberUtils.isNumber(ehbPercent)) {
+			BigDecimal bd = new BigDecimal(Double.parseDouble(ehbPercent)).multiply(new BigDecimal(100)).setScale(2,
+					RoundingMode.HALF_UP);
+			planEntity.setEhbPercent(bd);
+		}
+		planEntity.setGuranteedRateFlg(getChar(vo.getPlanAttributes().getGuaranteedVsEstimatedRate()));
+		planEntity.setMaxCoinsNbr(getString(vo.getPlanAttributes().getMaximumCoinsuranceForSpecialtyDrugs(), 10));
+		planEntity
+				.setMaxDaysChargingCopayNbr(getString(vo.getPlanAttributes().getMaxNumDaysForChargingInpatientCopay(), 10));
+		String effDt = getString(vo.getPlanAttributes().getPlanEffectiveDate(), 20);
+		planEntity.setEffDt(stringToDate(effDt));
+		String expDt = getString(vo.getPlanAttributes().getPlanExpirationDate(), 20);
+		planEntity.setExpDt(stringToDate(expDt));
+		planEntity.setOutOfCntryCvgFlg(getChar(vo.getPlanAttributes().getOutOfCountryCoverage()));
+		planEntity.setOutOfCntryCvgDescTxt(getString(vo.getPlanAttributes().getOutOfCountryCoverageDescription(), 200));
+		planEntity.setOutOfSvcAreaCvgFlg(getChar(vo.getPlanAttributes().getOutOfServiceAreaCoverage()));
+		planEntity
+				.setOutOfSvcAreaCvgDescTxt(getString(vo.getPlanAttributes().getOutOfServiceAreaCoverageDescription(), 200));
+		planEntity.setNationalNtwrkFlg(getChar(vo.getPlanAttributes().getNationalNetwork()));
+		planEntity.setEnrollPymntUrlTxt(getString(vo.getPlanAttributes().getEnrollmentPaymentURL(), 2000));
+
+	}
+
+	private PlanBenefitMstr findPlanBenefitMstr(PlanMstr planEntity, String lang) {
+		PlanBenefitMstr result = null;
+		if (CollectionUtils.isNotEmpty(planEntity.getPlanBenefitMstrs())) {
+			for (PlanBenefitMstr entity : planEntity.getPlanBenefitMstrs()) {
+				if (lang.equalsIgnoreCase(entity.getLanguageCd())) {
+					result = entity;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.debug("Plan Benefit Mstr with language code en_US not found in entity list");
+
+		}
+
+		return result;
+	}
+
+	private PlanMstr findPlanEntity(PlanAndBenefitsVO vo, Collection<PlanMstr> entityList) {
+		PlanMstr result = null;
+		if (CollectionUtils.isNotEmpty(entityList)) {
+			for (PlanMstr entity : entityList) {
+				if (getString(vo.getPlanAttributes().getStandardComponentID()).equalsIgnoreCase(entity.getPlanHiosId())) {
+					result = entity;
+					break;
+				}
+			}
+		}
+		if (result == null) {
+			log.debug("Plan with hios id {} not found in entity list", getString(vo.getPlanAttributes()
+					.getStandardComponentID()));
+
+		}
+
+		return result;
+	}
+
+	private List<PlanBenefitDetail> buildPlanBenefitDetailEntities(List<BenefitAttributeVO> benefitAttributeVOList) {
+		List<PlanBenefitDetail> list = new ArrayList<PlanBenefitDetail>();
+		log.debug("Populating a list of {} benefits", benefitAttributeVOList.size());
+		PlanBenefitDetail entity = null;
+		for (BenefitAttributeVO vo : benefitAttributeVOList) {
+			final String type = getLookupCode("BenefitDetail", getString(vo.getBenefitTypeCode(), 0));
+			if (StringUtils.isNotBlank(type)) {
+				entity = new PlanBenefitDetail();
+				list.add(entity);
+				entity.setBnftExplTxt(getString(vo.getExplanation(), 200));
+				entity.setCvrdFlg(getString(vo.getIsBenefitCovered(), 20));
+				entity.setEhbYn(getString(vo.getIsEHB(), 5));
+				entity.setExclInNtwrkMoopFlg(getChar(vo.getExcludedInNetworkMOOP()));
+				entity.setExclOutNtwrkMoopFlg(getChar(vo.getExcludedOutOfNetworkMOOP()));
+				entity.setExclTxt(getString(vo.getExclusion(), 200));
+				entity.setLimitQntyTxt(getString(vo.getQuantityLimit(), 100));
+				entity.setLimitUnitTxt(getString(vo.getUnitLimit(), 100));
+
+				entity.setLkBnftId(type);
+				final String ehbVarCode = getString(vo.getEhbVarianceReason(), 0);
+				if (StringUtils.isNotBlank(ehbVarCode)) {
+					entity.setLkEhbVarRsnCd(getLookupCode("EhbVarRsnCd", ehbVarCode));
+				}
+				entity.setMinStayTxt(getString(vo.getMinimumStay(), 100));
+				//			entity.setQuantitativeLimitFlg(getChar(vo.getQuantityLimit(), 100)); //TODO - Not available
+				entity.setStateReqdBnftCd(getString(vo.getIsStateMandate(), 5));
+			} else {
+				log.warn("Unknown PlanBenefitDetail type from benefits template {}, ignoring",
+						getString(vo.getBenefitTypeCode(), 0));
+			}
+		}
+
+		return log.exit(list);
+	}
+
+	private String getString(ExcelCellVO vo) {
+		return getString(vo, 0);
+	}
+
+	private String getString(ExcelCellVO vo, int limit) {
+		if (vo == null || StringUtils.isBlank(vo.getCellValue())) {
+			return "";
+		}
+		if (limit == 0) {
+			return vo.getCellValue();
+		}
+		return APIUtil.truncateString(StringUtils.trimToEmpty(vo.getCellValue()), limit);
+	}
+
+	private Character getChar(ExcelCellVO vo) {
+		if (vo == null || StringUtils.isBlank(vo.getCellValue())) {
+			return null;
+		}
+		String value = StringUtils.trimToEmpty(vo.getCellValue());
+		if (value.length() > 1 && !"Yes".equalsIgnoreCase(value) && !"No".equalsIgnoreCase(value)) {
+			log.debug("Expecting character from String of length > 1, returning first char in upper case : {}", value);
+		}
+		return value.toUpperCase().charAt(0);
+	}
+
+	public Set<PlanMstr> getUpdatedPlans() {
+		return updatedPlans;
+	}
+
+	public void setUpdatedPlans(Set<PlanMstr> updatedPlans) {
+		this.updatedPlans = updatedPlans;
+	}
+
+}

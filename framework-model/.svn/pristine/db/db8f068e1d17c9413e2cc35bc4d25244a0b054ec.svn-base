@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://services.ws.itim.ibm.com" xmlns:impl="http://services.ws.itim.ibm.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:intf="http://services.ws.itim.ibm.com" xmlns:tns1="http://model.ws.itim.ibm.com" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tns2="http://exceptions.ws.itim.ibm.com" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <wsdl:types>
+    <schema elementFormDefault="qualified" targetNamespace="http://services.ws.itim.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://exceptions.ws.itim.ibm.com"/>
+   <import namespace="http://model.ws.itim.ibm.com"/>
+   <element name="abortRequest">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="requestId" type="xsd:long"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="abortRequestResponse">
+    <complexType/>
+   </element>
+   <element name="fault" type="tns2:WSLoginServiceException"/>
+   <element name="fault1" type="tns2:WSApplicationException"/>
+   <element name="getActivities">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="processId" type="xsd:long"/>
+      <element name="recurseSubProcesses" type="xsd:boolean"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getActivitiesResponse">
+    <complexType>
+     <sequence>
+      <element maxOccurs="unbounded" name="getActivitiesReturn" type="tns1:WSActivity"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getChildProcesses">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="processId" type="xsd:long"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getChildProcessesResponse">
+    <complexType>
+     <sequence>
+      <element maxOccurs="unbounded" name="getChildProcessesReturn" type="tns1:WSRequest"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getCompletedRequests">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="timeType" type="xsd:int"/>
+      <element name="dateIntervalType" type="xsd:int"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getCompletedRequestsResponse">
+    <complexType>
+     <sequence>
+      <element maxOccurs="unbounded" name="getCompletedRequestsReturn" type="tns1:WSRequest"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getCompletedRequestsPage">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="searchResultsWrapper" type="tns1:WSSearchResultsWrapper"/>
+      <element name="pageNum" type="xsd:int"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getCompletedRequestsPageResponse">
+    <complexType>
+     <sequence>
+      <element maxOccurs="unbounded" name="getCompletedRequestsPageReturn" type="tns1:WSRequest"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="fault2" type="tns2:WSInvalidSessionException"/>
+   <element name="getPendingRequests">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getPendingRequestsResponse">
+    <complexType>
+     <sequence>
+      <element maxOccurs="unbounded" name="getPendingRequestsReturn" type="tns1:WSRequest"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getProcess">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="processId" type="xsd:long"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getProcessResponse">
+    <complexType>
+     <sequence>
+      <element name="getProcessReturn" type="tns1:WSRequest"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getRequest">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="requestId" type="xsd:long"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getRequestResponse">
+    <complexType>
+     <sequence>
+      <element name="getRequestReturn" type="tns1:WSRequest"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="searchCompletedRequests">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="timeType" type="xsd:int"/>
+      <element name="dateIntervalType" type="xsd:int"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="searchCompletedRequestsResponse">
+    <complexType>
+     <sequence>
+      <element name="searchCompletedRequestsReturn" type="tns1:WSSearchResultsWrapper"/>
+     </sequence>
+    </complexType>
+   </element>
+  </schema>
+    <schema elementFormDefault="qualified" targetNamespace="http://model.ws.itim.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://exceptions.ws.itim.ibm.com"/>
+   <complexType name="WSLocale">
+    <sequence>
+     <element name="country" nillable="true" type="xsd:string"/>
+     <element name="variant" nillable="true" type="xsd:string"/>
+     <element name="language" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="WSSession">
+    <sequence>
+     <element name="clientSession" nillable="true" type="xsd:string"/>
+     <element name="enforceChallengeResponse" type="xsd:boolean"/>
+     <element name="locale" nillable="true" type="tns1:WSLocale"/>
+     <element name="sessionID" type="xsd:long"/>
+    </sequence>
+   </complexType>
+   <complexType name="WSActivity">
+    <sequence>
+     <element name="timeCompleted" nillable="true" type="xsd:dateTime"/>
+     <element name="result" nillable="true" type="xsd:string"/>
+     <element name="description" nillable="true" type="xsd:string"/>
+     <element name="id" type="xsd:long"/>
+     <element name="designId" nillable="true" type="xsd:string"/>
+     <element name="timeStarted" nillable="true" type="xsd:dateTime"/>
+     <element name="index" type="xsd:int"/>
+     <element name="state" nillable="true" type="xsd:string"/>
+     <element name="resultDetail" nillable="true" type="xsd:string"/>
+     <element name="name" nillable="true" type="xsd:string"/>
+     <element name="activitySubType" nillable="true" type="xsd:string"/>
+     <element name="subProcessId" type="xsd:long"/>
+     <element name="processId" type="xsd:long"/>
+     <element name="activityType" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="WSRequest">
+    <sequence>
+     <element name="timeCompleted" nillable="true" type="xsd:dateTime"/>
+     <element name="subjectProfile" nillable="true" type="xsd:string"/>
+     <element name="result" nillable="true" type="xsd:string"/>
+     <element name="select" type="xsd:boolean"/>
+     <element name="description" nillable="true" type="xsd:string"/>
+     <element name="processTypeString" nillable="true" type="xsd:string"/>
+     <element name="title" nillable="true" type="xsd:string"/>
+     <element name="owner" nillable="true" type="xsd:string"/>
+     <element name="processStateString" nillable="true" type="xsd:string"/>
+     <element name="status" type="xsd:int"/>
+     <element name="requestee" nillable="true" type="xsd:string"/>
+     <element name="timeSubmitted" nillable="true" type="xsd:dateTime"/>
+     <element name="subject" nillable="true" type="xsd:string"/>
+     <element name="requestId" type="xsd:long"/>
+     <element name="processType" nillable="true" type="xsd:string"/>
+     <element name="subjectService" nillable="true" type="xsd:string"/>
+     <element name="statusString" nillable="true" type="xsd:string"/>
+     <element name="processState" nillable="true" type="xsd:string"/>
+     <element name="timeScheduled" nillable="true" type="xsd:dateTime"/>
+    </sequence>
+   </complexType>
+   <complexType name="WSSearchResultsWrapper">
+    <sequence>
+     <element name="resultsObject" nillable="true" type="xsd:string"/>
+     <element name="resultsClassName" nillable="true" type="xsd:string"/>
+     <element name="name" nillable="true" type="xsd:string"/>
+     <element name="pageCount" type="xsd:int"/>
+    </sequence>
+   </complexType>
+  </schema>
+    <schema elementFormDefault="qualified" targetNamespace="http://exceptions.ws.itim.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://model.ws.itim.ibm.com"/>
+   <complexType name="WSLoginServiceException">
+    <sequence/>
+   </complexType>
+   <complexType name="WSApplicationException">
+    <sequence/>
+   </complexType>
+   <complexType name="WSInvalidSessionException">
+    <complexContent>
+     <extension base="tns2:WSLoginServiceException">
+      <sequence/>
+     </extension>
+    </complexContent>
+   </complexType>
+  </schema>
+  </wsdl:types>
+  <wsdl:message name="getChildProcessesResponse">
+    <wsdl:part name="parameters" element="impl:getChildProcessesResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getChildProcessesRequest">
+    <wsdl:part name="parameters" element="impl:getChildProcesses">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getCompletedRequestsResponse">
+    <wsdl:part name="parameters" element="impl:getCompletedRequestsResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getProcessResponse">
+    <wsdl:part name="parameters" element="impl:getProcessResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getRequestResponse">
+    <wsdl:part name="parameters" element="impl:getRequestResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="WSApplicationException">
+    <wsdl:part name="fault" element="impl:fault1">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="WSInvalidSessionException">
+    <wsdl:part name="fault" element="impl:fault2">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getCompletedRequestsRequest">
+    <wsdl:part name="parameters" element="impl:getCompletedRequests">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getRequestRequest">
+    <wsdl:part name="parameters" element="impl:getRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getProcessRequest">
+    <wsdl:part name="parameters" element="impl:getProcess">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="abortRequestRequest">
+    <wsdl:part name="parameters" element="impl:abortRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getActivitiesRequest">
+    <wsdl:part name="parameters" element="impl:getActivities">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchCompletedRequestsResponse">
+    <wsdl:part name="parameters" element="impl:searchCompletedRequestsResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchCompletedRequestsRequest">
+    <wsdl:part name="parameters" element="impl:searchCompletedRequests">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getCompletedRequestsPageResponse">
+    <wsdl:part name="parameters" element="impl:getCompletedRequestsPageResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getPendingRequestsRequest">
+    <wsdl:part name="parameters" element="impl:getPendingRequests">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getActivitiesResponse">
+    <wsdl:part name="parameters" element="impl:getActivitiesResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getPendingRequestsResponse">
+    <wsdl:part name="parameters" element="impl:getPendingRequestsResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="WSLoginServiceException">
+    <wsdl:part name="fault" element="impl:fault">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getCompletedRequestsPageRequest">
+    <wsdl:part name="parameters" element="impl:getCompletedRequestsPage">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="abortRequestResponse">
+    <wsdl:part name="parameters" element="impl:abortRequestResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="WSRequestService">
+    <wsdl:operation name="abortRequest">
+      <wsdl:input name="abortRequestRequest" message="impl:abortRequestRequest">
+    </wsdl:input>
+      <wsdl:output name="abortRequestResponse" message="impl:abortRequestResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getActivities">
+      <wsdl:input name="getActivitiesRequest" message="impl:getActivitiesRequest">
+    </wsdl:input>
+      <wsdl:output name="getActivitiesResponse" message="impl:getActivitiesResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getChildProcesses">
+      <wsdl:input name="getChildProcessesRequest" message="impl:getChildProcessesRequest">
+    </wsdl:input>
+      <wsdl:output name="getChildProcessesResponse" message="impl:getChildProcessesResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getCompletedRequests">
+      <wsdl:input name="getCompletedRequestsRequest" message="impl:getCompletedRequestsRequest">
+    </wsdl:input>
+      <wsdl:output name="getCompletedRequestsResponse" message="impl:getCompletedRequestsResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getCompletedRequestsPage">
+      <wsdl:input name="getCompletedRequestsPageRequest" message="impl:getCompletedRequestsPageRequest">
+    </wsdl:input>
+      <wsdl:output name="getCompletedRequestsPageResponse" message="impl:getCompletedRequestsPageResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException" message="impl:WSInvalidSessionException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getPendingRequests">
+      <wsdl:input name="getPendingRequestsRequest" message="impl:getPendingRequestsRequest">
+    </wsdl:input>
+      <wsdl:output name="getPendingRequestsResponse" message="impl:getPendingRequestsResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getProcess">
+      <wsdl:input name="getProcessRequest" message="impl:getProcessRequest">
+    </wsdl:input>
+      <wsdl:output name="getProcessResponse" message="impl:getProcessResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getRequest">
+      <wsdl:input name="getRequestRequest" message="impl:getRequestRequest">
+    </wsdl:input>
+      <wsdl:output name="getRequestResponse" message="impl:getRequestResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="searchCompletedRequests">
+      <wsdl:input name="searchCompletedRequestsRequest" message="impl:searchCompletedRequestsRequest">
+    </wsdl:input>
+      <wsdl:output name="searchCompletedRequestsResponse" message="impl:searchCompletedRequestsResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException" message="impl:WSLoginServiceException">
+    </wsdl:fault>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="WSRequestServiceSoapBinding" type="impl:WSRequestService">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="abortRequest">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="abortRequestRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="abortRequestResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getActivities">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getActivitiesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getActivitiesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getChildProcesses">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getChildProcessesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getChildProcessesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getCompletedRequests">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getCompletedRequestsRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getCompletedRequestsResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getCompletedRequestsPage">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getCompletedRequestsPageRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getCompletedRequestsPageResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSInvalidSessionException">
+        <wsdlsoap:fault name="WSInvalidSessionException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getPendingRequests">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getPendingRequestsRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getPendingRequestsResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getProcess">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getProcessRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getProcessResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getRequest">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getRequestRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getRequestResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="searchCompletedRequests">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="searchCompletedRequestsRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchCompletedRequestsResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSLoginServiceException">
+        <wsdlsoap:fault name="WSLoginServiceException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="WSRequestServiceService">
+    <wsdl:port name="WSRequestService" binding="impl:WSRequestServiceSoapBinding">
+      <wsdlsoap:address location="http://10.118.19.245:9080/itim/services/WSRequestServiceService"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

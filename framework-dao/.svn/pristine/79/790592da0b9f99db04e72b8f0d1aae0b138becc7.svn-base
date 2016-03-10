@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+	<class name="com.hixapi.prescreening.api.model.FPLAmounts" table="elig_lkup_fpl_amounts">
+		<id name="fplID" column="fpl_id">
+            <generator class="native"/>
+        </id>      
+		<property name="size" column="houseHold_Size" />
+		<property name="fplAmount" column="fpl_Amt" />
+		<property name="fplStartDate" column="fpl_Start_Dt" />
+		<property name="fplEndDate" column="fpl_End_Dt" />
+	</class>	
+</hibernate-mapping>

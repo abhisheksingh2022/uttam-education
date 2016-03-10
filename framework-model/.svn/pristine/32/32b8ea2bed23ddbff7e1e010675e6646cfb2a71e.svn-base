@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://services.ws.itim.ibm.com" xmlns:impl="http://services.ws.itim.ibm.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:intf="http://services.ws.itim.ibm.com" xmlns:tns1="http://model.ws.itim.ibm.com" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tns2="http://exceptions.ws.itim.ibm.com" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <wsdl:types>
+    <schema elementFormDefault="qualified" targetNamespace="http://services.ws.itim.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://exceptions.ws.itim.ibm.com"/>
+   <import namespace="http://model.ws.itim.ibm.com"/>
+   <element name="extendWithXML">
+    <complexType>
+     <sequence>
+      <element name="session" type="tns1:WSSession"/>
+      <element name="extensionClassName" type="xsd:string"/>
+      <element name="methodName" type="xsd:string"/>
+      <element name="paramsXML" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="extendWithXMLResponse">
+    <complexType>
+     <sequence>
+      <element name="extendWithXMLReturn" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="fault" type="tns2:WSApplicationException"/>
+  </schema>
+    <schema elementFormDefault="qualified" targetNamespace="http://model.ws.itim.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://exceptions.ws.itim.ibm.com"/>
+   <complexType name="WSLocale">
+    <sequence>
+     <element name="country" nillable="true" type="xsd:string"/>
+     <element name="variant" nillable="true" type="xsd:string"/>
+     <element name="language" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="WSSession">
+    <sequence>
+     <element name="clientSession" nillable="true" type="xsd:string"/>
+     <element name="enforceChallengeResponse" type="xsd:boolean"/>
+     <element name="locale" nillable="true" type="tns1:WSLocale"/>
+     <element name="sessionID" type="xsd:long"/>
+    </sequence>
+   </complexType>
+  </schema>
+    <schema elementFormDefault="qualified" targetNamespace="http://exceptions.ws.itim.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://model.ws.itim.ibm.com"/>
+   <complexType name="WSApplicationException">
+    <sequence/>
+   </complexType>
+  </schema>
+  </wsdl:types>
+  <wsdl:message name="extendWithXMLRequest">
+    <wsdl:part name="parameters" element="impl:extendWithXML">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="extendWithXMLResponse">
+    <wsdl:part name="parameters" element="impl:extendWithXMLResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="WSApplicationException">
+    <wsdl:part name="fault" element="impl:fault">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="WSExtensionService">
+    <wsdl:operation name="extendWithXML">
+      <wsdl:input name="extendWithXMLRequest" message="impl:extendWithXMLRequest">
+    </wsdl:input>
+      <wsdl:output name="extendWithXMLResponse" message="impl:extendWithXMLResponse">
+    </wsdl:output>
+      <wsdl:fault name="WSApplicationException" message="impl:WSApplicationException">
+    </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="WSExtensionServiceSoapBinding" type="impl:WSExtensionService">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="extendWithXML">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="extendWithXMLRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="extendWithXMLResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSApplicationException">
+        <wsdlsoap:fault name="WSApplicationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="WSExtensionServiceService">
+    <wsdl:port name="WSExtensionService" binding="impl:WSExtensionServiceSoapBinding">
+      <wsdlsoap:address location="http://10.118.19.245:9080/itim/services/WSExtensionServiceService"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

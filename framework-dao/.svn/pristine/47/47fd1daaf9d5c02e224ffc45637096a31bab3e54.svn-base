@@ -1,0 +1,346 @@
+package com.hixapi.pmp.dao.prescreen.impl;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Criteria;
+import org.hibernate.Query;
+import org.hibernate.Session;
+
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
+
+
+import com.hixapi.framework.dao.BaseDAO;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanMetalLevel;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanVariant;
+import com.hixapi.pmp.dao.prescreen.EligibilityDAO;
+import com.hixapi.prescreening.api.model.CountyDetails;
+import com.hixapi.prescreening.api.model.FPLAmounts;
+import com.hixapi.prescreening.api.model.FPLLimitsWithDisregards;
+import com.hixapi.prescreening.api.model.HealthPlan;
+import com.hixapi.prescreening.api.model.RangeValues;
+
+public class EligibilityDAOImpl extends BaseDAO implements EligibilityDAO {
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager
+			.getLogger(EligibilityDAOImpl.class);
+	
+	public FPLAmounts getFPLValue(int houseHoldSize, Date date) {
+		Session session = getCurrentSession();
+		FPLAmounts fplAmounts = (FPLAmounts) session
+				.createCriteria(FPLAmounts.class)
+				.add(Restrictions.eq("size", houseHoldSize))
+				.add(Restrictions.le("fplStartDate", date))
+				.add(Restrictions.isNull("fplEndDate")).uniqueResult();
+		return fplAmounts;
+	}
+
+	@Override
+	public FPLLimitsWithDisregards getFplLimitsPlusDisregards(
+			String programCode, String subProgramCode, Date date, String type) {
+		Session session = getCurrentSession();
+		if ("min".equalsIgnoreCase(type)) {
+			FPLLimitsWithDisregards fPLLimitsWithDisregards = (FPLLimitsWithDisregards) session
+					.createCriteria(FPLLimitsWithDisregards.class)
+					.add(Restrictions.eq("programCode", programCode))
+					.add(Restrictions.eq("subProgramCode", subProgramCode))
+					.add(Restrictions.le("startDateMinFPLLimit", date))
+					.add(Restrictions.isNull("endDateMinFPLLimit"))
+					.uniqueResult();
+			return fPLLimitsWithDisregards;
+		} else {
+			Criteria criteria =session
+					.createCriteria(FPLLimitsWithDisregards.class);
+			criteria.add(Restrictions.eq("programCode", programCode));
+			if (StringUtils.isNotBlank(subProgramCode)) {
+
+				criteria.add(Restrictions.eq("subProgramCode", subProgramCode));
+			}
+			FPLLimitsWithDisregards fPLLimitsWithDisregards = (FPLLimitsWithDisregards) criteria
+					.add(Restrictions.le("startDateMaxFPLLimit", date))
+					.add(Restrictions.isNull("endDateMaxFPLLimit"))
+					.uniqueResult();
+			return fPLLimitsWithDisregards;
+		}
+	}
+
+	
+	public Map<Integer, List<HealthPlan>> getSilverPlans(Integer coverageYear,
+			String ratingAreaShortTxt, List<String> ageCategories, String csrVarId,String language) {
+		
+		Session session = getCurrentSession();
+		List<HealthPlan> healthPlansList = new ArrayList<HealthPlan>();
+		StringBuilder query = new StringBuilder(
+				"select DISTINCT RT.planMstr.planMstrId, RT.lkAgeCd, PL.ehbNb, RT.indvRateAmt, PL.planLevelNa,"
+						+ "PL.dsplPlanIn,PL.year,PL.carrNa,PL.id.dsplPlanId,PL.planNa,PL.hlthPrvdrUrlTx,"
+						+ "PL.carrierId,PL.qltyRatingNb,PL.plnsummPrmryCareCopayAm,"
+						+ "PL.plnsummEmrgncyRoomAm,PL.csrVarId, "
+						+ "PL.plnsummAnnualDeductAm, PL.plnsummAnnualOopocketMaxAm from "
+						+ "PlanRateDetail RT,PlanMstr PM,TDsplPlanStg PL where RT.planMstr.planMstrId = PM.planMstrId and PM.planHiosId = PL.planId and PL.ehbNb IS NOT NULL "
+						+ "and PL.dsplPlanIn ='Y' and PL.id.langCdTx = :language and PL.year = :coverageYear and PL.planLevelNa = 'Silver' "
+						+ "and RT.lkRatingAreaId = :ratingAreaShortTxt and RT.lkAgeCd in (");
+		int length = ageCategories.size();
+		int index = 0;
+		for (String group : ageCategories) {
+			index++;
+			query.append("'").append(group).append("'");
+			if (index < length) {
+				query.append(", ");
+			}
+		}
+		query.append(") and PL.csrVarId = :csrVarId");
+		query.append(" order by RT.planMstr.planMstrId, RT.lkAgeCd");
+
+		Query query1 = session.createQuery(
+				query.toString());
+		query1.setParameter("coverageYear", coverageYear.shortValue());
+		query1.setParameter("ratingAreaShortTxt", ratingAreaShortTxt);
+		query1.setParameter("csrVarId", csrVarId);
+		query1.setParameter("language", language);
+		List<Object[]> list = query1.list();
+		Map<Integer, List<HealthPlan>> planMap = new LinkedHashMap<Integer, List<HealthPlan>>();
+		HealthPlan plan = null;
+		for (Object[] obj : list) {
+			int i = 0;
+			plan = new HealthPlan();
+			plan.setHealthPlanId(Integer.parseInt(obj[i++].toString()));
+			plan.setAge(obj[i++].toString());
+			plan.setEhb(Double.parseDouble(obj[i++].toString()));
+			plan.setPlanRate(Double.parseDouble(obj[i++].toString()));
+			plan.setMetalLevel(obj[i++].toString());
+			plan.setDsplPlanIn(obj[i++].toString());
+			plan.setYear(obj[i++].toString());
+			plan.setCarrierName(obj[i++].toString());
+			plan.setPlanDetailsDisplayId(obj[i++].toString());
+			
+			
+			plan.setPlanName(obj[i++].toString());
+			plan.setHlthProvUrl(obj[i++].toString());
+			plan.setCarrierId(obj[i++].toString());
+			plan.setQualityRating(Integer.parseInt(obj[i++].toString()));
+			plan.setPrimCareCoPay(obj[i++].toString());
+			//need to change below
+			if(obj[i++] != null)
+			{
+			plan.setEmergencyRoom(obj[i].toString());
+			}
+			else
+			{
+				plan.setEmergencyRoom(null);	
+			}
+			plan.setCsrVarId(obj[i++].toString());
+			if(obj[i++] != null)
+			{
+			plan.setAnnualDeductible(obj[i].toString());
+			}
+			
+			plan.setAnnualOutOfPocMax(obj[i].toString());
+			
+			//need to set below things (not required in eligibilityDAo)
+//			plan.setCheckDocLink(obj[i++].toString());
+//			plan.setViewUrl(obj[i++].toString());
+			healthPlansList.add(plan);
+		}
+		for (HealthPlan pl : healthPlansList) {
+			//healthPlanId is the planMstrId required for grouping
+			List<HealthPlan> planList = planMap.get(pl.getHealthPlanId());
+			if (planList == null) {
+				planList = new ArrayList<HealthPlan>();
+				planMap.put(pl.getHealthPlanId(), planList);
+			}
+			planList.add(pl);
+		}
+		return planMap;
+	}
+
+	
+	public String getRatingAreaText(String county) {
+		Session session = getCurrentSession();
+		CountyDetails countyDetails = (CountyDetails) session.createCriteria(CountyDetails.class)
+				.add(Restrictions.eq("countyId", county)).add(Restrictions.eq("langCd","en_US" )).uniqueResult();
+		return countyDetails.getRatingAreaId();
+	}
+
+
+	public List<RangeValues> getMinAndMaxRangeValues(Date todayDate) {
+		Session session = getCurrentSession();
+		Criteria criteria = session.createCriteria(
+				RangeValues.class);
+		Criterion criterion1 = Restrictions.le("startDate", todayDate);
+		Criterion criterion2 = Restrictions.ge("endDate", todayDate);
+		Criterion criterion3 = Restrictions.isNull("endDate");
+		criteria.add(criterion1);
+		List<RangeValues> rangeList = (List<RangeValues>) criteria.add(
+				criterion3).list();
+		return rangeList;
+	}
+	
+	//need to fix docFileName(could be planEvidCovTx)  and ViewUrl
+	public Map<Integer, List<HealthPlan>> getAllHealthPlansForFamily(
+			Integer coverageYear, String ratingAreaShortTxt,
+			List<String> ageCategories, String csrId, boolean catastrophicElig,String language) {
+		// integrate with DAO query
+Session session = getCurrentSession();
+		List<HealthPlan> healthPlansList = new ArrayList<HealthPlan>();
+		StringBuilder query = new StringBuilder(
+				"select DISTINCT RT.planMstr.planMstrId, RT.lkAgeCd, PL.ehbNb, RT.indvRateAmt, PL.planLevelNa,"
+						+ "PL.dsplPlanIn,PL.year,PL.carrNa,PL.id.dsplPlanId,PL.planNa,PL.hlthPrvdrUrlTx,"
+						+ "PL.carrierId,PL.qltyRatingNb,PL.plnsummPrmryCareCopayAm,"
+						+ "PL.plnsummEmrgncyRoomAm,PL.csrVarId, "
+						+ "PL.plnsummAnnualDeductAm, PL.plnsummAnnualOopocketMaxAm,PL.planId,PL.planEvidCovTx from "
+						+ "PlanRateDetail RT,PlanMstr PM,TDsplPlanStg PL where RT.planMstr.planMstrId = PM.planMstrId and PM.planHiosId = PL.planId and PL.ehbNb IS NOT NULL "
+						+ "and PL.dsplPlanIn ='Y' and PL.id.langCdTx = :language and PL.year = :coverageYear "
+						+ "and RT.lkRatingAreaId = :ratingAreaShortTxt and RT.lkAgeCd in (");
+		int length = ageCategories.size();
+		int index = 0;
+		for (String group : ageCategories) {
+			index++;
+			query.append("'").append(group).append("'");
+			if (index < length) {
+				query.append(", ");
+			}
+		}
+		// query.append(") and PL.csrVarId = :csrVarId");
+
+		query.append(") and PL.csrVarId in (");
+		query.append("'").append(csrId).append("'");
+		query.append(",'01')");
+		query.append(" order by RT.planMstr.planMstrId, RT.lkAgeCd");
+
+		Query query1 = session.createQuery(
+				query.toString());
+		query1.setParameter("coverageYear", coverageYear.shortValue());
+		query1.setParameter("ratingAreaShortTxt", ratingAreaShortTxt);
+		 query1.setParameter("language", language);
+		List<Object[]> list = query1.list();
+		Map<Integer, List<HealthPlan>> planMap = new LinkedHashMap<Integer, List<HealthPlan>>();
+
+		HealthPlan plan = null;
+		for (Object[] obj : list) {
+			int i = 0;
+			plan = new HealthPlan();
+			plan.setHealthPlanId(Integer.parseInt(obj[i++].toString()));
+			plan.setAge(obj[i++].toString());
+			plan.setEhb(Double.parseDouble(obj[i++].toString()));
+			plan.setPlanRate(Double.parseDouble(obj[i++].toString()));
+			plan.setMetalLevel(obj[i++].toString());
+			plan.setDsplPlanIn(obj[i++].toString());
+			plan.setYear(obj[i++].toString());
+			plan.setCarrierName(obj[i++].toString());
+			//plan.setCheckDocLink(obj[8].toString());
+			plan.setPlanDetailsDisplayId(obj[i++].toString());
+			plan.setPlanName(obj[i++].toString());
+			plan.setHlthProvUrl(obj[i++].toString());
+			plan.setCarrierId(obj[i++].toString());
+			plan.setQualityRating(Integer.parseInt(obj[i++].toString()));
+			plan.setPrimCareCoPay(obj[i++].toString());
+		//	plan.setViewUrl(obj[15].toString());
+			if(obj[i] != null)
+			{
+			plan.setEmergencyRoom(obj[i++].toString());
+			}
+			else
+			{
+				i++;
+			}
+			plan.setCsrVarId(obj[i++].toString());
+			if(obj[i] != null)
+			{
+			plan.setAnnualDeductible(obj[i++].toString());
+			}
+			else
+			{
+				i++;
+			}
+			if(obj[i] != null)
+			{
+			plan.setAnnualOutOfPocMax(obj[i++].toString());
+			}
+			else
+			{
+				i++;
+			}
+			plan.setPlanId(obj[i++].toString());
+			if(obj[i] != null)
+			{
+			plan.setCheckDocLink(obj[i].toString());
+			}
+			healthPlansList.add(plan);
+		}
+		// ensures that for household with only APTC silver plans are not
+		// removed
+		if (csrId.equals(PlanVariant.VAR_04.getCode())
+				|| csrId.equals(PlanVariant.VAR_05.getCode())
+				|| csrId.equals(PlanVariant.VAR_06.getCode())) {
+			// we get silver plans with 04or05or06 and 01c
+			// eliminate 01 csrvarid silver plans- not the once required
+			for (Iterator<HealthPlan> iterator = healthPlansList.iterator(); iterator
+					.hasNext();) {
+				HealthPlan health = iterator.next();
+				if (PlanMetalLevel.SILVER.getDescription().contentEquals(health
+						.getMetalLevel())
+						&& PlanVariant.VAR_01.getCode().equalsIgnoreCase(health
+								.getCsrVarId()))
+					// Remove the current element from the iterator and the
+					// list.
+					iterator.remove();
+			}
+		}
+
+		// removing catastrophic plans if household not eligibile
+		if (catastrophicElig != true) {
+			for (Iterator<HealthPlan> iterator = healthPlansList.iterator(); iterator
+					.hasNext();) {
+				HealthPlan pln = iterator.next();
+				if (pln.getMetalLevel().equalsIgnoreCase("Catastrophic")) {
+					iterator.remove();
+				}
+			}
+		}
+		if (csrId.equals(PlanVariant.VAR_02)
+				|| csrId.equals(PlanVariant.VAR_03)) {
+			for (Iterator<HealthPlan> iterator = healthPlansList.iterator(); iterator
+					.hasNext();) {
+				HealthPlan health = iterator.next();
+				String planId = health.getPlanId();
+				String csrVarId = health.getCsrVarId();
+				String age = health.getAge();
+				HealthPlan pl = findPlan(planId, csrVarId,age,healthPlansList);
+				if (null != pl) {
+					iterator.remove();
+				}
+			}
+		}
+		for(HealthPlan pl:healthPlansList)
+		{
+		log.debug("plan id : "+pl.getPlanId()+" csr id: "+pl.getCsrVarId());	
+		}
+		for (HealthPlan pl : healthPlansList) {
+			List<HealthPlan> planList = planMap.get(pl.getHealthPlanId());
+			if (planList == null) {
+				planList = new ArrayList<HealthPlan>();
+				planMap.put(pl.getHealthPlanId(), planList);
+			}
+			planList.add(pl);
+		}
+
+		return planMap;
+	}
+
+	private HealthPlan findPlan(String planId, String csrId,String age,
+			List<HealthPlan> healthPlanList) {
+		for (HealthPlan pl : healthPlanList) {
+			if (planId.equalsIgnoreCase(pl.getPlanId())
+					&& !csrId.equalsIgnoreCase(pl.getCsrVarId()) && age.equalsIgnoreCase(pl.getAge())) {
+				return pl;
+			}
+		}
+
+		return null;
+	}
+}

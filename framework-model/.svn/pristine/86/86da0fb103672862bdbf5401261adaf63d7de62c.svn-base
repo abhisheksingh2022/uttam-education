@@ -1,0 +1,54 @@
+package com.hixapi.prescreening.api.model.plan;
+
+import java.io.Serializable;
+
+public class RetailPharmacyDrugs implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1331700844310101229L;
+	private InAndOutNetwork tier1;
+	private InAndOutNetwork tier2;
+	private InAndOutNetwork tier3;
+	private InAndOutNetwork tier4;
+	private InAndOutNetwork tier5;
+
+	public RetailPharmacyDrugs(){
+		tier1 = new InAndOutNetwork();
+		tier2 = new InAndOutNetwork();
+		tier3 = new InAndOutNetwork();
+		tier4 = new InAndOutNetwork();
+		tier5 = new InAndOutNetwork();
+	}
+	public InAndOutNetwork getTier1() {
+		return tier1;
+	}
+	public void setTier1(InAndOutNetwork tier1) {
+		this.tier1 = tier1;
+	}
+	public InAndOutNetwork getTier2() {
+		return tier2;
+	}
+	public void setTier2(InAndOutNetwork tier2) {
+		this.tier2 = tier2;
+	}
+	public InAndOutNetwork getTier3() {
+		return tier3;
+	}
+	public void setTier3(InAndOutNetwork tier3) {
+		this.tier3 = tier3;
+	}
+	public InAndOutNetwork getTier4() {
+		return tier4;
+	}
+	public void setTier4(InAndOutNetwork tier4) {
+		this.tier4 = tier4;
+	}
+	public InAndOutNetwork getTier5() {
+		return tier5;
+	}
+	public void setTier5(InAndOutNetwork tier5) {
+		this.tier5 = tier5;
+	}
+}

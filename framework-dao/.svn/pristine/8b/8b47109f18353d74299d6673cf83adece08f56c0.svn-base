@@ -1,0 +1,257 @@
+package com.hixapi.framework.dao.helper;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringTokenizer;
+
+import org.apache.commons.beanutils.PropertyUtils;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.type.Type;
+
+import com.hixapi.framework.dao.BaseDAO;
+
+/**
+ * 
+ * @author Abhishek
+ *
+ */
+@SuppressWarnings("rawtypes")
+public class QueryUtilDAO extends BaseDAO {
+
+	private static ThreadLocal threadBeanClass = new ThreadLocal();
+
+	private static ThreadLocal threadHqlQuery = new ThreadLocal();
+
+	private static ThreadLocal threadAttributeNames = new ThreadLocal();
+
+	/**
+	 * 
+	 * Method to find a list based on equal properties as filters. <br>
+	 * The propertyName array contains the fields which has to be checked for equal condition and propertyValue array
+	 * contains its corresponding equal value respectively. returnProperty array contains the fields which have to be
+	 * retrieved <br>
+	 * if propertyName and propertyValue is null, query will fetch all the records<br> Usage :<br>
+	 * <code>findOptimizedListByCondition(PlanBenefitDetail.class, <br>
+	 * 				new String[]{"benefitDetailId","cvrdFlg"},<br>
+	 * 				new String[]{"planBenefitMstr.planBenefitMstrId","ehbYn","planBenefitMstr.languageCd"},<br>
+	 * 				new Object[]{planBenefitMstr.getPlanBenefitMstrId(),ehbFlag,langCode}, "benefitDetailId", true);. <br><br>
+	 * 				
+	 * 	The generated query will be, <br><b>
+	 *  select  a.benefitDetailId, a.cvrdFlg
+	 *  from PlanBenefitDetail as a where a.planBenefitMstr.planBenefitMstrId=101 and a.ehbYn='Y' and a.planBenefitMstr.languageCd='en_US' order by a.benefitDetailId desc </b> <br>
+	 * 
+	 * 
+	 * @param aClass
+	 * @param returnProperty
+	 * @param propertyName
+	 * @param propertyValue
+	 * @param orderProperty
+	 * @param isDescending
+	 * @return List
+	 */
+	public List findOptimizedListByCondition(Class aClass, String[] returnProperty, String[] propertyName,
+			Object[] propertyValue, String orderProperty, boolean isDescending) {
+		return executeHQL(HixQueryGenerator.generateQuery(aClass, returnProperty, propertyName, propertyValue,
+				orderProperty, isDescending), propertyValue);
+	}
+
+	/**
+	 * @author Abhishek
+	 * 
+	 *         Execute an hql query which returns a list. This query fetch the result
+	 * 
+	 * @param query
+	 * @param pareameters
+	 *            can be null if no parameter is to be set
+	 * @return
+	 */
+	public List executeHQL(String query, Object[] parameters) {
+		initialize(query);
+		Session session = null;
+		try {
+			session = getReadOnlySession();
+			String hqlQuery = (String) threadHqlQuery.get();
+			// Create query
+			Query qry = session.createQuery(hqlQuery);
+			if (parameters != null) {
+				for (int i = 0, j = 0; i < parameters.length; i++) {
+					Object object = parameters[i];
+					if (object != null) {
+						qry.setParameter(""+j, object);
+						j++;
+					}
+				}
+			}
+			return executeHibQuery(qry);
+		} catch (Exception e) {
+			throw new HibernateException(e);
+		}
+	}
+
+	/**
+	 *
+	 * 
+	 * Initialize for HQL
+	 */
+	private void initialize(String query) {
+		Session session = null;
+		session = getReadOnlySession();
+		Query qry = session.createQuery(query);
+		init(qry);
+
+	}
+
+	/**
+	 * Private method execute query and set the values for the object.
+	 * 
+	 * @param query
+	 * @return
+	 * @throws Exception
+	 * @return List
+	 * 
+	 */
+	@SuppressWarnings("unchecked")
+	private List executeHibQuery(Query query) throws Exception {
+
+		List results = new ArrayList();
+
+		// Execute query
+		Iterator iter = query.iterate();
+		while (iter.hasNext()) {
+			Class beanClass = (Class) threadBeanClass.get();
+			Object bean = beanClass.newInstance();
+			String[] attributeNames = (String[]) threadAttributeNames.get();
+			// if query has only single return value
+			if (attributeNames.length > 1) {
+				Object[] row = (Object[]) iter.next();
+				for (int j = 0; j < row.length; j++) {
+					if (row[j] != null) {
+						initialisePath(bean, attributeNames[j]);
+						PropertyUtils.setProperty(bean, attributeNames[j], row[j]);
+					}
+				}
+			} else {
+				Object row = (Object) iter.next();
+				if (row != null) {
+					initialisePath(bean, attributeNames[0]);
+					PropertyUtils.setProperty(bean, attributeNames[0], row);
+				}
+			}
+			results.add(bean);
+		}
+		return results;
+	}
+
+	private static void initialisePath(final Object bean, final String fieldName) throws Exception {
+		int dot = fieldName.indexOf('.');
+		while (dot >= 0) {
+			String attributeName = fieldName.substring(0, dot);
+			Class attributeClass = PropertyUtils.getPropertyType(bean, attributeName);
+			if (PropertyUtils.getProperty(bean, attributeName) == null) {
+				PropertyUtils.setProperty(bean, attributeName, attributeClass.newInstance());
+			}
+			dot = fieldName.indexOf('.', dot + 1);
+		}
+	}
+
+	/** Initialize for Query Object */
+	@SuppressWarnings("unchecked")
+	private void init(Query qry) {
+		Session session = null;
+		session = getReadOnlySession();
+		String hqlQuery = qry.getQueryString();
+		hqlQuery = qry.getQueryString();
+
+		// Prepare a Hibernate query from "from"
+		String hqlFromClause = extractFromClause(hqlQuery);
+		Query query = session.createQuery(hqlFromClause);
+
+		// Determine the return type for this query
+		Type beanType = query.getReturnTypes()[0];
+
+		// Return the class instance from the query.
+		Class beanClass = beanType.getReturnedClass();
+
+		// list of columns with alias name
+		String[] columns = extractColumns(hqlQuery);
+
+		// At least single field is required to fetch in select query
+		if (columns == null) {
+			throw new RuntimeException(
+					"Invalid Query, Possible cause: Atleast One column is required in the select in the query");
+		}
+		String attributeNames[] = null;
+		attributeNames = getAttributeFieldNames(columns);
+
+		threadHqlQuery.set(hqlQuery);
+		threadBeanClass.set(beanClass);
+		threadAttributeNames.set(attributeNames);
+
+	}
+
+	@SuppressWarnings("unchecked")
+	private static String[] getAttributeFieldNames(final String[] fieldNames) {
+		ArrayList list = new ArrayList();
+		for (int i = 0; i < fieldNames.length; i++) {
+			list.add(getAttributeFieldName(fieldNames[i]));
+		}
+		return (String[]) list.toArray(new String[0]);
+	}
+
+	private static String getAttributeFieldName(final String fieldName) {
+		int dot = fieldName.indexOf('.');
+		String trimmedFieldName = null;
+		String normalisedFieldName = null;
+		if (dot >= 0) {
+			trimmedFieldName = fieldName.substring(dot + 1);
+		} else {
+			trimmedFieldName = fieldName;
+		}
+
+		int asClause = trimmedFieldName.toLowerCase().indexOf(" as ");
+		if (asClause > 0) {
+			normalisedFieldName = trimmedFieldName.substring(0, asClause);
+		} else {
+			normalisedFieldName = trimmedFieldName;
+		}
+		return normalisedFieldName;
+	}
+
+	private static String extractFromClause(final String query) {
+		int fromPosition = query.toLowerCase().indexOf(" from ");
+		if (fromPosition >= 0) {
+			return query.substring(fromPosition);
+		} else {
+			return query;
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static String[] extractColumns(final String query) {
+		int fromPosition = query.toLowerCase().indexOf(" from ");
+		int selectPosition = query.toLowerCase().indexOf("select distinct ");
+		if (selectPosition >= 0) {
+			if (fromPosition < selectPosition) {
+				selectPosition = query.toLowerCase().indexOf("select ") + 6;
+			} else {
+				selectPosition = selectPosition + 15;
+			}
+		} else {
+			selectPosition = query.toLowerCase().indexOf("select ") + 6;
+		}
+		// int selectPosition = query.toLowerCase().indexOf("select ");
+		if (selectPosition >= 0) {
+			String columns = query.substring(selectPosition, fromPosition);
+			StringTokenizer st = new StringTokenizer(columns, ",");
+			List columnList = new ArrayList();
+			while (st.hasMoreTokens()) {
+				columnList.add(st.nextToken().trim());
+			}
+			return (String[]) columnList.toArray(new String[0]);
+		}
+		return null;
+	}
+}

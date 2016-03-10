@@ -1,0 +1,1305 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp"%>
+<link href="<s:property value='rootPath'/>static/custom/css/plan-benefits.css" rel="stylesheet" type="text/css" />
+<script>
+	$(document).ready(function() {
+		// Setting the CSS of plan-benefits table according to 6 variants
+		<s:if test="numberOfVariants == 6">
+		$(".innetwork").each(function() {
+			$(this).addClass("innetwork-6");
+		});
+		$(".stplan-for-variants").each(function() {
+			$(this).addClass("stplan-6");
+		});
+		$(".sumry-bnfts").each(function() {
+			$(this).addClass("sumry-bnfts-6");
+		});
+		$(".stplan-for-3").each(function() {
+			$(this).addClass("stplan-header-6");
+		});
+		</s:if>
+		// Setting the CSS of plan-benefits table according to 3 variants
+		<s:elseif test="numberOfVariants == 3">
+		$(".stplan-for-3").each(function() {
+			$(this).addClass("stplan-header-3");
+		});
+
+		$(".innetwork").each(function() {
+			$(this).addClass("innetwork-3");
+		});
+		$(".stplan-for-variants").each(function() {
+			$(this).addClass("stplan-3");
+		});
+		$(".sumry-bnfts").each(function() {
+			$(this).addClass("sumry-bnfts-3");
+		});
+		</s:elseif>
+		// Setting the CSS of plan-benefits table according to 1 variant
+		<s:elseif test="numberOfVariants == 1">
+		$(".innetwork").each(function() {
+			$(this).addClass("innetwork-1");
+		});
+		$(".sumry-bnfts-for-1").each(function() {
+			$(this).addClass("sumry-bnfts-1A ");
+		});
+		$(".sumry-bnfts").each(function() {
+			$(this).addClass("sumry-bnfts-1");
+		});
+		</s:elseif>
+
+		$(".load-block").fadeOut("slow");
+		$('.load-image').fadeOut("slow");
+		$('img[alt="Tooltip"]').tooltip();
+
+		<s:if test="readOnly==true">
+		$('.disableMe').prop("disabled", true);
+		$('button.disableMe').css('background-color', 'grey');
+		$('button.disableMe').css('border', 'grey');
+		</s:if>
+		<s:else>
+		$('.disableMe').prop("disabled", false);
+		</s:else>
+
+		$("#datepicker").datepicker({
+			changeMonth : true,
+			changeYear : true
+		});
+
+		<s:if test="variantSelected == true">
+		$('#planPreviewModal').modal('show');
+		</s:if>
+
+		$("#thisclick").click(function(show) {
+			$("#datatable").slideToggle("slow");
+		});
+		$(document).on("click", "#tablist1-tab1", function() {
+			navigateAway('showProfile');
+		});
+		$(document).on("click", "#tablist1-tab2", function() {
+			navigateAway('showRates');
+		});
+	});
+
+	function changeLanguage() {
+		setActionAndSubmit("id_form_plan-benefits", "changePlanLanguage");
+	}
+	function openPlanPreview() {
+		return ajaxGet({
+			resource : 'plan-preview_input',
+			targetId : 'id_plan_preview',
+			blockId : 'id_plan_preview',
+			urlparams : {
+				"language" : $('#id_sel_lookupLanguage').attr('mylanguage'),
+				"variantIndex" : $('#variantOptionSelect').val(),
+				"coverageYear" : <s:property value="plan.coverageYear" />,
+				"planId" : <s:property value="plan.planId" />
+			}
+		});
+	}
+
+	function navigateAway(URL) {
+		$targetURL = URL;
+		formId = 'id_form_plan-benefits';
+		formDefaultAction = 'plan-benefits';
+		formAction = formDefaultAction + '_' + URL;
+
+		if (isDirty) {
+			var onConfirmAction = "return setActionAndSubmit(" + "'" + formId
+					+ "','" + URL + "')";
+			$('#id_button_confirm_warning').attr('onclick', onConfirmAction);
+			if ((URL == "showRates") || (URL == "showProfile")) {
+
+				$('#tablist1-tab1').removeClass(
+						'responsive-tabs__list__item--active');
+				$('#tablist1-panel1').css('display', 'none');
+				$('#tablist1-tab2').removeClass(
+						'responsive-tabs__list__item--active');
+				$('#tablist1-panel2').css('display', 'none');
+				$('#tablist1-tab3').addClass(
+						'responsive-tabs__list__item--active');
+				$('#tablist1-panel3').css('display', 'block');
+			}
+			$("#warningPopUp").appendTo("body").modal("show");
+		} else {
+			if (URL == "showRates") {
+				$(".benefitsTabClickDetector").hide();
+				$(".ratesTabClickDetector")
+						.after(
+								"<div><h2><img class='plan-centeredLoading' src='<s:property value='rootPath'/>static/custom/images/loader.gif' /></h2></div>");
+
+			} else if (URL == "showProfile") {
+				$(".benefitsTabClickDetector").hide();
+				$(".ratesTabClickDetector").hide();
+				$(".profileTabClickDetector")
+						.after(
+								"<div><h2><img class='plan-centeredLoading' src='<s:property value='rootPath'/>static/custom/images/loader.gif' /></h2></div>");
+
+			}
+			return setActionAndSubmit(formId, URL);
+		}
+	}
+	isDirty = false;
+
+	function readFile(input) {
+		// alert(input.id);
+		document.getElementById("fileUploadVarId").value = input.id;
+		if (input.files && input.files[0]) {
+			$('#pdfPopup').modal('show');
+		}
+	}
+	function viewDocument(input) {
+		document.getElementById("fileUploadVarId").value = input.id;
+		var url = "<s:property value='rootPath'/>planmgmt/plan-benefits_downloadPDF";
+		url = url + "?planPdfVO.variantHiosId=" + $("#fileUploadVarId").val();
+		url = url + "&planPdfVO.coverageYear="
+				+ $("#planPdfVO_coverageYear").val();
+		url = url + "&planPdfVO.language=" + $("#planPdfVO_language").val();
+		url = url + "&planPdfVO.carrierId=" + $("#planPdfVO_carrierId").val();
+		url = url + "&planPdfVO.planIdNumber="
+				+ $("#planPdfVO_planIdNumber").val();
+
+		window.open(url, "_blank");
+		return false;
+	}
+
+	function updateToolTip() {
+		isDirty = true;
+		$(".updateToolTip").each(function() {
+			$(this).next().text($(this).val());
+		});
+	}
+	function searchFromList(textId) {
+		$(".search-text").each(
+				function() {
+					rowspan = $(this).attr('rowspan');
+					$($(this).parent()).show();
+					if (rowspan == 2) {
+						$($(this).parent()).next().show();
+					} else if (rowspan == 4) {
+						$($(this).parent()).next().show();
+						$($(this).parent()).next().next().show();
+						$($(this).parent()).next().next().next().show();
+					} else if (rowspan == 8) {
+						$($(this).parent()).next().show();
+						$($(this).parent()).next().next().show();
+						$($(this).parent()).next().next().next().show();
+						$($(this).parent()).next().next().next().next().show();
+						$($(this).parent()).next().next().next().next().next()
+								.show();
+						$($(this).parent()).next().next().next().next().next()
+								.next().show();
+						$($(this).parent()).next().next().next().next().next()
+								.next().next().show();
+						$($(this).parent()).next().next().next().next().next()
+								.next().next().next().show();
+					}
+				});
+		searchText = document.getElementById(textId).value;
+		$(".search-text")
+				.each(
+						function() {
+							text = $(this).text();
+							if (!(text.toUpperCase().indexOf(
+									searchText.toUpperCase()) > -1)) {
+								rowspan = $(this).attr('rowspan');
+								$($(this).parent()).hide();
+								if (rowspan == 2) {
+									$($(this).parent()).next().hide();
+								} else if (rowspan == 4) {
+									$($(this).parent()).next().hide();
+									$($(this).parent()).next().next().hide();
+									$($(this).parent()).next().next().next()
+											.hide();
+								} else if (rowspan == 8) {
+									$($(this).parent()).next().hide();
+									$($(this).parent()).next().next().hide();
+									$($(this).parent()).next().next().next()
+											.hide();
+									$($(this).parent()).next().next().next()
+											.next().hide();
+									$($(this).parent()).next().next().next()
+											.next().next().hide();
+									$($(this).parent()).next().next().next()
+											.next().next().next().hide();
+									$($(this).parent()).next().next().next()
+											.next().next().next().next().hide();
+									$($(this).parent()).next().next().next()
+											.next().next().next().next().next()
+											.hide();
+								}
+							}
+						});
+	}
+</script>
+<div class="row">
+	<div class="body-bg">
+		<h2 class="inner-heading-plan-benefits">
+			<s:text name="txt.planmanage.manageplans"></s:text>
+		</h2>
+		<div class="clear20"></div>
+		<div class="">
+			<s:form autocomplete="off" id="id_form_plan-benefits" action="plan-benefits" enctype="multipart/form-data"
+				method="post">
+				<s:token />
+				<s:hidden name="ajaxRequest" value="false" />
+				<s:hidden name="formId" />
+				<s:hidden name="planId" />
+				<s:hidden name="plan.planId" />
+				<s:hidden name="plan.coverageYear" />
+				<s:hidden name="plan.exchangeStatus" />
+				<s:hidden name="outOfNetworkToBeDeleted" />
+				<div class="load-block" id="load-block">
+					<img class="load-image" src='<s:property value='rootPath'/>static/custom/images/big_loader.gif' />
+				</div>
+
+				<div class="carrier-fieldA lange">
+					<label style="width: 100px;"><s:text name="txt.planmanage.viewplan"></s:text>:</label> <span> <s:select
+							list="lookups.Languages" class="form-control" id="id_sel_lookupLanguage" name="plan.language" headerKey=""
+							mylanguage="%{plan.language}" headerValue="%{selectBoxHeader}" onchange="changeLanguage()" listKey="value"
+							listValue="label"></s:select>
+					</span>
+				</div>
+				<s:if test="planFound==true">
+					<s:if test="allowCarrierUpdatesToBeShown==true">
+						<div class="manage-planright">
+							<a href="" onclick="return setActionAndSubmit('id_form_plan-benefits','changeLockStatus')" class="save-btn">
+								<s:if test="plan.carrierUpdateAllowed==false">
+									<s:text name="txt.planmanage.allowcarrierupdates"></s:text>
+								</s:if> <s:else>
+									<s:text name="txt.planmanage.disallowcarrierupdates"></s:text>
+								</s:else>
+							</a>
+						</div>
+					</s:if>
+					<div class="clear20"></div>
+					<div class="ratestab">
+						<div class="responsive-tabs">
+
+							<h2 class="profileTabClickDetector">
+								<s:text name="txt.planmanage.profile"></s:text>
+							</h2>
+							<h2 class="ratesTabClickDetector">
+								<s:text name="txt.planmanage.rates"></s:text>
+							</h2>
+							<h2 class="benefitsTabClickDetector">
+								<s:text name="txt.planmanage.benefits"></s:text>
+							</h2>
+							<div class="benefits-sec">
+								<h3 class="inner-heading2">
+									<s:text name="txt.planbenefits.manageplandata"></s:text>
+								</h3>
+								<table border="0" width="100%" cellpadding="0" cellspacing="0" class="benefits-sec-Table">
+									<tr>
+										<td height="40" valign="top" class="cvrageyr"><strong><s:text
+													name="txt.planbenefits.coverageyear"></s:text> </strong> <s:property value="plan.coverageYear" /></td>
+										<td height="40" valign="top"><strong><s:text name="txt.planbenefits.planname"></s:text></strong> <s:property
+												value="plan.planName" /></td>
+										<td height="40" rowspan="2"><a data-target="#myModal2" data-toggle="modal" href=""><s:text
+													name="txt.planmanage.planpreview"></s:text></a></td>
+									</tr>
+									<tr valign="top">
+										<td height="40"><strong><s:text name="txt.planbenefits.issuername" /></strong> <s:property
+												value="plan.carrierName" /></td>
+										<td height="40"><strong><s:text name="txt.planbenefits.planid" /></strong> <s:property
+												value="plan.planHiosId" /></td>
+									</tr>
+								</table>
+								<div class="clear20"></div>
+								<div class="clear20"></div>
+								<div class="plan-benefits-heading">
+									<a class="btn-back" href="javascript:navigateAway('back');"> <s:text name="txt.global.button2" />
+									</a>
+									<div>
+										<s:textfield name="" placeholder="Input Search Criteria" id="id_input_search"
+											onchange="searchFromList(this.id);" onkeyup="this.onchange();" onpaste="this.onchange();"
+											oninput="this.onchange();"></s:textfield>
+										<button class="button-hidden" disabled="disabled">
+											<s:text name="txt.plansearch.search" />
+										</button>
+									</div>
+								</div>
+								<div class="clear20"></div>
+								<table border="0" width="100%" cellpadding="2" cellspacing="2" class="benefits-sec-Table2 benefits-sec-Table3"
+									style="border-collapse: separate; border-spacing: 1px; height: auto;">
+									<!-- 									width: 95% !important; margin: 0 0 0 17px"
+ -->
+									<tr>
+										<th class="beniftsclr" width="300"></th>
+										<s:iterator value="planVariants" var="planVariant" status="planVariantIndex">
+											<td height="60" class="stplan-for-3"><s:property value="#planVariant.varTypTxt" /></td>
+										</s:iterator>
+									</tr>
+									<tr>
+										<td height="50" class="header-table-td"><s:property value="planBenefitsLookup['HPI']" /></td>
+										<s:iterator value="planVariants" var="planVariant" status="planVariantIndex">
+											<td height="50"><s:property value="#planVariant.variantHiosId" /></td>
+										</s:iterator>
+									</tr>
+									<tr>
+										<td height="50"><s:property value="planBenefitsLookup['PVN']" /></td>
+										<s:iterator value="planVariants" var="planVariant" status="planVariantIndex">
+											<td height="50"><s:property value="#planVariant.planSecondaryName" /></td>
+										</s:iterator>
+									</tr>
+								</table>
+								<div class="benefits-tab">
+									<table border="0" width="100%" cellpadding="2" cellspacing="2" class="benefits-sec-Table2"
+										style="border-collapse: separate; border-spacing: 1px;">
+										<tr>
+											<td class="plan-benefits-categories" colspan="9" bgcolor="#f5f5f5"><s:property
+													value="planBenefitsLookup['CSO']" /></td>
+										</tr>
+
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['DEI']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td class="stplan-for-variants"><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].deductibleDetails['DED_MED'].deductibleId"></s:hidden>
+														<s:textarea class="form-control updateToolTip disableMe" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].deductibleDetails['DED_MED'].inNetworkTier1Individual"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.deductibleDetails.get('DED_MED').inNetworkTier1Individual}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+
+										<tr>
+											<td class="innetwork" colspan="2"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].deductibleDetails['DED_MED'].outOfNetworkIndividual"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.deductibleDetails.get('DED_MED').outOfNetworkIndividual}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['DEF']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].deductibleDetails['DED_MED'].inNetworkTier1Family"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.deductibleDetails.get('DED_MED').inNetworkTier1Family}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control  disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].deductibleDetails['DED_MED'].outOfNetworkFamily"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.deductibleDetails.get('DED_MED').outOfNetworkFamily}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['OOM']" />-<s:property
+													value="planBenefitsLookup['IND']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MOOP_MED'].moopId"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MOOP_MED'].inNetworkTier1Individual"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.moopDetails.get('MOOP_MED').inNetworkTier1Individual}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MOOP_MED'].outOfNetworkIndividual"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.moopDetails.get('MOOP_MED').outOfNetworkIndividual}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['OOM']" />-<s:property
+													value="planBenefitsLookup['FAM']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<%-- <s:hidden class="form-control"
+													name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MMD'].moopId"></s:hidden>
+ --%>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MOOP_MED'].inNetworkTier1Family"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.moopDetails.get('MOOP_MED').inNetworkTier1Family}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MOOP_MED'].outOfNetworkFamily"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.moopDetails.get('MOOP_MED').outOfNetworkFamily}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td class="plan-benefits-categories" colspan="9" bgcolor="#f5f5f5"><s:property
+													value="planBenefitsLookup['PHY']" /></td>
+										</tr>
+
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['PSI']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden name="planVariantDetails[%{#planVariantDetailIndex.index}].planVariantDtlId"></s:hidden>
+														<s:hidden name="planVariantDetails[%{#planVariantDetailIndex.index}].variantHiosId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PSI'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PSI'].inNetworkUpdateFieldName"></s:hidden>
+															<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PSI'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('PSI').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PSI'].%{#planVariantDetail.copayDetails.get('PSI').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('PSI').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('PSI').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PSI'].%{#planVariantDetail.copayDetails.get('PSI').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('PSI').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['PCV']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PCV'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PCV'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PCV'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('PCV').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PCV'].%{#planVariantDetail.copayDetails.get('PCV').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('PCV').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('PCV').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PCV'].%{#planVariantDetail.copayDetails.get('PCV').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('PCV').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['SPV']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['SPV'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['SPV'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['SPV'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('SPV').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['SPV'].%{#planVariantDetail.copayDetails.get('SPV').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('SPV').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('SPV').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['SPV'].%{#planVariantDetail.copayDetails.get('SPV').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('SPV').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td class="plan-benefits-categories" colspan="9" bgcolor="#f5f5f5"><s:property
+													value="planBenefitsLookup['PHD']" /></td>
+										</tr>
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['PDD']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].deductibleDetails['DED_DRG'].deductibleId"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].deductibleDetails['DED_DRG'].inNetworkTier1Individual"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.deductibleDetails.get('DED_DRG').inNetworkTier1Individual}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].deductibleDetails['DED_DRG'].outOfNetworkIndividual"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.deductibleDetails.get('DED_DRG').outOfNetworkIndividual}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['PDF']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].deductibleDetails['DED_DRG'].inNetworkTier1Family"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.deductibleDetails.get('DED_DRG').inNetworkTier1Family}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].deductibleDetails['DED_DRG'].outOfNetworkFamily"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.deductibleDetails.get('DED_DRG').outOfNetworkFamily}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['PDI']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MOOP_DRG'].moopId"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MOOP_DRG'].inNetworkTier1Individual"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.moopDetails.get('MOOP_DRG').inNetworkTier1Individual}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MOOP_DRG'].outOfNetworkIndividual"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.moopDetails.get('MOOP_DRG').outOfNetworkIndividual}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['OOF']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MOOP_DRG'].inNetworkTier1Family"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.moopDetails.get('MOOP_DRG').inNetworkTier1Family}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].moopDetails['MOOP_DRG'].outOfNetworkFamily"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.moopDetails.get('MOOP_DRG').outOfNetworkFamily}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+
+										<tr>
+											<td rowspan="8" class="search-text"><s:property value="planBenefitsLookup['PRP']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['T1I']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['GDG'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['GDG'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['GDG'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('GDG').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['GDG'].%{#planVariantDetail.copayDetails.get('GDG').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('GDG').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['T1O']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('GDG').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['GDG'].%{#planVariantDetail.copayDetails.get('GDG').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('GDG').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['T2I']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PBD'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PBD'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PBD'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('PBD').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PBD'].%{#planVariantDetail.copayDetails.get('PBD').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('PBD').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['T2O']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('PBD').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['PBD'].%{#planVariantDetail.copayDetails.get('PBD').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('PBD').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['T3I']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['NBD'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['NBD'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['NBD'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('NBD').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['NBD'].%{#planVariantDetail.copayDetails.get('NBD').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('NBD').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['T3O']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('NBD').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['NBD'].%{#planVariantDetail.copayDetails.get('NBD').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('NBD').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['T4I']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['SDG'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['SDG'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['SDG'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('SDG').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['SDG'].%{#planVariantDetail.copayDetails.get('SDG').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('SDG').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['T4O']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('SDG').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['SDG'].%{#planVariantDetail.copayDetails.get('SDG').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('SDG').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="3" rowspan="1" class="search-text"><s:property value="planBenefitsLookup['PFS']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();" name="plan.carrierFormularyVO.formularyUrlLink"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="#plan.carrierFormularyVO.formularyUrlLink" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td class="plan-benefits-categories" colspan="9" bgcolor="#f5f5f5"><s:property
+													value="planBenefitsLookup['ECH']" /></td>
+										</tr>
+
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['ERS']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['ERS'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['ERS'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['ERS'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('ERS').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['ERS'].%{#planVariantDetail.copayDetails.get('ERS').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('ERS').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('ERS').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['ERS'].%{#planVariantDetail.copayDetails.get('ERS').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('ERS').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['IHS']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['IHS'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['IHS'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['IHS'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('IHS').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['IHS'].%{#planVariantDetail.copayDetails.get('IHS').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('IHS').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<%-- <s:hidden class="form-control"
+													name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['IHS'].copayId"></s:hidden>
+												 --%>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('IHS').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['IHS'].%{#planVariantDetail.copayDetails.get('IHS').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('IHS').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td class="plan-benefits-categories" colspan="9" bgcolor="#f5f5f5"><s:property
+													value="planBenefitsLookup['PDC']" /></td>
+										</tr>
+
+
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['DAP']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['DCC'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['DCC'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['DCC'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('DCC').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['DCC'].%{#planVariantDetail.copayDetails.get('DCC').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('DCC').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('DCC').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['DCC'].%{#planVariantDetail.copayDetails.get('DCC').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('DCC').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['BAR']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['BDC'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['BDC'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['BDC'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('BDC').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['BDC'].%{#planVariantDetail.copayDetails.get('BDC').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('BDC').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('BDC').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['BDC'].%{#planVariantDetail.copayDetails.get('BDC').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('BDC').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['MAR']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['MDC'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['MDC'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['MDC'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('MDC').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['MDC'].%{#planVariantDetail.copayDetails.get('MDC').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('MDC').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<%-- <s:hidden class="form-control"
+													name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['MDC'].copayId"></s:hidden>
+												 --%>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('MDC').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['MDC'].%{#planVariantDetail.copayDetails.get('MDC').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('MDC').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td rowspan="2" class="search-text"><s:property value="planBenefitsLookup['ODS']" /></td>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['INW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['OCD'].copayId"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['OCD'].inNetworkUpdateFieldName"></s:hidden>
+														<s:hidden class="form-control"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['OCD'].outNetworkUpdateFieldName"></s:hidden>
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('OCD').inNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['OCD'].%{#planVariantDetail.copayDetails.get('OCD').inNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('OCD').inNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="2" class="innetwork"><s:property value="planBenefitsLookup['ONW']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															value="%{#planVariantDetail.copayDetails.get('OCD').outNetworkDisplayValue}"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].copayDetails['OCD'].%{#planVariantDetail.copayDetails.get('OCD').outNetworkUpdateFieldName}">
+														</s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.copayDetails.get('OCD').outNetworkDisplayValue}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td class="plan-benefits-categories" colspan="9" bgcolor="#f5f5f5"><s:property
+													value="planBenefitsLookup['ABI']" /></td>
+										</tr>
+
+										<tr>
+											<td colspan="3" rowspan="1" class="search-text sumry-bnfts"><s:property
+													value="planBenefitsLookup['DPD']" /></td>
+											<s:hidden name="planPdfVO.planHiosId" id="planPdfVO_planHiosId"></s:hidden>
+											<s:hidden name="planPdfVO.coverageYear" id="planPdfVO_coverageYear"></s:hidden>
+											<s:hidden name="planPdfVO.language" id="planPdfVO_language"></s:hidden>
+											<s:hidden name="planPdfVO.carrierId" id="planPdfVO_carrierId"></s:hidden>
+											<s:hidden name="planPdfVO.planIdNumber" value="%{plan.planId}" id="planPdfVO_planIdNumber"></s:hidden>
+											<s:hidden name="planPdfVO.variantHiosId" value="" class="fileVarId" id="fileUploadVarId"></s:hidden>
+											<s:iterator value="planVariantDetails" var="planVarianDetail" status="planVariantDetailIndex">
+												<td><s:if test="uploadDocumentAllowed==true">
+														<div class="fileUpload btn btn-primary">
+															<span><s:property value="planBenefitsLookup['UPL']" /></span>
+															<s:file name="planPdfVO.uploadFile" cssClass="upload disableMe"
+																id="%{planVariants.get(#planVariantDetailIndex.index).variantHiosId}" onchange="readFile(this)"
+																accept="application/pdf" />
+														</div>
+														<br>
+													</s:if> <a href="" target="_blank"
+													id="<s:property value='%{planVariants.get(#planVariantDetailIndex.index).variantHiosId}'/>"
+													onclick="return viewDocument(this)"><s:property value="planBenefitsLookup['VDO']" /></a></td>
+											</s:iterator>
+										</tr>
+										<tr>
+											<td colspan="3" rowspan="1" class="search-text sumry-bnfts"><s:property
+													value="planBenefitsLookup['SBC']" /></td>
+											<s:iterator value="planVariantDetails" var="planVariantDetail" status="planVariantDetailIndex">
+												<td class="sumry-bnfts-for-1"><div class="input-text">
+														<s:textarea class="form-control disableMe updateToolTip" onchange="updateToolTip();"
+															onkeyup="this.onchange();" onpaste="this.onchange();"
+															name="planVariantDetails[%{#planVariantDetailIndex.index}].hsaBenefitCoverageUrlTxt"></s:textarea>
+														<div class="tooltip10">
+															<s:property value="%{#planVariantDetail.hsaBenefitCoverageUrlTxt}" />
+														</div>
+													</div></td>
+											</s:iterator>
+										</tr>
+									</table>
+								</div>
+								<div class="form-btn">
+									<a class="save-btn" href="javascript:navigateAway('back');"> <s:text name="txt.global.button2"></s:text>
+									</a>
+									<button class="save-btn disableMe" onclick="return setActionAndSubmit('id_form_plan-benefits', 'save');">
+										<s:text name="txt.planbenefit.save"></s:text>
+									</button>
+								</div>
+								<div class="clearfix"></div>
+								<div class="clear20"></div>
+								<div class="modal fade imagemodal" id="pdfPopup" role="dialog">
+									<div class="modal-dialog">
+
+										<!-- Modal content-->
+										<div class="modal-content">
+											<button type="button" class="close" data-dismiss="modal">&times;</button>
+											<div class="modal-body">
+
+												<p>
+													<s:text name="txt.planbenefits.uploadpopup"></s:text>
+												</p>
+												<button class="save-btn" data-dismiss="modal"
+													onclick="return setActionAndSubmit('id_form_plan-benefits','uploadPdf')">
+													<s:text name="txt.plansearch.yes"></s:text>
+												</button>
+												<button class="cancel-btn" data-dismiss="modal" onclick="cancelImage()">
+													<s:text name="txt.plansearch.cancel"></s:text>
+												</button>
+											</div>
+
+										</div>
+
+									</div>
+								</div>
+							</div>
+
+
+						</div>
+
+						<div class="clearfix"></div>
+					</div>
+					<!-- PLAN PREVIEW STARTS  -->
+					<div class="modal fade modal1" id="myModal2" role="dialog">
+						<div class="modal-dialog">
+
+							<!-- Modal content-->
+							<div class="modal-content">
+
+								<div class="modal-header">
+									<!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
+									<h4 class="modal-title">
+										<s:text name="txt.planmanage.chooseplanpreview"></s:text>
+									</h4>
+								</div>
+
+								<div class="modal-body">
+
+									<div class="carrier-field">
+										<span> <s:select id="variantOptionSelect" list="plan.planBenefits.get(0).planVariants.keySet()"
+												listKey="variantHiosId" listValue="varTypTxt" class="form-control" name="variantIndex" type="text"></s:select>
+
+										</span>
+									</div>
+
+									<div class="clear20"></div>
+
+									<a href="" onclick="openPlanPreview();" class="save-btn" data-toggle="modal" data-target="#planPreviewModal"
+
+										data-dismiss="modal"><s:text name="txt.global.view" /></a>
+
+									<!--NEWMODAL POPUP-->
+
+
+
+
+								</div>
+
+							</div>
+
+						</div>
+					</div>
+
+					<div class="modal fade modal1" id="warningPopUp" role="dialog">
+						<div class="modal-dialog">
+							<!-- Modal content-->
+							<div class="modal-content">
+								<div class="modal-body">
+									<div class="carrier-field">
+										<span>
+											<p>
+												<s:text name="txt.planbenefits.warning-message"></s:text>
+											</p>
+										</span>
+									</div>
+									<div class="clear20"></div>
+
+									<button class="cancel-btn" id="id_button_discard_warning" data-dismiss="modal" onclick="cancelChanges()">
+										<s:text name="txt.planbenefits.warning-keep-changes"></s:text>
+									</button>
+									<button class="save-btn" data-dismiss="modal" id="id_button_confirm_warning"
+										onclick="return setActionAndSubmit('id_form_plan-benefits','uploadPdf')">
+										<s:text name="txt.planbenefits.warning-discard-changes"></s:text>
+									</button>
+									<!--NEWMODAL POPUP-->
+								</div>
+							</div>
+						</div>
+					</div>
+
+
+					<div class="modal fade" id="planPreviewModal" role="dialog">
+						<div class="modal-dialog">
+							<div class="modal-content">
+							<div id="id_plan_preview"></div></div>
+						</div>
+					</div>
+					<%--  					<%@include file="/jsp/planmgmt/plan-preview.jsp"%>				
+ --%>
+				</s:if>
+				<s:else>
+					<div class="clearfix"></div>
+					<a href="" style="" onclick="return setActionAndSubmit('id_form_plan-benefits','back')" class="save-btn"><s:text
+							name="txt.global.button2" /></a>
+				</s:else>
+			</s:form>
+
+			<div class="clearfix"></div>
+		</div>
+
+
+		<div class="clearfix"></div>
+
+	</div>
+</div>
+
+<script type="text/javascript"
+	src="<s:property value='rootPath'/>static/custom/js/script.js?v=<s:property value='buildId'/>""></script>
+<script type="text/javascript"
+	src="<s:property value='rootPath'/>static/custom/js/responsiveTabs.js?v=<s:property value='buildId'/>""></script>
+<script>
+	$(document).ready(function() {
+		RESPONSIVEUI.responsiveTabs();
+	})
+	$('#planPreviewModal').on('shown.bs.modal', function() {
+		//alert('hello');
+		$('.modal-content').css('overflow-y', 'auto');
+		$('.modal-content').css('max-height', $(window).height() * 0.9);
+	});
+</script>
+
+
+
+<%@include file="/jsp/includes/footer.jsp"%>

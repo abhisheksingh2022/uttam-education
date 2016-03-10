@@ -1,0 +1,149 @@
+/**
+ * 
+ */
+package com.hixapi.framework.common.exception;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.model.BaseException;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.api.model.BusinessServiceErrorVO;
+
+/**
+ * @author admin
+ *
+ */
+public class BusinessServiceException extends BaseException {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1901539459756043223L;
+
+	private List<BusinessServiceErrorVO> errorList = new ArrayList<BusinessServiceErrorVO>();
+
+	public BusinessServiceException() {
+		super.setErrorCode("exception.business_service");
+	}
+
+	public BusinessServiceException(Throwable ex) {
+
+		this(ex, "exception.business_service");
+	}
+
+	public BusinessServiceException(Throwable cause, String errorMsgKey, Severity severity) {
+		super(errorMsgKey, cause);
+		addError(errorMsgKey, severity);
+	}
+
+	public BusinessServiceException(Throwable cause, String errorMsgKey) {
+		super(errorMsgKey, cause);
+		addError(errorMsgKey, Severity.ERROR);
+	}
+
+	/**
+	 * Constructs and add an error message. More error messages can be added using addError method
+	 * 
+	 * @param errorMsgKey
+	 */
+	public BusinessServiceException(String errorMsgKey) {
+		this(errorMsgKey, Severity.ERROR);
+	}
+
+	public BusinessServiceException(String errorMsgKey, Severity severity) {
+		super.setErrorCode(errorMsgKey);
+		addError(errorMsgKey, severity);
+	}
+
+	public List<BusinessServiceErrorVO> getErrorList() {
+		return errorList;
+	}
+
+	public void setErrorList(List<BusinessServiceErrorVO> errorList) {
+		this.errorList = errorList;
+	}
+	
+	public void addError(String errorMsgKey, Severity severity) {
+		Validate.notBlank(errorMsgKey, "Error Message Key cannot be empty");
+		Validate.notNull(severity, "Severity cannot be empty");
+		if (this.errorList == null) {
+			this.errorList = new ArrayList<BusinessServiceErrorVO>();
+		}
+		BusinessServiceErrorVO vo = new BusinessServiceErrorVO();
+		vo.setErrorKey(errorMsgKey);
+		vo.setSeverity(severity.getCode());
+		this.errorList.add(vo);
+	}
+	
+	public void addError(String errorMsgKey, Severity severity, String substitution) {
+		List<Object> subs = new ArrayList<Object>();
+		subs.add(substitution);
+		addError(errorMsgKey, severity, subs);
+	}
+
+	public void addError(String errorMsgKey, Severity severity, List<Object> substitutions) {
+		Validate.notBlank(errorMsgKey, "Error Message Key cannot be empty");
+		Validate.notNull(severity, "Severity cannot be empty");
+		if (this.errorList == null) {
+			this.errorList = new ArrayList<BusinessServiceErrorVO>();
+		}
+		BusinessServiceErrorVO vo = new BusinessServiceErrorVO();
+		vo.setErrorKey(errorMsgKey);
+		vo.setSeverity(severity.getCode());
+		vo.setSubstitutions(substitutions);
+		this.errorList.add(vo);
+	}
+
+	public void addErrors(List<BusinessServiceErrorVO> voList) {
+		if (CollectionUtils.isNotEmpty(voList)) {
+			if (this.errorList == null) {
+				this.errorList = new ArrayList<BusinessServiceErrorVO>();
+			}
+			this.errorList.addAll(voList);
+		}
+	}
+
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		str.append("Error Code: ").append(this.getErrorCode());
+		str.append("\r\n");
+		str.append("Error List: \r\n");
+		if (this.errorList != null) {
+			for (BusinessServiceErrorVO vo : errorList) {
+				str.append("Severity: ").append(vo.getSeverity()).append(", Key: ").append(vo.getErrorKey())
+						.append(": Subsitutute:").append(vo.getSubstitutions()).append("\r\n");
+			}
+		}
+		if (this.getCause() != null) {
+			str.append("\r\nRoot Cause:").append(ExceptionUtils.getRootCauseMessage(getCause()));
+		}
+		return str.toString();
+	}
+	
+	public String showDetailView() {
+		StringBuilder str = new StringBuilder();
+		str.append(super.getErrorCode()).append(" - ").append(super.getMessage()).append("\n");
+		str.append("Reference id: " ).append(ConversionUtil.toString(super.getErrorIdNbr())).append("\n");
+		str.append("\r\n");
+		str.append("Error List: \r\n");
+		if (this.errorList != null) {
+			for (BusinessServiceErrorVO vo : errorList) {
+				str.append("Severity: ").append(vo.getSeverity()).append(", Key: ").append(vo.getErrorKey());
+				if(vo.getSubstitutions() != null && vo.getSubstitutions().size() > 0){
+						str.append(": Subsitutute:").append(vo.getSubstitutions()).append("\r\n");
+				}
+			}
+		}
+		if (this.getCause() != null) {
+			str.append("\r\nRoot Cause:").append(ExceptionUtils.getRootCauseMessage(getCause()));
+		}
+		return str.toString();
+	}
+
+}

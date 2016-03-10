@@ -1,0 +1,446 @@
+
+<!DOCTYPE HTML>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"><![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+<title>Access Health</title>
+
+<!--Favicon Css-->
+<link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico">
+
+<!--Icon Css-->
+<link href="images/touch-icon-iphone.png" rel="apple-touch-icon-precomposed" />
+<link href="images/touch-icon-ipad.png" rel="apple-touch-icon-precomposed" sizes="72x72" />
+<link href="images/touch-icon-iphone4.png" rel="apple-touch-icon-precomposed" sizes="114x114" />
+<link href="images/touch-icon-ipad3.png" rel="apple-touch-icon-precomposed" sizes="144x144" />
+
+<!-- MAIN STYLE SHEET GOES HERE -->
+
+<link href="css/bootstrap.css" rel="stylesheet" type="text/css">
+<link href="css/style.css" rel="stylesheet" type="text/css">
+<link href="css/responsive.css" rel="stylesheet" type="text/css">
+<link href="css/font-awesome.css" rel="stylesheet" type="text/css">
+<link href="css/font-awesome.min.css" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700,700italic,900,900italic&subset=latin,cyrillic-ext,cyrillic,greek-ext,greek,vietnamese,latin-ext' rel='stylesheet' type='text/css'>
+
+<!-- FONT CSS GOES HERE -->
+
+<!-- MAIN JAVASCRIPT GOES HERE -->
+<script language="javascript" src="js/jquery-1.11.2.min.js"></script>
+<script src="js/modernizr.custom.js" type="text/javascript"></script>
+
+<script>
+function add_more_row(){
+	var row_counter = $('#total_row').val();
+	var new_row_counter = parseInt(row_counter)+1;
+	
+	var row_html = '<div class="col-md-12 mainpannelpart1" id="row_'+new_row_counter+'"><div class="heading1part"><div class="minuspart"><a href="javascript:void(0);" onclick="delete_row('+new_row_counter+')"><i class="fa fa-minus-circle"></i></a></div><div class="heading1part22"><h3>Member</h3></div><div class="heading1part22"><span><input type="text"/></span></div><div class="heading1part22"><select name="makeup_id1" class="makeup_id1" tabindex="1"><option value="">Select</option><option value="">Yes</option><option value="">No</option></select></div><div class="heading1part22"><div class="drop_box5"><select name="makeup_id1" class="makeup_id1" tabindex="1"><option value="">Select</option><option value="">Spouse</option><option value="">Dependent</option></select></div></div></div>';
+	
+	$('#total_row').val(new_row_counter);
+	$('#row_wrapper_div').append(row_html);
+}
+
+function delete_row(row_number){
+	$('#row_'+row_number).remove();
+}
+
+</script>
+
+<script>
+// handle links with @href started with '#' only
+$(document).on('click', 'a[href^="#"]', function(e) {
+    // target element id
+    var id = $(this).attr('href');
+    
+    // target element
+    var $id = $(id);
+    if ($id.length === 0) {
+        return;
+    }
+    
+    // prevent standard hash navigation (avoid blinking in IE)
+    e.preventDefault();
+    
+    // top position relative to the document
+    var pos = $(id).offset().top;
+    
+    // animated top scrolling
+    $('body, html').animate({scrollTop: pos});
+});
+
+$(document).ready(
+    function() {
+        $("#chkProbt").click(function() {
+            $("#topscroll").show();
+        });
+    });
+
+</script>
+
+</head>
+
+<body>
+
+<!--=======================WRAPPER PART START==========================-->
+
+<div id="wrapper">
+
+	<!--=======================Header Part Start==========================-->
+
+	<header>  
+    
+    	<div class="container maincont">
+        	<div class="row">
+        	<div class="col-md-7 logopart">
+            	<img src="images/logo1.png" alt="logo"/>
+                <p>Connecticut's Official Health Insurance Marketplace</p>
+            
+            </div>
+            
+            <div class="col-md-3 iconpart">
+            	<ul>
+                	<li><a href="#"><i class="fa fa-mobile"></i>ahCT Mobile</a><span>|</span> </li>
+                    <li><a href="#">Español</a></li>
+                
+                </ul>
+            
+            </div>
+            </div>
+        
+        </div>
+     
+    </header><!--//header-->
+	
+
+	
+	  <div class="clearfix"></div>
+	
+    
+    <!--=======================Header Part End==========================-->
+    
+    <!--=======================Main Part Start==========================-->
+    
+   <section class="col-md-12 marginmaintop">
+   		<div class="container maincont">
+   		<div class="row">
+        	<div class="col-md-12 heading">
+            	<h2>Tell us about your household</h2>
+            
+            </div>
+            
+            <div class="col-md-12 mainlevelbody">
+            	<label>Country of the Applicant</label>
+                
+                <div class="drop_boxpart">
+									<select>
+										  <option value="">Select</option>
+										  <option value="">Select</option>
+										  <option value="">Select</option>
+										  <option value="">Select</option>
+										  <option value="">Select</option>
+										  <option value="">Select</option>
+									</select>								
+								</div>
+            </div>
+            
+             <div class="clearfix"></div>
+            
+            <div class="col-md-12">
+            	<div class="heading1part">
+                	<h2>Household Member</h2>
+                    <h2>Age<sup><i class="fa fa-question-circle"></i></sup></h2>
+                    <h2>Pregnant?</h2>
+                    <h2>Relation to Applicant</h2>
+                </div>
+            </div>
+             <div class="clearfix"></div>
+              
+			  <div id="row_wrapper_div">
+			  <div class="col-md-12 mainpannelpart1">
+              	<div class="heading1part">
+              		<div class="heading1part22">
+                		<h3>Applicant</h3>
+                	</div>
+					
+					<div class="heading1part22">
+                		<span>
+							<input type="text"/>
+						</span>
+                	</div>
+					
+					<div class="heading1part22">
+                		
+									<select name="makeup_id1" class="makeup_id1" tabindex="1">
+										  <option value="">Select</option>
+										  <option value="">Yes</option>
+										  <option value="">No</option>
+									</select>								
+							
+                	</div>
+                    
+                    <div class="heading1part22"></div>
+                    
+                    </div>
+              </div>
+              
+              <!--
+              <div class="col-md-12 mainpannelpart1">
+              		<div class="minuspart"><a href="#"><i class="fa fa-minus-circle"></i></a></div>
+              		<div class="heading1part22" style="width:28%;">
+                		<h3 style="padding-left:20px;">Member</h3>
+                	</div>
+					
+					<div class="heading1part23">
+                		<span>
+							<input type="text"/>
+						</span>
+                	</div>
+					
+					<div class="heading1part24">
+                		
+									<select name="makeup_id1" class="makeup_id1" tabindex="1">
+										  <option value="">Select</option>
+										  <option value="">Yes</option>
+										  <option value="">No</option>
+										 
+									</select>								
+							
+                	</div>
+                    
+                    
+                    <div class="heading1part25">
+                		<div class="drop_box5">
+									<select name="makeup_id1" class="makeup_id1" tabindex="1">
+										   <option value="">Select</option>
+										  <option value="">Spouse</option>
+										  <option value="">Dependent</option>
+									</select>								
+								</div>
+                	</div>
+              </div>
+              
+              <div class="col-md-12 mainpannelpart1">
+              		<div class="minuspart"><a href="#"><i class="fa fa-minus-circle"></i></a></div>
+              		<div class="heading1part22" style="width:28%;">
+                		<h3 style="padding-left:20px;">Member</h3>
+                	</div>
+					
+					<div class="heading1part23">
+                		<span>
+							<input type="text"/>
+						</span>
+                	</div>
+					
+					<div class="heading1part24">
+                	
+									<select name="makeup_id1" class="makeup_id1" tabindex="1">
+										   <option value="">Select</option>
+										  <option value="">Yes</option>
+										  <option value="">No</option>
+									</select>								
+								
+                	</div>
+                    
+                    
+                    <div class="heading1part25">
+                		<div class="drop_box5">
+									<select name="makeup_id1" class="makeup_id1" tabindex="1">
+										  <option value="">Select</option>
+										  <option value="">Spouse</option>
+										  <option value="">Dependent</option>
+									</select>								
+								</div>
+                	</div>
+              </div>
+              -->
+              
+              <div class="clearfix"></div>
+			  </div>
+              
+              <div class="col-md-12 mainpannelpart1">
+              		<div class="addhouseholdbutton">
+                    	<a href="javascript:void(0);" onclick="add_more_row();">
+                        	<i class="fa fa-plus-circle"></i>
+                            Add Household Member
+                        </a>
+						<input type="hidden" name="total_row" id="total_row" value="1"/>
+                    </div>
+              
+              </div>
+        
+        </div>
+        
+        
+        <div class="row nextdownpart">
+        		<div class="col-md-12 heading">
+            		<h2>Provide some additional information</h2>
+            
+            	</div>
+                
+                <div class="col-md-12 resmid">
+                	
+                    <div class="heading1part">
+                	
+                	<div class="mainadditionalpart">
+                    		<label>What is the total household income</label>
+                            <div class="mainleftinputpart1">
+                            <span>
+                            	<input type="text"/>
+                            </span>
+                            
+                             <span class="selectspan1">
+                            	<select>
+                                	<option>Select</option>
+                                	<option>Annualy</option>
+                                    <option>Monthly</option>
+                                    <option>Weekly</option>
+                                   
+                                    
+                                
+                                
+                                </select>
+                            </span>
+                            
+                            </div>
+                    </div>
+                    
+                    
+                    <div class="mainadditionalpart">
+                    		<label>Is the applicant affiliated with an American Indian or Alaskan native tribe?</label>
+                            <div class="mainleftinputpart1">
+                            <span>
+                            	<input type="radio" name="a"><p>Yes</p>
+                            </span>
+                            
+                             <span class="selectspan1">
+                            	<input type="radio" name="a"><p>No</p>
+                            </span>
+                            
+                            </div>
+                    </div>
+                    
+                    
+                    <div class="mainadditionalpart">
+                    		<label>Have all the household members lived in the U.S as a lawful resident for at least five years?</label>
+                            <div class="mainleftinputpart1">
+                            <span>
+                            	<input type="radio" name="a"><p>Yes</p>
+                            </span>
+                            
+                             <span class="selectspan1">
+                            	<input type="radio" name="a"><p>No</p>
+                            </span>
+                            
+                            </div>
+                    </div>
+                    
+                    	<div class="clearfix"></div>
+                    </div>
+                    
+                    <a href="#topscroll" class="checkprot" id="chkProbt">Check Protencial Eligibility ></a>
+                </div>
+        
+        </div>
+        
+        
+        
+        <div class="row nextdownpart" id="topscroll">
+        		<div class="col-md-12 heading">
+            		<h2>Preliminary Eligibility Results</h2>
+            
+            	</div>
+                
+                <div class="col-lg-12h subscribe">
+                	<p>Based on the income information you entered, your household may be eligible for the following subsidized health insurance programs. Please fill out an application to determine full eligibilty.</p>
+                </div>
+                
+                <div class="col-md-12">
+               	  <div class="row tax">
+                   	<h2>Applicant, Age 29</h2>
+                      <p>Premium Tax <i><img src="images/right-green.png" alt=""></i><br>Credit:</p>
+                      <span>Based on the income information you entered, your household may be eligible for an estimated $169.73 in the federal tax credit per month.</span>
+                    </div>
+                    <div class="row tax">
+                    	<h2>Household Member, Age 26</h2>
+                        <p>Premium Tax <i><img src="images/right-green.png" alt=""></i><br>Credit:</p>
+                        <span>Based on the income information you entered, your household may be eligible for an estimated $169.73 in the federal tax credit per month.</span>
+                    </div>
+                    <div class="row tax">
+                    	<h2>Household Member, Age 5</h2>
+                        <p>HUSKY B/Children's Health Insurance Program(CHIP) - 2:Band <i><img src="images/right-green.png" alt=""></i><br>Credit</p>
+                        <span>Based on the income information you entered, your household may be eligible for an estimated $169.73 in the federal tax credit per month.</span>
+                    </div>
+                </div>
+                
+                <div class="clcknext"><a href="#">Click Next to estimate your potential health costs and view health plan options</a></div>
+                <div class="chknextBt"><a href="#" class="back">< Back</a><a href="#">Next ></a></div>
+        
+        </div>
+        
+        </div>
+   
+   </section>
+    
+
+    
+    <!--=======================Main Part End==========================-->
+    
+   
+     
+     
+	 
+	 
+	 <!--=======================Footer Part start==========================-->
+    <footer>
+    	<div class="container maincont">
+        	<div class="col-md-6 leftfootpart">
+            		<h4>1-855-805-HEAL  FREE 1-855-805-4325 <span>|</span> TTY 1-855-789-2428</h4>
+                    <h3>2015 AccessHealthCT © All rights reserved, 2013 </h3>
+            </div>
+			
+			
+			<div class="col-md-6 rightfootpart">
+            	<ul>
+                	<li><a href="#">Terms</a><span>|</span></li>
+                    <li><a href="#">Privacy</a> <span>|</span></li>
+                    <li><a href="#">Feedback</a> <span>|</span></li>
+                    <li><a href="#">Connect</a></li>
+                    
+                    <li><a href="#"><i class="fa fa-facebook-square"></i></a></li>
+                    
+                    <li><a href="#"><i class="fa fa-twitter-square"></i></a></li>
+                    
+                    <li><a href="#"><i class="fa fa-youtube-square"></i></a></li>
+                
+                </ul>	
+            </div>
+        
+        </div>
+    
+    </footer>
+    
+    <!--=======================Footer Part End==========================-->
+    
+	
+   
+    
+	<div class="clearfix"></div>
+</div>
+
+<!--=======================WRAPPER PART END==========================-->
+
+    
+
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    
+  	
+
+   
+</body>
+</html>

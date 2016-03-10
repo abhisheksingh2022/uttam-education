@@ -1,0 +1,660 @@
+package com.hixapi.pmp.service.plan;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.common.context.ContextKeyEnum;
+import com.hixapi.framework.common.context.ContextProvider;
+import com.hixapi.framework.common.env.IEnvironmentProvider;
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.common.model.LookupBean;
+import com.hixapi.framework.common.model.UserIdentity;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants.Language;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanStatus;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.api.model.NetworkURLVO;
+import com.hixapi.pmp.api.model.PlanChangeVO;
+import com.hixapi.pmp.api.model.PlanHistoryVO;
+import com.hixapi.pmp.api.model.PlanPdfVO;
+import com.hixapi.pmp.api.model.PlanRateVO;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsVO;
+import com.hixapi.pmp.api.model.PlanVariantVO;
+import com.hixapi.pmp.api.model.criteria.PlanHistorySearchCriteria;
+import com.hixapi.pmp.api.model.criteria.PlanRateSearchCriteria;
+import com.hixapi.pmp.api.model.criteria.PlanSearchCriteria;
+import com.hixapi.pmp.api.modeltranslator.PlanModelTranslator;
+import com.hixapi.pmp.dao.plan.PlanDAO;
+import com.hixapi.pmp.dao.plan.TDsplPlanStgUpdate;
+import com.hixapi.pmp.entity.model.CarrierFormularyInfo;
+import com.hixapi.pmp.entity.model.CarrierNetwork;
+import com.hixapi.pmp.entity.model.PlanBenefitMstr;
+import com.hixapi.pmp.entity.model.PlanLifecycle;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanMstrHist;
+import com.hixapi.pmp.entity.model.PlanRateDetail;
+import com.hixapi.pmp.entity.model.PlanVariantDtlCopayCoins;
+import com.hixapi.pmp.entity.model.PlanVariantDtlDeductible;
+import com.hixapi.pmp.entity.model.PlanVariantDtlMaxOop;
+import com.hixapi.pmp.entity.model.TDsplPlanStg;
+import com.hixapi.pmp.service.plan.mapping.PlanBenefitUpdateHelper;
+import com.hixapi.pmp.service.plan.mapping.hix.HIXDisplayPlanMapper;
+import com.hixapi.pmp.service.plan.mapping.hix.HIXDisplayPlanToVOMapper;
+
+public class PlanManagerServiceImpl implements PlanManagerService {
+
+	private static final Logger LOG = LogManager.getLogger(PlanManagerServiceImpl.class);
+	private PlanDAO planDAO;
+	private PlanModelTranslator planModelTranslator;
+
+	public PlanDAO getPlanDAO() {
+		return planDAO;
+	}
+
+	public void setPlanDAO(PlanDAO planDAO) {
+		this.planDAO = planDAO;
+	}
+
+	public PlanModelTranslator getPlanModelTranslator() {
+		return planModelTranslator;
+	}
+
+	public void setPlanModelTranslator(PlanModelTranslator planModelTranslator) {
+		this.planModelTranslator = planModelTranslator;
+	}
+
+	@Override
+	public List<PlanVO> searchPlans(PlanSearchCriteria criteria) throws BusinessServiceException {
+		LOG.entry();
+
+		List<PlanLifecycle> plansList = planDAO.searchPlans(criteria);
+		Set<PlanLifecycle> plansSet = new LinkedHashSet<PlanLifecycle>(plansList);
+		List<PlanVO> planList = planModelTranslator.initializePlanVOlist(plansSet);
+		LOG.exit();
+		return planList;
+	}
+
+	@Override
+	public void updatePlanStatus(List<PlanVO> plans, PlanStatus status, PlanStatus old) throws BusinessServiceException {
+		LOG.entry();
+		String newStatus = status.getCode();
+		for (PlanVO planVO : plans) {
+			planDAO.updatePlanStatusByPlanId(Long.parseLong(planVO.getPlanId()), newStatus);
+			
+			PlanMstrHist planMstrHist = new PlanMstrHist();
+
+			PlanMstr planMstr = new PlanMstr();
+			planMstr.setPlanMstrId(ConversionUtil.toLong(planVO.getPlanId()));
+
+			planMstrHist.setPlanMstr(planMstr);
+			StringBuilder str = new StringBuilder();
+			str.append("<p align=\"left\"><b>Field Updated</b> : " + "Plan Status" + "<br/>");
+			str.append("<b>Plan Id</b> : " +  StringUtils.trimToEmpty(planVO.getPlanHiosId()) + "<br/>");
+			str.append("<b>Year</b> : " +  StringUtils.trimToEmpty(planVO.getCoverageYear()) + "<br/>");
+			str.append("&#160;&#160;<b>Old Value</b> : " +  StringUtils.trimToEmpty(old.getDescription()) + "<br/>");
+			str.append("&#160;&#160;<b>New Value</b> : " +  StringUtils.trimToEmpty(status.getDescription()) + "<br/></p>");
+			
+			planMstrHist.setChangeDetailTxt(str.toString());
+			planMstrHist.setChangeLocationTxt("Plan-Profile");
+			planMstrHist.setChngByUsr(ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class)
+					.getLoginId());
+			planMstrHist.setComments("Plan Status Updated");
+			planMstrHist.setDtChng(APIUtil.getCurrentDate());
+			planDAO.savePlanUpdateHistory(planMstrHist);
+		}
+		LOG.exit();
+	}
+
+	@Override
+	public PlanVO retrievePlan(Long planId, Language lang) throws BusinessServiceException {
+		LOG.entry();
+		PlanVO planVO = null;
+		PlanMstr planMstr = planDAO.retrievePlanByPlanIdAndLangCode(planId, lang.getCode());
+		if (planMstr != null) {
+			CarrierNetwork carrierNetwork = planDAO.retrieveNetworkById(planMstr.getNtwrkId(), planMstr
+					.getCarrierAdminInfo().getCarrierAdminInfoIdNbr());
+			CarrierFormularyInfo carrierFormularyInfo = planDAO.retrieveCarrierFormularyInfoById(planMstr.getFrmltryId(),
+					planMstr.getCarrierAdminInfo().getCarrierAdminInfoIdNbr());
+			planVO = planModelTranslator.intializePlanVO(planMstr, carrierNetwork, carrierFormularyInfo);
+		}
+		return LOG.exit(planVO);
+	}
+
+	//@Override No longer in use. Do not delete this. May be used later
+	public PlanVO retrievePlanBenefits(Long planId, Language lang) throws BusinessServiceException {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		LOG.exit();
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
+	public PlanVO retrievePlanRates(Long planId, Language lang) throws BusinessServiceException {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		LOG.exit();
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
+	public List<PlanRateVO> searchPlanRates(PlanRateSearchCriteria criteria) throws BusinessServiceException {
+		LOG.entry();
+		List<PlanRateDetail> planRates = planDAO.searchPlanRates(criteria);
+		List<PlanRateVO> planrRateVOList = new ArrayList<PlanRateVO>(0);
+
+		for (PlanRateDetail planRateDetail : planRates) {
+			PlanRateVO rateVO = planModelTranslator.initializePlanRateVO(planRateDetail);
+			planrRateVOList.add(rateVO);
+		}
+		return LOG.exit(planrRateVOList);
+	}
+
+	@Override
+	public void updatePlan(PlanVO vo, Language lang, Map<String, List<LookupBean>> map) throws BusinessServiceException {
+		LOG.entry();
+		List<PlanChangeVO> planChanges = new ArrayList<PlanChangeVO>();
+		/* check duplicate plan id */
+		boolean isDuplicate = planDAO.checkDuplicatePlan(ConversionUtil.toLong(vo.getPlanId()),
+				StringUtils.trim(vo.getPlanHiosId()));
+
+		if (isDuplicate) {
+			List<Object> subs = new ArrayList<Object>();
+			subs.add(vo.getPlanHiosId());
+			BusinessServiceException bex = new BusinessServiceException();
+			bex.addError("err.plan.duplicate", Severity.ERROR, subs);
+			throw bex;
+		}
+
+		PlanVO oldPlanVO = retrievePlan(ConversionUtil.toLong(vo.getPlanId()), lang);
+		PlanMstr mstr = new PlanMstr();
+		CarrierNetwork carrierNetwork = new CarrierNetwork();
+		List<TDsplPlanStgUpdate> displayPlanUpdates = new ArrayList<TDsplPlanStgUpdate>();
+		planModelTranslator.intializePlanMstrEntity(vo, mstr, carrierNetwork, planChanges, oldPlanVO);
+		HIXDisplayPlanMapper mapper = new HIXDisplayPlanMapper();
+		if (lang.getCode().equalsIgnoreCase(Language.ENGLISH.getCode())) {
+			planDAO.updateEntity(PlanMstr.class, new String[] { "planHiosId", "planMktngName", "ehbPercent", "qltyRating",
+					"planTypCd", "lvlCvgCd" },
+					new Object[] { mstr.getPlanHiosId(), mstr.getPlanMktngName(), mstr.getEhbPercent(),
+							mstr.getQltyRating(), mstr.getPlanTypCd(), mstr.getLvlCvgCd() }, new String[] { "planMstrId" },
+					new Object[] { mstr.getPlanMstrId() });
+
+		} else {
+			planDAO.updateEntity(PlanMstr.class, new String[] { "planHiosId", "ehbPercent", "qltyRating", "planTypCd",
+					"lvlCvgCd" },
+					new Object[] { mstr.getPlanHiosId(), mstr.getEhbPercent(), mstr.getQltyRating(), mstr.getPlanTypCd(),
+							mstr.getLvlCvgCd() }, new String[] { "planMstrId" }, new Object[] { mstr.getPlanMstrId() });
+
+		}
+
+		List<LookupBean> lookupIds = map.get("MetalLevel");
+		String metalLevelTXT = "";
+		for (LookupBean lookupBean : lookupIds) {
+			if (lookupBean.getValue().equalsIgnoreCase(vo.getMetalLevel())) {
+				metalLevelTXT = lookupBean.getLabel();
+				break;
+			}
+		}
+		LOG.debug("**********************************************************");
+		LOG.debug("Metal Level, PlanName in the service is : " + metalLevelTXT + ", " + vo.getPlanName());
+
+		List<PlanBenefitMstr> list = planDAO.retrievePlanBenefit(mstr.getPlanMstrId(), null);
+		Iterator<PlanBenefitMstr> it = list.iterator();
+		while (it.hasNext()) {
+			PlanBenefitMstr planBenefitMstr = it.next();
+
+			if (lang.getCode().equalsIgnoreCase(planBenefitMstr.getLanguageCd())) {
+				boolean change = false;
+				if (!vo.getPlanName().equalsIgnoreCase(planBenefitMstr.getPlanNameTxt())) {
+					planBenefitMstr.setPlanNameTxt(vo.getPlanName());
+					change = true;
+				}
+				if (!metalLevelTXT.equalsIgnoreCase(planBenefitMstr.getMetalLevelTxt())) {
+					planBenefitMstr.setMetalLevelTxt(metalLevelTXT);
+					change = true;
+				}
+				if (change) {
+					planDAO.updatePlanBenefit(planBenefitMstr);
+					if (mstr.getPlanBenefitMstrs() == null) {
+						mstr.setPlanBenefitMstrs(new HashSet<PlanBenefitMstr>());
+					}
+					mstr.getPlanBenefitMstrs().add(planBenefitMstr);
+				}
+			}
+		}
+
+		displayPlanUpdates.addAll(mapper.getTDsplPlanUpdateRecord(mstr, null, lang.getCode(), oldPlanVO.getPlanHiosId(),
+				oldPlanVO.getCoverageYear()));
+		
+
+		if (oldPlanVO.getNetworkUrl() == null) {
+			oldPlanVO.setNetworkUrl(new NetworkURLVO());
+		}
+		if (!StringUtils.trimToEmpty(carrierNetwork.getUrl()).equalsIgnoreCase(
+				StringUtils.trimToEmpty(oldPlanVO.getNetworkUrl().getNetworkURL()))) {
+			planDAO.updateEntity(CarrierNetwork.class, new String[] { "url" }, new Object[] { carrierNetwork.getUrl() },
+					new String[] { "networkIdNbr" }, new Object[] { carrierNetwork.getNetworkIdNbr() });
+			displayPlanUpdates.addAll(mapper.getTDsplPlanUpdateRecord(null, carrierNetwork, lang.getCode(),
+					oldPlanVO.getPlanHiosId(), oldPlanVO.getCoverageYear()));
+		}
+		//Plan planDAO.retrievePlanByPlanIdAndLangCode(vo.getPlanId(), vo.getLanguage());
+
+		PlanMstrHist planMstrHist = new PlanMstrHist();
+
+		PlanMstr planMstr = new PlanMstr();
+		planMstr.setPlanMstrId(ConversionUtil.toLong(oldPlanVO.getPlanId()));
+
+		planMstrHist.setPlanMstr(planMstr);
+		StringBuilder text = new StringBuilder();
+		for (PlanChangeVO changeVO : planChanges) {
+			LOG.debug("************************: \n{}", changeVO.toHtmlString());
+			text.append(changeVO.toHtmlString()).append("<br/><pre>------</pre><br/>");
+		}
+		planMstrHist.setChangeDetailTxt(text.toString());
+		planMstrHist.setChangeLocationTxt("Plan Profile");
+		planMstrHist.setChngByUsr(ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class)
+				.getLoginId());
+		planMstrHist.setComments("Plan-Profile Updated");
+		planMstrHist.setDtChng(APIUtil.getCurrentDate());
+		planDAO.savePlanUpdateHistory(planMstrHist);
+		planDAO.updateDisplayPlans(displayPlanUpdates);
+		LOG.exit();
+
+	}
+
+	@Override
+	public void unlockPlanForUpdates(PlanVO plan) throws BusinessServiceException {
+		LOG.entry();
+		planDAO.unlockPlan(Long.parseLong(plan.getPlanId()));
+		
+		PlanMstrHist planMstrHist = new PlanMstrHist();
+		PlanMstr planMstr = new PlanMstr();
+		planMstr.setPlanMstrId(ConversionUtil.toLong(plan.getPlanId()));
+		planMstrHist.setPlanMstr(planMstr);
+		StringBuilder str = new StringBuilder();
+		str.append("<p align=\"left\"><b>Field Updated</b> : " + "Plan Lock Status" + "<br/>");
+		str.append("<b>Plan Id</b> : " +  StringUtils.trimToEmpty(plan.getPlanHiosId()) + "<br/>");
+		str.append("<b>Year</b> : " +  StringUtils.trimToEmpty(plan.getCoverageYear()) + "<br/>");
+		str.append("&#160;&#160;<b>Old Value</b> : Locked<br/>");
+		str.append("&#160;&#160;<b>New Value</b> : Unlocked for carrier updates<br/></p>");
+		
+		planMstrHist.setChangeDetailTxt(str.toString());
+		planMstrHist.setChangeLocationTxt("Plan-Profile");
+		planMstrHist.setChngByUsr(ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class)
+				.getLoginId());
+		planMstrHist.setComments("Plan Unlocked for carrier edits");
+		planMstrHist.setDtChng(APIUtil.getCurrentDate());
+		planDAO.savePlanUpdateHistory(planMstrHist);
+		LOG.exit();
+
+	}
+
+	@Override
+	public void lockPlan(PlanVO plan) throws BusinessServiceException {
+		LOG.entry();
+		planDAO.lockPlan(Long.parseLong(plan.getPlanId()));
+		PlanMstrHist planMstrHist = new PlanMstrHist();
+		PlanMstr planMstr = new PlanMstr();
+		planMstr.setPlanMstrId(ConversionUtil.toLong(plan.getPlanId()));
+		planMstrHist.setPlanMstr(planMstr);
+		StringBuilder str = new StringBuilder();
+		str.append("<p align=\"left\"><b>Field Updated</b> : " + "Plan Lock Status" + "<br/>");
+		str.append("<b>Plan Id</b> : " +  StringUtils.trimToEmpty(plan.getPlanHiosId()) + "<br/>");
+		str.append("<b>Year</b> : " +  StringUtils.trimToEmpty(plan.getCoverageYear()) + "<br/>");
+		str.append("&#160;&#160;<b>Old Value</b> : Unlocked for carrier updates<br/>");
+		str.append("&#160;&#160;<b>New Value</b> : Locked<br/></p>");
+		
+		planMstrHist.setChangeDetailTxt(str.toString());
+		planMstrHist.setChangeLocationTxt("Plan-Profile");
+		planMstrHist.setChngByUsr(ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class)
+				.getLoginId());
+		planMstrHist.setComments("Plan Locked");
+		planMstrHist.setDtChng(APIUtil.getCurrentDate());
+		planDAO.savePlanUpdateHistory(planMstrHist);
+		LOG.exit();
+
+	}
+
+	@Override
+	public PlanVO retrievePlanPreview(String variantHiosId, Language lang, Short coverageYear)
+			throws BusinessServiceException {
+		LOG.entry();
+		LOG.debug("Retrieving preview: {}, {}, {}", variantHiosId, lang, coverageYear);
+		// TODO fetch plan from database and fill PlanPreviewVO
+		TDsplPlanStg stagingRecord = planDAO.retrieveDisplayPlanStagingRecords(variantHiosId, lang.getCode(), coverageYear);
+		PlanVO previewVO = new HIXDisplayPlanToVOMapper().mapToPlanVO(stagingRecord);
+		return LOG.exit(previewVO);
+	}
+
+	public void uploadPlanPdf(PlanPdfVO pdf) throws BusinessServiceException {
+		LOG.entry();
+		LOG.debug("VO: {}", pdf);
+		Validate.notNull(pdf, "Parameter null");
+		Validate.notBlank(pdf.getCoverageYear(), "Coverage Year cannot be null");
+		Validate.notBlank(pdf.getLanguage(), "Language cannot be null");
+		Validate.notBlank(pdf.getPlanHiosId(), "Plan HIOS id cannot be null");
+		Validate.notBlank(pdf.getUploadFileFileName(), "Upload file name cannot be null");
+		Validate.notNull(pdf.getUploadFile(), "File cannot be null");
+		Validate.notNull(pdf.getCarrierId(), "Carrier ID cannot be null");
+		Validate.notNull(pdf.getVariantHiosId(), "Plan Variant HIOS ID cannot be null");
+		IEnvironmentProvider env = ServiceLocator.getInstance().getService(IEnvironmentProvider.class);
+		String rootDirectory = env.getPropertyInGroup(APIConstants.PROPGROUP_NAS, APIConstants.PROP_KEY_NAS_ROOT_FOLDER,
+				String.class, "");
+		String draftFolder = env.getPropertyInGroup(APIConstants.PROPGROUP_NAS,
+				APIConstants.PROP_KEY_NAS_PLAN_PDF_DRAFT_FOLDER, String.class, "");
+		String saveLocation = StringUtils.join(
+				new String[] { rootDirectory, draftFolder, pdf.getCoverageYear(), pdf.getCarrierId() }, "/");
+		APIUtil.mkdirs(saveLocation);
+
+		File saveFile = new File(saveLocation + "/" + pdf.getVariantHiosId() + "_" + pdf.getLanguage() + ".pdf");
+		try {
+			if (saveFile.exists()) {
+				APIUtil.backupFile(saveFile);
+
+			}
+			FileUtils.copyFile(pdf.getUploadFile(), saveFile);
+		} catch (IOException ioEx) {
+			LOG.error("IOError copying plan file", ioEx);
+			BusinessServiceException busEx = new BusinessServiceException(ioEx);
+			busEx.addError("msg.planpdf.failed_upload", Severity.ERROR);
+			throw busEx;
+		}
+		
+		PlanMstrHist planMstrHist = new PlanMstrHist();
+
+		PlanMstr planMstr = new PlanMstr();
+		planMstr.setPlanMstrId(ConversionUtil.toLong(pdf.getPlanIdNumber()));
+
+		planMstrHist.setPlanMstr(planMstr);
+		StringBuilder str = new StringBuilder();
+		str.append("<p align=\"left\"><b>Field Updated</b> : " + "Plan PDF Uploaded" + "<br/>");
+		str.append("<b>Plan Id</b> : " +  StringUtils.trimToEmpty(pdf.getVariantHiosId()) + "<br/>");
+		str.append("<b>Year</b> : " +  StringUtils.trimToEmpty(pdf.getCoverageYear()) + "<br/></p>");
+//		str.append("&#160;&#160;<b>Old Value</b> : " +  StringUtils.trimToEmpty(old.getDescription()) + "<br/>");
+//		str.append("&#160;&#160;<b>New Value</b> : " +  StringUtils.trimToEmpty(status.getDescription()) + "<br/></p>");
+		
+		planMstrHist.setChangeDetailTxt(str.toString());
+		planMstrHist.setChangeLocationTxt("Plan-Benefits");
+		planMstrHist.setChngByUsr(ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class)
+				.getLoginId());
+		planMstrHist.setComments("Plan PDF File Uploaded");
+		planMstrHist.setDtChng(APIUtil.getCurrentDate());
+		planDAO.savePlanUpdateHistory(planMstrHist);
+		
+		
+		LOG.exit();
+
+	}
+
+	
+	
+
+	@Override
+	public void updatePlanVariantDetails(List<PlanVariantDetailsVO> planVariantDetials, PlanVO oldPlanVO) {
+		// TODO Auto-generated method stub
+		
+		List<PlanVariantDetailsVO> oldPlanVariantDetails = initializeOldPlanVariantDetails(oldPlanVO);
+		
+		PlanBenefitUpdateHelper helper = new PlanBenefitUpdateHelper();
+		final List<PlanChangeVO> planChanges = helper.getPlanChanges();
+		for (PlanVariantDetailsVO planVariantDetailsVO : planVariantDetials) {
+			for (PlanVariantDetailsVO oldPlanVariantDetailsVO : oldPlanVariantDetails) {
+				if (planVariantDetailsVO.getPlanVariantDtlId().equals(oldPlanVariantDetailsVO.getPlanVariantDtlId())) {
+					helper.populateChangeVOCopay(planVariantDetailsVO, oldPlanVariantDetailsVO, oldPlanVO);
+					helper.populateChangeVODeductible(planVariantDetailsVO, oldPlanVariantDetailsVO, oldPlanVO);
+					helper.populateChangeVOMoop(planVariantDetailsVO, oldPlanVariantDetailsVO, oldPlanVO);
+				}
+
+			}
+			
+			updateCopayCoins(planVariantDetailsVO, Language.getEnum(oldPlanVO.getLanguage()), planChanges);
+			updateDeductibles(planVariantDetailsVO, Language.getEnum(oldPlanVO.getLanguage()), planChanges);
+			updateMOOP(planVariantDetailsVO, Language.getEnum(oldPlanVO.getLanguage()), planChanges);
+
+		}
+
+		
+
+		PlanMstr planMstr = new PlanMstr();
+		planMstr.setPlanMstrId(ConversionUtil.toLong(oldPlanVO.getPlanId()));
+
+		StringBuilder text = new StringBuilder();
+		List<PlanMstrHist> records = new ArrayList<PlanMstrHist>();
+		PlanMstrHist planMstrHist = new PlanMstrHist();
+		planMstrHist.setPlanMstr(planMstr);
+		planMstrHist.setChangeLocationTxt("Plan Benefits");
+		planMstrHist.setChngByUsr(ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class)
+				.getLoginId());
+		planMstrHist.setComments("Plan-Benefits Updated");
+		planMstrHist.setDtChng(APIUtil.getCurrentDate());
+		for (PlanChangeVO changeVO : planChanges) {
+			final String htmlString = changeVO.toHtmlString();
+			LOG.debug("************************: {}", htmlString);
+			if(text.length() + htmlString.length() > 5500){
+				LOG.debug("Text extending beyond limit, breaking to new record");
+				records.add(planMstrHist);
+				planMstrHist.setChangeDetailTxt(text.toString());
+				
+				planMstrHist = new PlanMstrHist();
+				planMstrHist.setPlanMstr(planMstr);
+				planMstrHist.setChangeLocationTxt("Plan Benefits");
+				planMstrHist.setChngByUsr(ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class)
+						.getLoginId());
+				planMstrHist.setComments("Plan-Benefits Updated");
+				planMstrHist.setDtChng(APIUtil.getCurrentDate());
+				text.setLength(0);
+			}
+			text.append(StringUtils.abbreviate(htmlString, 5500)).append("<br/><pre><center>------</center></pre><br/>");
+			
+		}
+		planMstrHist.setChangeDetailTxt(text.toString());
+		records.add(planMstrHist);
+		for(PlanMstrHist record : records){
+			planDAO.savePlanUpdateHistory(record);
+		}
+		text = null;
+		
+	}
+
+	@Override
+	public List<PlanHistoryVO> retrievePlanHistory(PlanHistorySearchCriteria criteria) {
+		LOG.entry();
+		List<PlanHistoryVO> userVOList = new ArrayList<PlanHistoryVO>();
+		List<PlanMstrHist> planMstrHistList = planDAO.retrievePlanUpdateHistory(criteria);
+		for (PlanMstrHist planMstrHist : planMstrHistList) {
+			PlanHistoryVO vo = planModelTranslator.initializePlanUpdateHistoryVO(planMstrHist);
+			userVOList.add(vo);
+		}
+		return LOG.exit(userVOList);
+	}
+
+	@Override
+	public byte[] downloadDraftPlanPDF(PlanPdfVO vo) {
+		LOG.entry();
+		LOG.debug("VO: {}", vo);
+		byte[] result = new byte[0];
+		Validate.notNull(vo, "Parameter null");
+		Validate.notBlank(vo.getCoverageYear(), "Coverage Year cannot be null");
+		Validate.notBlank(vo.getLanguage(), "Language cannot be null");
+		Validate.notBlank(vo.getVariantHiosId(), "Variant HIOS id cannot be null");
+		IEnvironmentProvider env = ServiceLocator.getInstance().getService(IEnvironmentProvider.class);
+		String rootDirectory = env.getPropertyInGroup(APIConstants.PROPGROUP_NAS, APIConstants.PROP_KEY_NAS_ROOT_FOLDER,
+				String.class, "");
+		String draftFolder = env.getPropertyInGroup(APIConstants.PROPGROUP_NAS,
+				APIConstants.PROP_KEY_NAS_PLAN_PDF_DRAFT_FOLDER, String.class, "");
+		String saveLocation = StringUtils.join(
+				new String[] { rootDirectory, draftFolder, vo.getCoverageYear(), vo.getCarrierId() }, "/");
+
+		File file = new File(saveLocation + "/" + vo.getVariantHiosId() + "_" + vo.getLanguage() + ".pdf");
+		try {
+			if (file.exists() && file.isFile()) {
+				result = FileUtils.readFileToByteArray(file);
+				LOG.debug("Read file of size: {}", result.length);
+
+			}
+
+		} catch (IOException ioEx) {
+			LOG.error("IOError copying plan file", ioEx);
+			BusinessServiceException busEx = new BusinessServiceException(ioEx);
+			busEx.addError("msg.planpdf.failed_upload", Severity.ERROR);
+			throw busEx;
+		}
+		LOG.exit();
+		return result;
+	}
+
+	@Override
+	public byte[] downloadFinalPlanPDF(PlanPdfVO vo) {
+		LOG.entry();
+		LOG.debug("VO: {}", vo);
+		byte[] result = new byte[0];
+		Validate.notNull(vo, "Parameter null");
+		Validate.notBlank(vo.getCoverageYear(), "Coverage Year cannot be null");
+		Validate.notBlank(vo.getLanguage(), "Language cannot be null");
+		Validate.notBlank(vo.getVariantHiosId(), "Variant HIOS id cannot be null");
+		Validate.notBlank(vo.getCarrierId(), "Carrier id cannot be null");
+		IEnvironmentProvider env = ServiceLocator.getInstance().getService(IEnvironmentProvider.class);
+		String rootDirectory = env.getPropertyInGroup(APIConstants.PROPGROUP_NAS, APIConstants.PROP_KEY_NAS_ROOT_FOLDER,
+				String.class, "");
+		String draftFolder = env.getPropertyInGroup(APIConstants.PROPGROUP_NAS,
+				APIConstants.PROP_KEY_NAS_PLAN_PDF_FINAL_FOLDER, String.class, "");
+		String saveLocation = StringUtils.join(
+				new String[] { rootDirectory, draftFolder, vo.getCoverageYear(), vo.getCarrierId() }, "/");
+
+		File file = new File(saveLocation + "/" + vo.getVariantHiosId() + "_" + vo.getLanguage() + ".pdf");
+		try {
+			if (file.exists() && file.isFile()) {
+				result = FileUtils.readFileToByteArray(file);
+				LOG.debug("Read file of size: {}", result.length);
+
+			}
+
+		} catch (IOException ioEx) {
+			LOG.error("IOError copying plan file", ioEx);
+			BusinessServiceException busEx = new BusinessServiceException(ioEx);
+			busEx.addError("msg.planpdf.failed_upload", Severity.ERROR);
+			throw busEx;
+		}
+		LOG.exit();
+		return result;
+	}
+	
+	
+	private void updateCopayCoins(PlanVariantDetailsVO planVariantDetailsVO, Language lang, List<PlanChangeVO> planChanges) {
+		Set<PlanVariantDtlCopayCoins> planVariantDetailsCopayCoins = new HashSet<PlanVariantDtlCopayCoins>();
+		planModelTranslator.initializePlanVariantDtlCopayCoinsEntity(planVariantDetailsVO.getCopayDetails(),
+				planVariantDetailsCopayCoins);
+		List<TDsplPlanStgUpdate> displayPlanUpdates = new ArrayList<TDsplPlanStgUpdate>();
+		HIXDisplayPlanMapper mapper = new HIXDisplayPlanMapper();
+
+		for (PlanVariantDtlCopayCoins planVariantDtlCopayCoins : planVariantDetailsCopayCoins) {
+			PlanChangeVO changeRecord = getBenefitChangeRecord(planChanges,
+					"CP_" + planVariantDtlCopayCoins.getPlanVariantDtlCopayCoinsId());
+			if (changeRecord != null) {
+				planDAO.updateEntity(PlanVariantDtlCopayCoins.class, new String[] { "copayInNetworkTier1",
+						"coinsOutOfNetwork" }, new Object[] { planVariantDtlCopayCoins.getCopayInNetworkTier1(),
+						planVariantDtlCopayCoins.getCoinsOutOfNetwork() }, new String[] { "planVariantDtlCopayCoinsId" },
+						new Object[] { planVariantDtlCopayCoins.getPlanVariantDtlCopayCoinsId() });
+				displayPlanUpdates.add(mapper.getTDsplPlanUpdateRecord(planVariantDtlCopayCoins, lang.getCode(),
+						changeRecord.getYear(), changeRecord.getPlanId()));
+			}
+		}
+
+		planDAO.updateDisplayPlans(displayPlanUpdates);
+	}
+
+	private void updateDeductibles(PlanVariantDetailsVO planVariantDetailsVO, Language lang, List<PlanChangeVO> planChanges) {
+		Set<PlanVariantDtlDeductible> planVariantDtlDeductibles = new HashSet<PlanVariantDtlDeductible>();
+		planModelTranslator.initializePlanVariantDtlDeductibleEntity(planVariantDetailsVO.getDeductibleDetails(),
+				planVariantDtlDeductibles);
+		List<TDsplPlanStgUpdate> displayPlanUpdates = new ArrayList<TDsplPlanStgUpdate>();
+		HIXDisplayPlanMapper mapper = new HIXDisplayPlanMapper();
+		for (PlanVariantDtlDeductible planVariantDtlDeductible : planVariantDtlDeductibles) {
+			final PlanChangeVO changeRecord = getBenefitChangeRecord(planChanges,
+					"DED_" + planVariantDtlDeductible.getPlanVariantDtlDeductibleId());
+			if (changeRecord != null) {
+				planDAO.updateEntity(
+						PlanVariantDtlDeductible.class,
+						new String[] { "inNetworkIndv", "inNetworkFamily", "outOfNetworkFamily", "outOfNetworkIndv" },
+						new Object[] { planVariantDtlDeductible.getInNetworkIndv(),
+								planVariantDtlDeductible.getInNetworkFamily(),
+								planVariantDtlDeductible.getOutOfNetworkFamily(),
+								planVariantDtlDeductible.getOutOfNetworkIndv() },
+						new String[] { "planVariantDtlDeductibleId" },
+						new Object[] { planVariantDtlDeductible.getPlanVariantDtlDeductibleId() });
+				displayPlanUpdates.add(mapper.getTDsplPlanUpdateRecord(planVariantDtlDeductible, lang.getCode(),
+						changeRecord.getYear(), changeRecord.getPlanId()));
+			}
+		}
+		planDAO.updateDisplayPlans(displayPlanUpdates);
+	}
+
+	private void updateMOOP(PlanVariantDetailsVO planVariantDetailsVO, Language lang, List<PlanChangeVO> planChanges) {
+		Set<PlanVariantDtlMaxOop> planVariantDtlMaxOop = new HashSet<PlanVariantDtlMaxOop>();
+		planModelTranslator
+				.initializePlanVariantDtlMaxOopEntity(planVariantDetailsVO.getMoopDetails(), planVariantDtlMaxOop);
+
+		List<TDsplPlanStgUpdate> displayPlanUpdates = new ArrayList<TDsplPlanStgUpdate>();
+		HIXDisplayPlanMapper mapper = new HIXDisplayPlanMapper();
+
+		for (PlanVariantDtlMaxOop planVariantDetailMaxOop : planVariantDtlMaxOop) {
+			final PlanChangeVO changeRecord = getBenefitChangeRecord(planChanges,
+					"MOOP_" + planVariantDetailMaxOop.getPlanVariantDtlMaxOopId());
+			if (changeRecord != null) {
+				planDAO.updateEntity(PlanVariantDtlMaxOop.class, new String[] { "inNetworkTier1Indv",
+						"inNetworkTier1Family", "outOfNetworkFamily", "outOfNetworkIndv" }, new Object[] {
+						planVariantDetailMaxOop.getInNetworkTier1Indv(), planVariantDetailMaxOop.getInNetworkTier1Family(),
+						planVariantDetailMaxOop.getOutOfNetworkFamily(), planVariantDetailMaxOop.getOutOfNetworkIndv() },
+						new String[] { "planVariantDtlMaxOopId" },
+						new Object[] { planVariantDetailMaxOop.getPlanVariantDtlMaxOopId() });
+
+				displayPlanUpdates.add(mapper.getTDsplPlanUpdateRecord(planVariantDetailMaxOop, lang.getCode(),
+						changeRecord.getYear(), changeRecord.getPlanId()));
+			}
+		}
+		planDAO.updateDisplayPlans(displayPlanUpdates);
+
+	}
+
+	private PlanChangeVO getBenefitChangeRecord(List<PlanChangeVO> planChanges, String idStr) {
+		PlanChangeVO retVo = null;
+		if (planChanges != null) {
+			for (PlanChangeVO vo : planChanges) {
+				if (vo.getId().equals(idStr)) {
+					retVo = vo;
+					break;
+				}
+			}
+		}
+		return retVo;
+	}
+
+	private List<PlanVariantDetailsVO> initializeOldPlanVariantDetails(PlanVO oldPlanVO) {
+		List<PlanVariantDetailsVO> oldPlanVariantDetails = new ArrayList<PlanVariantDetailsVO>();
+		Map<PlanVariantVO, PlanVariantDetailsVO> oldPlanBenefitDetails = oldPlanVO.getPlanBenefits().get(0)
+				.getPlanVariants();
+		for (Entry<PlanVariantVO, PlanVariantDetailsVO> entry : oldPlanBenefitDetails.entrySet()) {
+			oldPlanVariantDetails.add(entry.getValue());
+		}
+		return oldPlanVariantDetails;
+	}
+
+
+}

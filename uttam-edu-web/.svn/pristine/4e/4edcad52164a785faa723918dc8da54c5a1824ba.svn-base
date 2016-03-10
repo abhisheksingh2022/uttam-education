@@ -1,0 +1,162 @@
+package com.hixapi.pmp.struts.usermgmt;
+
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.api.model.APICodeConstants.AccessCheckMode;
+import com.hixapi.pmp.api.model.APICodeConstants.RecordMode;
+import com.hixapi.pmp.api.model.APICodeConstants.UserFunction;
+import com.hixapi.pmp.api.model.CarrierVO;
+import com.hixapi.pmp.api.model.criteria.CarrierSearchCriteria;
+import com.hixapi.pmp.common.util.PMPAccessController;
+import com.hixapi.pmp.service.carrier.CarrierService;
+import com.hixapi.web.framework.struts.BaseSecureAction;
+
+public class CarrierSearchAction extends BaseSecureAction {
+	
+	private static final Logger LOG = LogManager.getLogger(CarrierSearchAction.class);
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7296331027656555878L;
+	private static final String RESULT_CARRIER_PROFILE = "carrier-profile";
+	
+	/**Display Objects **/
+	private List<CarrierVO> carrierList;
+	
+	/** Display Objects end **/
+	
+	/** Input Objects start **/
+	private Long carrierId;
+	private Long carrierIdNbr;
+	private CarrierSearchCriteria criteria; 
+	/** Input Objects end **/
+	
+
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		LOG.entry();
+		
+		/*
+		 * Retrieve List of all active carriers in the system and display using carrierList;
+		 */
+/*		CarrierSearchCriteria carrierSearchCriteria=new CarrierSearchCriteria();*/
+		//carrierSearchCriteria.setCarrierId("91069");
+		carrierList=ServiceLocator.getInstance().getService(CarrierService.class).searchCarriers(criteria);
+		LOG.exit();
+	}
+	
+	public String search(){
+		LOG.entry();
+		/*
+		 * Search using the incoming criteria
+		 */
+		carrierList = ServiceLocator.getInstance().getService(CarrierService.class).searchCarriers(criteria);
+		return LOG.exit(FLASH);
+	}
+	
+	public boolean isEditAccess() {
+		if(PMPAccessController.getInstance().isAllowedForCurrentUser(AccessCheckMode.USER_ACTION, UserFunction.CARRIER_EDIT.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public boolean isAddAccess() {
+		if(PMPAccessController.getInstance().isAllowedForCurrentUser(AccessCheckMode.USER_ACTION, UserFunction.CARRIER_ADD.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public boolean isViewAccess() {
+		if(PMPAccessController.getInstance().isAllowedForCurrentUser(AccessCheckMode.USER_ACTION, UserFunction.CARRIER_VIEW.getCode())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	/**
+	 * Navigates to carrier profile screen with no parameters
+	 * @return
+	 * @throws Exception
+	 */
+	public String add()throws Exception{
+		LOG.entry();
+		if (isAddAccess()){
+			addRedirectURLParameter(CarrierProfileAction.RECORD_MODE, RecordMode.ADD.getCode());
+			return LOG.exit(RESULT_CARRIER_PROFILE);
+		}
+		else 
+			return LOG.exit(UNAUTHORIZED);
+		
+	}
+	
+	public String view()throws Exception{
+		LOG.entry();
+		if (isViewAccess()){
+		addRedirectURLParameter(CarrierProfileAction.CARRIER_ID_NBR, carrierIdNbr);
+		addRedirectURLParameter(CarrierProfileAction.RECORD_MODE, RecordMode.VIEW.getCode());
+		return LOG.exit(RESULT_CARRIER_PROFILE);
+		}
+		else 
+			return LOG.exit(UNAUTHORIZED);
+	}
+	public String edit()throws Exception{
+		LOG.entry();
+		if (isEditAccess()){
+		addRedirectURLParameter(CarrierProfileAction.CARRIER_ID_NBR, carrierIdNbr);
+		addRedirectURLParameter(CarrierProfileAction.RECORD_MODE, RecordMode.EDIT.getCode());
+		return LOG.exit(RESULT_CARRIER_PROFILE);
+		}
+		else
+			return LOG.exit(UNAUTHORIZED);
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		LOG.entry();
+		// TODO Auto-generated method stub
+		return LOG.exit(null);
+	}
+
+	public List<CarrierVO> getCarrierList() {
+		return carrierList;
+	}
+
+	public void setCarrierList(List<CarrierVO> carrierList) {
+		this.carrierList = carrierList;
+	}
+
+	public Long getCarrierId() {
+		return carrierId;
+	}
+
+	public void setCarrierId(Long carrierId) {
+		this.carrierId = carrierId;
+	}
+
+	public Long getCarrierIdNbr() {
+		return carrierIdNbr;
+	}
+
+	public void setCarrierIdNbr(Long carrierIdNbr) {
+		this.carrierIdNbr = carrierIdNbr;
+	}
+
+	public CarrierSearchCriteria getCriteria() {
+		return criteria;
+	}
+
+	public void setCriteria(CarrierSearchCriteria criteria) {
+		this.criteria = criteria;
+	}
+
+	
+}

@@ -1,0 +1,793 @@
+<%@include file="/includes/header.jsp"%>
+<s:token id="updatedtoken" />
+
+<%-- <script
+	src="<s:property value='rootPath'/>static/custom/js/jquery-ui.js"></script>
+ --%>
+<script
+	src="<s:property value='rootPath'/>static/custom/js/jquery.accordion.source.js"></script>
+
+<script type="text/javascript">
+	$(document)
+			.ready(
+					function() {
+						$('ul').accordion();
+						$("a")
+								.each(
+										function() {
+											var ahref = $(this).attr("href");
+											if (typeof ahref != "undefined") {
+												if ($(this).attr("id") != 'id_a_pdf-link') {
+													if (ahref
+															.indexOf('http://') != 0
+															&& ahref
+																	.indexOf('https://') != 0) {
+														$(this)
+																.attr(
+																		"href",
+																		"http://"
+																				+ ahref);
+													}
+												}
+											}
+
+										});
+
+					});
+	$(function() {
+		$("#accordion1").accordion({
+			heightStyle : "content"
+		});
+	});
+</script>
+
+<h2>
+
+	<%-- 	<s:text name="txt.plandetails.healthyCTInc"></s:text> --%>
+	<s:property value="planContainer.plan.carrierName" />
+	<br />
+	<%-- 	<s:text name="txt.plandetails.silverEnhanced"></s:text> --%>
+	<s:property value="planContainer.plan.planName" />
+</h2>
+<ul class="accordion">
+	<li><a><s:text name="txt.plandetails.notice_planDetails"></s:text></a>
+		<div class="text-align-justify">
+			<p>
+				<s:text name="txt.plandetails.noticeText1"></s:text>
+				<br />
+				<s:text name="txt.plandetails.noticeText2"></s:text>
+				<i class="fa fa-question-circle"
+					title="<s:text name="txt.plan.hovertext.expectedmonthlypremium" />"
+					data-toggle="tooltip"></i>&nbsp;
+				<s:text name="txt.plandetails.noticeText3"></s:text>
+				<i class="fa fa-question-circle"
+					title="<s:text name="txt.plan.hovertext.qhp" />"
+					data-toggle="tooltip"></i>&nbsp;
+				<s:text name="txt.plandetails.noticeText4"></s:text>
+
+			</p>
+		</div></li>
+</ul>
+<ul class="accordion">
+	<li><a> <s:text name="txt.plandetails.planOverview"></s:text></a>
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.expectedmonthlypremium" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.estimatedMonthlyPremium"></s:text></label>
+			<div class="rightppart">
+				$
+				<s:property
+					value="planContainer.plan.planDetails.planOverview.estimatedMonthlyPremium" />
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.healthcareprovider" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.healthCareProvider"></s:text></label>
+			<div class="rightppart">
+				<a id="id_a_provider-link"
+					href="<s:property
+						value="planContainer.plan.planDetails.planOverview.healthCareProviderLink" />"
+					target="_blank"> <s:text name="txt.plandetails.searchProviders"></s:text>
+				</a>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.plantype" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.planType"></s:text></label>
+			<div class="rightppart">
+				<s:property
+					value="planContainer.plan.planDetails.planOverview.planType" />
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.planLevel" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.planLevel"></s:text></label>
+			<div class="rightppart">
+				<s:property
+					value="planContainer.plan.planDetails.planOverview.planLevel" />
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.qualityrating" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.qualityRating"></s:text></label>
+			<div class="rightppart">
+<!--  			<script>alert("1");alert("<s:property value='planContainer.plan.planDetails.planOverview.qualityRating' />");</script>
+ -->				<s:if
+					test="planContainer.plan.planDetails.planOverview.qualityRating>0">
+					<s:iterator begin="1" step="1" end="planContainer.plan.planDetails.planOverview.qualityRating">
+						<img class="middle"
+							src="<s:property value='rootPath'/>static/custom/images/star.png"
+							alt="Full Star">
+					</s:iterator>
+					<s:iterator begin="planContainer.plan.planDetails.planOverview.qualityRating+1" step="1" end="4">
+						<img class="middle"
+							src="<s:property value='rootPath'/>static/custom/images/star_empty.png"
+							alt="Full Star">
+					</s:iterator>
+				</s:if>
+				<s:else>
+					<s:text name="txt.plandetails.unrated"></s:text>
+				</s:else>
+			</div>
+		</div></li>
+	<li><a><s:text name="txt.plandetails.costSharing"></s:text></a>
+
+
+
+
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.deductible" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.deductible"></s:text></label>
+			<div class="rightppart bold_underline">
+				<s:text name="txt.plandetails.individual"></s:text>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.costSharingOverview.deductible.individualInAndOutNetwork.inNetwork" />
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.costSharingOverview.deductible.individualInAndOutNetwork.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.costSharingOverview.deductible.individualInAndOutNetwork.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart bold_underline">
+				<s:text name="txt.plandetails.family"></s:text>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.costSharingOverview.deductible.familyInAndOutNetwork.inNetwork" />
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:if
+					test="planContainer.plan.planDetails.costSharingOverview.deductible.familyInAndOutNetwork.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.costSharingOverview.deductible.familyInAndOutNetwork.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.oop" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.outOfPocket"></s:text></label>
+			<div class="rightppart bold_underline">
+				<s:text name="txt.plandetails.individual"></s:text>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.costSharingOverview.deductible.individualInAndOutNetwork.inNetwork" />
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.costSharingOverview.deductible.individualInAndOutNetwork.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.costSharingOverview.deductible.individualInAndOutNetwork.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+
+			<div class="rightppart bold_underline">
+				<s:text name="txt.plandetails.family"></s:text>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.costSharingOverview.outOfPocketMax.familyInAndOutNetwork.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.costSharingOverview.outOfPocketMax.familyInAndOutNetwork.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.costSharingOverview.outOfPocketMax.familyInAndOutNetwork.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div></li>
+
+
+	<li><a> <s:text name="txt.plandetails.physicianServices"></s:text>
+	</a>
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.preventivecare" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.preventiveCare"></s:text></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.physicianServices.preventiveCare.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.physicianServices.preventiveCare.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.physicianServices.preventiveCare.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div> <s:if
+			test="planContainer.plan.planDetails.physicianServices.pVPInjury.inNetwork != null">
+			<div class="extremepart">
+				<label><s:text name="txt.plandetails.primaryCare"></s:text>
+				</label>
+				<div class="rightppart">
+					<s:text name="txt.plandetails.inNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.physicianServices.pVPInjury.inNetwork" />
+				</div>
+			</div>
+
+			<div class="extremepart">
+				<label></label>
+				<div class="rightppart">
+					<s:if
+						test="planContainer.plan.planDetails.physicianServices.pVPInjury.outOfNetwork != null">
+						<s:text name="txt.plandetails.outNetwork"></s:text>
+						<s:property
+							value="planContainer.plan.planDetails.physicianServices.pVPInjury.outOfNetwork" />
+
+					</s:if>
+				</div>
+			</div>
+		</s:if>
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.primarycare" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.specialistVisit"></s:text></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.physicianServices.specialistVisit.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.physicianServices.specialistVisit.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.physicianServices.specialistVisit.outOfNetwork" />
+				</s:if>
+			</div>
+		</div></li>
+	<li><a> <s:text name="txt.plandetails.prescriptionDrugs"></s:text>
+	</a>
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.presDrugDeductible" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.PDDeductible"></s:text></label>
+			<div class="rightppart bold_underline">
+				<s:text name="txt.plandetails.individual"></s:text>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.prescriptionDrugs.drugDeductible.individualInAndOutNetwork.inNetwork" />
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.prescriptionDrugs.drugDeductible.individualInAndOutNetwork.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.prescriptionDrugs.drugDeductible.individualInAndOutNetwork.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart bold_underline">
+				<s:text name="txt.plandetails.family"></s:text>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.prescriptionDrugs.drugDeductible.familyInAndOutNetwork.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.prescriptionDrugs.drugDeductible.familyInAndOutNetwork.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.prescriptionDrugs.drugDeductible.familyInAndOutNetwork.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.presDrugOOP" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.PDOutOfPocket"></s:text></label>
+			<div class="rightppart bold_underline">
+				<s:text name="txt.plandetails.individual"></s:text>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.prescriptionDrugs.drugOutOfPocketMax.individualInAndOutNetwork.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.prescriptionDrugs.drugOutOfPocketMax.individualInAndOutNetwork.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.prescriptionDrugs.drugOutOfPocketMax.individualInAndOutNetwork.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart bold_underline">
+				<s:text name="txt.plandetails.family"></s:text>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.prescriptionDrugs.drugOutOfPocketMax.familyInAndOutNetwork.inNetwork" />
+
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.prescriptionDrugs.drugOutOfPocketMax.familyInAndOutNetwork.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.prescriptionDrugs.drugOutOfPocketMax.familyInAndOutNetwork.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.presDrugRetail" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.PDFromARetail"></s:text></label>
+			<div class="rightppart bold_underline">
+				<s:text name="txt.plandetails.tier1"></s:text>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier1.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier1.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier1.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart bold_underline">
+				<s:text name="txt.plandetails.tier2"></s:text>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier2.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier2.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier2.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div> <s:if
+			test="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier3.inNetwork != null">
+
+			<div class="extremepart">
+				<label></label>
+				<div class="rightppart bold_underline">
+					<s:text name="txt.plandetails.tier3"></s:text>
+				</div>
+			</div>
+			<div class="extremepart">
+				<label></label>
+				<div class="rightppart">
+					<s:text name="txt.plandetails.inNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier3.inNetwork" />
+				</div>
+			</div>
+			<div class="extremepart">
+				<label></label>
+				<div class="rightppart">
+					<s:if
+						test="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier3.outOfNetwork != null">
+						<s:text name="txt.plandetails.outNetwork"></s:text>
+						<s:property
+							value="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier3.outOfNetwork" />
+
+					</s:if>
+				</div>
+			</div>
+		</s:if> <s:if
+			test="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier4.inNetwork != null">
+			<div class="extremepart">
+				<label></label>
+				<div class="rightppart bold_underline">
+					<s:text name="txt.plandetails.tier4"></s:text>
+				</div>
+			</div>
+			<div class="extremepart">
+				<label></label>
+				<div class="rightppart">
+					<s:text name="txt.plandetails.inNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier4.inNetwork" />
+				</div>
+			</div>
+			<div class="extremepart">
+				<label></label>
+				<div class="rightppart">
+					<s:if
+						test="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier4.outOfNetwork != null">
+						<s:text name="txt.plandetails.outNetwork"></s:text>
+						<s:property
+							value="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier4.outOfNetwork" />
+
+					</s:if>
+				</div>
+			</div>
+		</s:if> <s:if
+			test="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier5.inNetwork != null">
+			<div class="extremepart">
+				<label></label>
+				<div class="rightppart bold_underline">
+					<s:text name="txt.plandetails.tier5"></s:text>
+				</div>
+			</div>
+			<div class="extremepart">
+				<label></label>
+				<div class="rightppart">
+					<s:text name="txt.plandetails.inNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier5.inNetwork" />
+				</div>
+			</div>
+			<div class="extremepart">
+				<label></label>
+				<div class="rightppart">
+					<s:if
+						test="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier5.outOfNetwork != null">
+						<s:text name="txt.plandetails.outNetwork"></s:text>
+						<s:property
+							value="planContainer.plan.planDetails.prescriptionDrugs.retailPharmacyDrugs.tier5.outOfNetwork" />
+
+					</s:if>
+				</div>
+			</div>
+		</s:if>
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.presDrugSearch" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.PDFormulatory"></s:text></label>
+			<div class="rightppart">
+				<a id="id_a_formulary-link"
+					href="<s:property
+							value="planContainer.plan.planDetails.prescriptionDrugs.drugFormularySearchLink" />"
+					target="_blank"><s:text
+						name="txt.plandetails.searchPrescription"></s:text> </a>
+			</div>
+		</div></li>
+	<li><a> <s:text name="txt.plandetails.emergencyCare"></s:text>
+	</a>
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.emergencyRoom" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.emergencyRoom"></s:text></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.emergencyCareAndHospitalService.emergencyRoomService.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.emergencyCareAndHospitalService.emergencyRoomService.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.emergencyCareAndHospitalService.emergencyRoomService.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.inpatientHospital" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.inPatient"></s:text></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.emergencyCareAndHospitalService.inpatientHospitalServices.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.emergencyCareAndHospitalService.inpatientHospitalServices.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.emergencyCareAndHospitalService.inpatientHospitalServices.outOfNetwork" />
+				</s:if>
+			</div>
+		</div></li>
+	<li><a> <s:text name="txt.plandetails.pediatricDental"></s:text>
+	</a>
+		<div class="extremepart">
+			<label><s:text name="txt.plandetails.diagnostic"></s:text></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.pediatricDentalCare.diagnosticPreventive.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.pediatricDentalCare.diagnosticPreventive.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.pediatricDentalCare.diagnosticPreventive.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label><s:text name="txt.plandetails.basicRestorative"></s:text></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.pediatricDentalCare.basicRestorative.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.pediatricDentalCare.basicRestorative.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.pediatricDentalCare.basicRestorative.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label><s:text name="txt.plandetails.majorRestorative"></s:text></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.pediatricDentalCare.majorRestorative.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.pediatricDentalCare.majorRestorative.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.pediatricDentalCare.majorRestorative.outOfNetwork" />
+				</s:if>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label><s:text name="txt.plandetails.orthodonticServices"></s:text></label>
+			<div class="rightppart">
+				<s:text name="txt.plandetails.inNetwork"></s:text>
+				<s:property
+					value="planContainer.plan.planDetails.pediatricDentalCare.orthodonticServices.inNetwork" />
+			</div>
+		</div>
+		<div class="extremepart">
+			<label></label>
+			<div class="rightppart">
+				<s:if
+					test="planContainer.plan.planDetails.pediatricDentalCare.orthodonticServices.outOfNetwork != null">
+					<s:text name="txt.plandetails.outNetwork"></s:text>
+					<s:property
+						value="planContainer.plan.planDetails.pediatricDentalCare.orthodonticServices.outOfNetwork" />
+
+				</s:if>
+			</div>
+		</div></li>
+	<li><a> <s:text name="txt.plandetails.additionalInformation"></s:text>
+	</a>
+
+		<div class="extremepart">
+			<label><i class="fa fa-question-circle"
+				title="<s:text name="txt.plan.hovertext.document" />"
+				data-toggle="tooltip"></i>&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.detailedPlan"></s:text></label>
+			<div class="rightppart">
+				<a target="_blank" id="id_a_pdf-link"
+					href="<s:property
+								value="planContainer.plan.planDetails.additionalInformation.detailedPlanDocumentLink" />">
+					<s:text name="txt.plandetails.view"></s:text>
+				</a>
+			</div>
+		</div>
+		<div class="extremepart">
+			<label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<s:text
+					name="txt.plandetails.viewSummary"></s:text></label>
+			<div class="rightppart">
+				<a target="_blank" id="id_a_sob-link"
+					href="<s:property
+							value="planContainer.plan.planDetails.additionalInformation.benefitsAndCoverageLink" />">
+					<s:text name="txt.plandetails.summary"></s:text>
+				</a>
+			</div>
+		</div></li>
+</ul>
+<br />
+<br />
+<div class="clearfix"></div>
+<div class="blank-space-accordion">
+	<button type="button" class="btn btn-default float-right"
+		data-dismiss="modal">
+		<s:text name="txt.button.close" />
+	</button>
+</div>
+<!-- 		</div>
+ -->
+
+</body>
+</html>

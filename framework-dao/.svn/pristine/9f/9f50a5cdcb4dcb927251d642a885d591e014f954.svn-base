@@ -1,0 +1,267 @@
+package com.hixapi.pmp.dao.user.impl;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hibernate.Criteria;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.criterion.MatchMode;
+import org.hibernate.criterion.Restrictions;
+
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.dao.BaseDAO;
+import com.hixapi.pmp.api.model.criteria.CarrierUserSearchCriteria;
+import com.hixapi.pmp.api.model.criteria.LoginHistorySearchCriteria;
+import com.hixapi.pmp.common.util.PMPAccessController;
+import com.hixapi.pmp.dao.carrier.CarrierDAO;
+import com.hixapi.pmp.dao.user.UserDAO;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+import com.hixapi.pmp.entity.model.CarrierUser;
+import com.hixapi.pmp.entity.model.EntityCodeConstants.RoleType;
+import com.hixapi.pmp.entity.model.RoleMstr;
+import com.hixapi.pmp.entity.model.UsrLoginHistory;
+
+public class UserDAOImpl extends BaseDAO implements UserDAO {
+
+	private static final Logger log = LogManager.getLogger(UserDAOImpl.class);
+
+	private CarrierDAO carrierDAO;
+
+	@Override
+	public CarrierUser retrieveUserByLoginId(String loginId) {
+		Session session = getCurrentSession();
+		Criteria criteriaObj = session.createCriteria(CarrierUser.class);
+		criteriaObj.add(Restrictions.eq("userLoginId", StringUtils.lowerCase(loginId)));
+		return (CarrierUser) criteriaObj.uniqueResult();
+	}
+
+	@Override
+	public CarrierUser retrieveUserById(Long id) {
+		Session session = getReadOnlySession();
+		Criteria criteriaObj = session.createCriteria(CarrierUser.class);
+		criteriaObj.add(Restrictions.eq("carrierUserId", id));
+		return (CarrierUser) criteriaObj.uniqueResult();
+	}
+
+	@Override
+	public void saveCarrierUser(CarrierUser carrierUser) {
+		Session session = getCurrentSession();
+		carrierUser.setUserLoginId(StringUtils.lowerCase(carrierUser.getUserLoginId()));
+		session.save(carrierUser);
+		session.flush();
+	}
+
+	@Override
+	public List<RoleMstr> retrieveAvailableRoles() {
+
+		Session session = getReadOnlySession();
+		@SuppressWarnings("unchecked")
+		List<RoleMstr> roles = session.createCriteria(RoleMstr.class)
+				.add(Restrictions.ne("roleTypeCd", RoleType.ALL.getCode())).list();
+		return roles;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<CarrierUser> searchCarrierUsers(CarrierUserSearchCriteria criteria) {
+		Session session = getReadOnlySession();
+		Criteria criteriaObj = session.createCriteria(CarrierUser.class);
+
+		if (!PMPAccessController.getInstance().hasAllCarrierAccessForCurrentUser()) {
+			criteriaObj.add(Restrictions.eq("carrierMstr.carrierIdNbr", PMPAccessController.getInstance().getCurrentUserCarrierId()));
+		}
+
+		if (criteria != null) {
+			criteriaObj.createAlias("usrContactDetail", "usrContactDetail");
+			if (!StringUtils.isEmpty(criteria.getFirstName())) {
+				criteriaObj.add(Restrictions.ilike("usrContactDetail.frstNm", criteria.getFirstName(),MatchMode.ANYWHERE));
+			}
+			if (!StringUtils.isEmpty(criteria.getLastName())) {
+				criteriaObj.add(Restrictions.ilike("usrContactDetail.lastNm", criteria.getLastName(),MatchMode.ANYWHERE));
+			}
+
+			if (!StringUtils.isEmpty(criteria.getStatusCode())) {
+				criteriaObj.add(Restrictions.eq("usrStatusCd", criteria.getStatusCode()));
+			}
+
+			if (!StringUtils.isEmpty(criteria.getUserId())) {
+				criteriaObj.add(Restrictions.eq("userLoginId", StringUtils.lowerCase(criteria.getUserId())));
+			}
+
+			if (!StringUtils.isEmpty(criteria.getCarrierIdNbr())) {
+				criteriaObj.createAlias("carrierMstr", "carrierMstr");
+				criteriaObj.add(Restrictions.eq("carrierMstr.carrierIdNbr", Long.parseLong(criteria.getCarrierIdNbr())));
+			}
+		}
+		return criteriaObj.list();
+	}
+
+	@Override
+	public void updateCarrierUser(CarrierUser carrierUser) {
+		Session session = getCurrentSession();
+		carrierUser.setUserLoginId(StringUtils.lowerCase(carrierUser.getUserLoginId()));
+		session.update(carrierUser);
+		
+		session.flush();
+	}
+
+	@Override
+	public void deleteCarrierUser(CarrierUser carrierUser) {
+		Session session = getCurrentSession();
+		session.delete(carrierUser);
+		session.flush();
+	}
+
+	@Override
+	public void saveLoginHistory(UsrLoginHistory record) {
+		Session session = getCurrentSession();
+		session.save(record);
+		record.setUsrLoginId(StringUtils.lowerCase(record.getUsrLoginId()));
+		session.flush();
+	}
+
+	@Override
+	public List<Object[]> retrieveLoginHistory(LoginHistorySearchCriteria criteria) {
+		Session session = getReadOnlySession();
+		int flag = 0;
+		List<CarrierMstr> carriers = null;
+		if (StringUtils.isNotEmpty(criteria.getOrganisation()) && !"0".equals(criteria.getOrganisation())) {
+			CarrierMstr carrier = carrierDAO.retrieveCarrierByCarrierIdNumber(ConversionUtil.toLong(criteria
+					.getOrganisation()));
+			carriers = new ArrayList<CarrierMstr>(1);
+			carriers.add(carrier);
+		} else if (!"0".equals(criteria.getOrganisation())) {
+			carriers = carrierDAO.searchCarrier(null);
+		}
+
+		StringBuilder query = new StringBuilder(
+				"SELECT ULH.USR_LOGIN_ID,  ULH.LOGIN_DT , CU.CARRIER_ID_NBR FROM USR_LOGIN_HISTORY ULH ")
+				.append(" left outer join CARRIER_USER CU on CU.USER_LOGIN_ID = ULH.USR_LOGIN_ID ");
+		if (criteria != null) {
+			if ((criteria.getDateFrom() != null) && (criteria.getDateTo() != null)) {
+				if (flag == 0) {
+					query.append("WHERE ");
+					++flag;
+				} else {
+					query.append(" AND  ");
+				}
+				query.append(" ULH.").append("LOGIN_DT").append(" between ").append(" :dateFrom and :dateTo ");
+			} else if (criteria.getDateFrom() != null) {
+				if (flag == 0) {
+					query.append("WHERE ");
+					++flag;
+				} else {
+					query.append(" AND  ");
+				}
+				query.append(" ULH.").append("LOGIN_DT").append(" >= ").append(" :dateFrom ");
+			} else if (criteria.getDateTo() != null) {
+				if (flag == 0) {
+					query.append("WHERE ");
+					++flag;
+				} else {
+					query.append(" AND  ");
+				}
+				query.append(" ULH.").append("LOGIN_DT").append(" <= ").append(" :dateTo ");
+			}
+			if (StringUtils.isNotEmpty(criteria.getUserId())) {
+				if (flag == 0) {
+					query.append("where ");
+					++flag;
+				} else {
+					query.append(" AND  ");
+				}
+				query.append("ULH.USR_LOGIN_ID").append(" = ").append(" :userId ");
+			}
+
+			if ("0".equals(criteria.getOrganisation())) {
+				if (flag == 0) {
+					query.append("where ");
+					++flag;
+				} else {
+					query.append(" AND  ");
+				}
+				query.append("CU.CARRIER_ID_NBR IS NULL");
+			}
+		}
+
+		query.append(" order by ulh.login_Dt desc");
+
+		Query sql = session.createSQLQuery(query.toString());
+		log.debug("query: " + sql);
+		if (criteria != null) {
+			if (criteria.getDateFrom() != null) {
+				sql.setParameter("dateFrom", criteria.getDateFrom());
+			}
+			if (criteria.getDateTo() != null) {
+				sql.setParameter("dateTo", criteria.getDateTo());
+			}
+			if (StringUtils.isNotEmpty(criteria.getUserId())) {
+				sql.setParameter("userId", StringUtils.lowerCase(criteria.getUserId()));
+			}
+		}
+
+		@SuppressWarnings("unchecked")
+		List<Object[]> results = sql.list();
+		List<Object[]> finalResults = new ArrayList<Object[]>(results.size());
+		if (CollectionUtils.isNotEmpty(results)) {
+			for (Object[] result : results) {
+				Object[] finalResult = new Object[3];
+				finalResult[0] = result[0];
+				String carrierName = findCarrier(carriers, result[2]);
+				finalResult[1] = carrierName;
+				finalResult[2] = result[1];
+				if (StringUtils.isBlank(carrierName)) {
+					if (StringUtils.isBlank(criteria.getOrganisation())
+							|| "0".equals(criteria.getOrganisation())) {
+						finalResult[1] = "Access Health CT";
+						finalResults.add(finalResult);
+					}
+				}else{
+					finalResults.add(finalResult);
+				}
+				
+			}
+		}
+
+		return finalResults;
+	}
+
+	private String findCarrier(List<CarrierMstr> carriers, Object id) {
+		String result = "";
+		if (id != null && CollectionUtils.isNotEmpty(carriers)) {
+			for (CarrierMstr carrier : carriers) {
+				if (carrier.getCarrierIdNbr().equals(((BigDecimal)id).longValue())) {
+					result = carrier.getCarrierName();
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public boolean checkIfPlanAccessibleToCurrentUser(Long planIdNbr) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean checkIfPlanAccessibleToCurrentUser(String planHiosId) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public CarrierDAO getCarrierDAO() {
+		return carrierDAO;
+	}
+
+	public void setCarrierDAO(CarrierDAO carrierDAO) {
+		this.carrierDAO = carrierDAO;
+	}
+}

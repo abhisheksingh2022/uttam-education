@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.CarrierAdminInfo" table="CARRIER_ADMIN_INFO" optimistic-lock="version">
+        <id name="carrierAdminInfoIdNbr" type="java.lang.Long">
+            <column name="CARRIER_ADMIN_INFO_ID_NBR" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_CARRIER_ADMIN_INFO_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="addressByCompanyAddrId" class="com.hixapi.pmp.entity.model.Address" fetch="select" cascade="all">
+            <column name="COMPANY_ADDR_ID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="addressByIssuerAddressId" class="com.hixapi.pmp.entity.model.Address" fetch="select" cascade="all">
+            <column name="ISSUER_ADDRESS_ID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="carrierMstr" class="com.hixapi.pmp.entity.model.CarrierMstr" fetch="select">
+            <column name="CARRIER_ID_NBR" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <many-to-one name="customerServiceCenterByCustSvcShopId" class="com.hixapi.pmp.entity.model.CustomerServiceCenter" fetch="select" cascade="all">
+            <column name="CUST_SVC_SHOP_ID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="customerServiceCenterByCustSvcIndvId" class="com.hixapi.pmp.entity.model.CustomerServiceCenter" fetch="select" cascade="all">
+            <column name="CUST_SVC_INDV_ID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByFinRptingCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="FIN_RPTING_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailBySystemCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="SYSTEM_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByRskCorridorCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="RSK_CORRIDOR_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByCeoCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="CEO_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByReinsCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="REINS_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByCfoCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="CFO_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByQltyCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="QLTY_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByAptcCsrCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="APTC_CSR_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByPymtCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="PYMT_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByIssuerIndvMktCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="ISSUER_INDV_MKT_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByIssuerShopCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="ISSUER_SHOP_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByCmplncOfcrCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="CMPLNC_OFCR_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByOnlEnrtCtrBackupCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="ONL_ENRT_CTR_BACKUP_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByRskAdjstmntCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="RSK_ADJSTMNT_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByApplGrvCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="APPL_GRV_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByEnrtCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="ENRT_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByChiefDntlDrctrCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="CHIEF_DNTL_DRCTR_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByOnlEnrtCtrPrimaryCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="ONL_ENRT_CTR_PRIMARY_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByMedicalDrctrCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="MEDICAL_DRCTR_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByPharmBnftMgrCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="PHARM_BNFT_MGR_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByCmplntTrckCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="CMPLNT_TRCK_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByFinTrnsfrCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="FIN_TRNSFR_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByHipaaScrtyOfcrCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="HIPAA_SCRTY_OFCR_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByGvtRltnCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="GVT_RLTN_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByCustSvcOpsCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="CUST_SVC_OPS_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByBackupUsAccessCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="BACKUP_US_ACCESS_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByUsrAccessCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="USR_ACCESS_CID" precision="12" scale="0" />
+        </many-to-one>
+        <many-to-one name="usrContactDetailByMktingCid" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="select" cascade="all">
+            <column name="MKTING_CID" precision="12" scale="0" />
+        </many-to-one>
+        <property name="coverageYear" type="short">
+            <column name="COVERAGE_YEAR" not-null="true" />
+        </property>
+        <property name="stateCd" type="string">
+            <column name="STATE_CD" length="2" />
+        </property>
+        <property name="proposedXchngMktCvgType" type="string">
+            <column name="PROPOSED_XCHNG_MKT_CVG_TYPE" length="100" />
+        </property>
+        <property name="currSalesMktType" type="string">
+            <column name="CURR_SALES_MKT_TYPE" length="100" />
+        </property>
+        <property name="cmpnyLegalNm" type="string">
+            <column name="CMPNY_LEGAL_NM" length="200" />
+        </property>
+        <property name="issuerLegalNm" type="string">
+            <column name="ISSUER_LEGAL_NM" length="200" />
+        </property>
+        <property name="issuerMktingNm" type="string">
+            <column name="ISSUER_MKTING_NM" length="200" />
+        </property>
+        <property name="assocHlthPlnId" type="string">
+            <column name="ASSOC_HLTH_PLN_ID" length="30" />
+        </property>
+        <property name="tin" type="string">
+            <column name="TIN" length="30" />
+        </property>
+        <property name="naicCmpnyCd" type="string">
+            <column name="NAIC_CMPNY_CD" length="10" />
+        </property>
+        <property name="naicGrpCd" type="string">
+            <column name="NAIC_GRP_CD" length="10" />
+        </property>
+        <property name="primaryContactType" type="string">
+            <column name="PRIMARY_CONTACT_TYPE" length="100" />
+        </property>
+        <property name="enrtTpaFlg" type="java.lang.Character">
+            <column name="ENRT_TPA_FLG" length="1" />
+        </property>
+        <property name="clmPrcssngTpaFlg" type="java.lang.Character">
+            <column name="CLM_PRCSSNG_TPA_FLG" length="1" />
+        </property>
+        <property name="edgeServerHostTpaFlg" type="java.lang.Character">
+            <column name="EDGE_SERVER_HOST_TPA_FLG" length="1" />
+        </property>
+        <property name="delInd" type="char">
+            <column name="DEL_IND" length="1" not-null="true" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+        
+        
+    </class>
+</hibernate-mapping>

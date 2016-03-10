@@ -1,0 +1,5 @@
+<script>
+	$(document).ready(function(){
+		$("#myModalsetTime").modal('hide');		
+	});
+</script>

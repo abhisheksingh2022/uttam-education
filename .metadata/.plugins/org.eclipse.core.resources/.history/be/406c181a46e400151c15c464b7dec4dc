@@ -1,0 +1,62 @@
+package com.hixapi.framework.dao.interceptor;
+
+import java.io.Serializable;
+
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.EmptyInterceptor;
+import org.hibernate.type.Type;
+
+import com.hixapi.framework.common.context.ContextKeyEnum;
+import com.hixapi.framework.common.context.ContextProvider;
+import com.hixapi.framework.common.model.UserIdentity;
+import com.uttam.framework.common.APIConstants;
+import com.uttam.framework.common.APIUtil;
+
+public class AuditLogInterceptor extends EmptyInterceptor {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7853971248815989472L;
+
+	public boolean onFlushDirty(Object entity, Serializable id, Object[] currentState,
+
+	Object[] previousState, String[] propertyNames, Type[] types) {
+		UserIdentity i = ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class);
+		if(i != null){
+			setValue(currentState, propertyNames, "updtUserId", i.getLoginId());
+		}else{
+			setValue(currentState, propertyNames, "updtUserId", APIConstants.SYSTEM_USER_ID);
+		}
+		setValue(currentState, propertyNames, "updtDt", APIUtil.getCurrentDate());
+		return true;
+	}
+
+	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
+		UserIdentity i = ContextProvider.getContextField(ContextKeyEnum.REQUEST_USER, UserIdentity.class);
+		if(i != null){
+			setValue(state, propertyNames, "createUsrId", i.getLoginId());
+		}else{
+			setValue(state, propertyNames, "createUsrId", APIConstants.SYSTEM_USER_ID);
+		}
+		setValue(state, propertyNames, "crtdDt", APIUtil.getCurrentDate());
+		return true;
+
+	}
+
+	private void setValue(Object[] currentState, String[] propertyNames, String propertyToSet, Object value) {
+
+		Integer propertyPosition = 0;
+		for (String property : propertyNames) {
+
+			if (StringUtils.equals(property, propertyToSet)) {
+
+				currentState[propertyPosition] = value;
+			} else {
+				propertyPosition++;
+			}
+
+		}
+	}
+
+}

@@ -1,0 +1,102 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+public class FPLLimitsWithDisregards implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private int fplLimitsId;
+
+	private Double disregardPercentage = 0d;
+	private Double maxFPLLimit;
+	private Double minFPLLimit;
+	private String programCode;
+	private String subProgramCode;
+	private Date startDateMinFPLLimit;
+	private Date endDateMinFPLLimit;
+	private Date startDateMaxFPLLimit;
+	private Date endDateMaxFPLLimit;
+	//adjustedMax or adjustedMin FPLLimit
+	private Double adjustedMaxFPLLimit;
+	private Double adjustedMinFPLLimit;
+//	private Double initialPerc;
+//	private Double finalPerc;
+	
+	
+	public int getFplLimitsId() {
+		return fplLimitsId;
+	}
+	public void setFplLimitsId(int fplLimitsId) {
+		this.fplLimitsId = fplLimitsId;
+	}
+	public Double getDisregardPercentage() {
+		return disregardPercentage;
+	}
+	public void setDisregardPercentage(Double disregardPercentage) {
+		this.disregardPercentage = disregardPercentage;
+	}
+	public Double getMaxFPLLimit() {
+		return maxFPLLimit;
+	}
+	public void setMaxFPLLimit(Double maxFPLLimit) {
+		this.maxFPLLimit = maxFPLLimit;
+	}
+	public Double getMinFPLLimit() {
+		return minFPLLimit;
+	}
+	public void setMinFPLLimit(Double minFPLLimit) {
+		this.minFPLLimit = minFPLLimit;
+	}
+	public String getProgramCode() {
+		return programCode;
+	}
+	public void setProgramCode(String programCode) {
+		this.programCode = programCode;
+	}
+	public String getSubProgramCode() {
+		return subProgramCode;
+	}
+	public void setSubProgramCode(String subProgramCode) {
+		this.subProgramCode = subProgramCode;
+	}
+	public Date getStartDateMinFPLLimit() {
+		return startDateMinFPLLimit;
+	}
+	public void setStartDateMinFPLLimit(Date startDateMinFPLLimit) {
+		this.startDateMinFPLLimit = startDateMinFPLLimit;
+	}
+	public Date getEndDateMinFPLLimit() {
+		return endDateMinFPLLimit;
+	}
+	public void setEndDateMinFPLLimit(Date endDateMinFPLLimit) {
+		this.endDateMinFPLLimit = endDateMinFPLLimit;
+	}
+	public Date getStartDateMaxFPLLimit() {
+		return startDateMaxFPLLimit;
+	}
+	public void setStartDateMaxFPLLimit(Date startDateMaxFPLLimit) {
+		this.startDateMaxFPLLimit = startDateMaxFPLLimit;
+	}
+	public Date getEndDateMaxFPLLimit() {
+		return endDateMaxFPLLimit;
+	}
+	public void setEndDateMaxFPLLimit(Date endDateMaxFPLLimit) {
+		this.endDateMaxFPLLimit = endDateMaxFPLLimit;
+	}
+	public Double getAdjustedMaxFPLLimit() {
+		return this.maxFPLLimit + this.disregardPercentage;
+	}
+	
+	public Double getAdjustedMinFPLLimit() {
+		return this.minFPLLimit + this.disregardPercentage;
+	}
+	
+	
+	
+	
+	
+}

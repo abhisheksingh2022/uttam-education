@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:hix-pm="http://hix.cms.gov/0.1/hix-pm" xmlns:i="http://niem.gov/niem/appinfo/2.0" xmlns:nc="http://niem.gov/niem/niem-core/2.0" xmlns:niem-xsd="http://niem.gov/niem/proxy/xsd/2.0" xmlns:s="http://niem.gov/niem/structures/2.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://hix.cms.gov/0.1/hix-pm" version="&quot;1&quot;">
+  <xsd:import namespace="http://niem.gov/niem/niem-core/2.0" schemaLocation="../../../../../.././XMLschemas/niem/niem-core.xsd"/>
+  <xsd:import namespace="http://niem.gov/niem/structures/2.0" schemaLocation="../../../../../../XMLschemas/subset/niem/structures/2.0/structures.xsd"/>
+  <xsd:import namespace="http://niem.gov/niem/appinfo/2.1" schemaLocation="../../../../../../XMLschemas/subset/niem/appinfo/2.1/appinfo.xsd"/>
+  <xsd:import namespace="http://niem.gov/niem/proxy/xsd/2.0" schemaLocation="../../../../../../XMLschemas/subset/niem/proxy/xsd/2.0/xsd.xsd"/>
+  <xsd:import namespace="http://niem.gov/niem/appinfo/2.0" schemaLocation="../../../../../../XMLschemas/subset/niem/appinfo/2.0/appinfo.xsd"/>
+  <xsd:annotation>
+    <xsd:appinfo>
+      <i:ConformantIndicator>true</i:ConformantIndicator>
+    </xsd:appinfo>
+    <xsd:documentation source="">Reference Model for Health Information Exchange (HIX) Plan Management (PM)</xsd:documentation>
+  </xsd:annotation>
+  <xsd:complexType abstract="false" mixed="false" name="FamilyRelationshipCohabitationRuleType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for [TTM] A data type for a rule that determines whether an allowed relationship must live in the same household as the primary subscriber for the purpose of qualifying for a rate.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="s:ComplexObjectType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:CohabitationRequiredIndicator"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:FamilyRelationshipCohabitationRuleCode"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element abstract="false" name="CohabitationRequiredIndicator" nillable="false" type="niem-xsd:boolean">
+    <xsd:annotation>
+      <xsd:documentation source="">[TTM]  True if the person in the relationship with the primary subscriber must live in the same household; false otherwise.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="FamilyRelationshipCohabitationRuleCode" nillable="false" type="hix-pm:FamilyRelationshipCodeSimpleType">
+    <xsd:annotation>
+      <xsd:documentation source="">[TTM]  A data type for familial relationship between two people.
+An allowed familial relationship between the primary subscriber and another family member.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:simpleType name="FamilyRelationshipCodeSimpleType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for [TTM] A rule for familial relationship between two people.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:token">
+      <xsd:enumeration value="Spouse">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A husband or wife</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Parent">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A Father or Mother</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Grandparent">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A grandfather or grandmother</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Grandchild">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  A grandson or granddaughter</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="ParentSibling"/>
+      <xsd:enumeration value="SiblingChild">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  A sibling child</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Cousin">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  A cousin</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="AdoptedChild">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  An adopted child</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="FosterChild"/>
+      <xsd:enumeration value="ChildInLaw">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  A son or daughter in law.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="SiblingInLaw">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  A brother or sister in law.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Sibling">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  A brother or sister</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Ward">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A ward.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="StepParent">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  A step father or step mother</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="StepChild"/>
+      <xsd:enumeration value="Child">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A son or daughter</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="SponsoredDependent">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A sponsored dependent.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="DependentOfMinorDependent">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A dependent of minor dependent.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="ExSpouse">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  An ex husband or wife.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Guardian">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A Guardian</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="CourtAppointedGuardian">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A court appointed guardian.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="CollateralDependent">
+        <xsd:annotation>
+          <xsd:documentation source="">A person related by blood or marriage who resides in the home and is dependent on the insured for a major portion of their support.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="LifePartner">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  A life partner</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Annultant">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  An annultant.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Trustee">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM]  A trustee</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Self">
+        <xsd:annotation>
+          <xsd:documentation source="">Self</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="ParentInLaw">
+        <xsd:annotation>
+          <xsd:documentation source="">Father in Law or Mother in Law</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="OtherRelationship">
+        <xsd:annotation>
+          <xsd:documentation source="">Miscellaneous relationship not captured in other literals</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="OtherRelative">
+        <xsd:annotation>
+          <xsd:documentation source="">Miscellaneous relative not captured in other literals</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:complexType abstract="false" mixed="false" name="RateCategoryDeterminationRulesetType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for [TTM] A data type for representing a set of rules that determine the rates for an insurance plan.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="s:ComplexObjectType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:RateCategoryDeterminationRulesetDependentMaximumAgeMeasure"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:RateCategoryDeterminationRulesetMinimumTobaccoFreeMonthsMeasure"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:RateCategoryDeterminationRulesetDomesticPartnerAsSpouseIndicator"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:RateCategoryDeterminationRulesetSameSexPartnerAsSpouseIndicator"/>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" ref="hix-pm:RateCategoryDeterminationRulesetFamilyRelationshipCohabitationRule"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:RateCategoryDeterminationRulesetChildrenOnlyContractMaxChildrenRuleCode"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:RateCategoryDeterminationRulesetAgeDeterminationRuleCode"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:RateCategoryDeterminationRulesetEnrolleeContractRateDeterminationRuleCode"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:RateCategoryDeterminationRulesetSingleParentFamilyMaxDependentsRuleCode"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:RateCategoryDeterminationRulesetTwoParentFamilyMaxDependentsRuleCode"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element abstract="false" name="RateCategoryDeterminationRulesetDependentMaximumAgeMeasure" nillable="false" type="nc:TimeMeasureType">
+    <xsd:annotation>
+      <xsd:documentation source="">A [TTM] A measure of the maximum age that qualifies as a dependent.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="RateCategoryDeterminationRulesetMinimumTobaccoFreeMonthsMeasure" nillable="false" type="nc:TimeMeasureType">
+    <xsd:annotation>
+      <xsd:documentation source="">A [TTM] A measure of the minimum number of months since last tobacco usage that qualifies as tobacco free.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="RateCategoryDeterminationRulesetDomesticPartnerAsSpouseIndicator" nillable="false" type="niem-xsd:boolean">
+    <xsd:annotation>
+      <xsd:documentation source="">True if [TTM] True if a domestic partner is treated the same as a spouse; false otherwise.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="RateCategoryDeterminationRulesetSameSexPartnerAsSpouseIndicator" nillable="false" type="niem-xsd:boolean">
+    <xsd:annotation>
+      <xsd:documentation source="">True if [TTM] True if a same-sex partner is treated the same as a spouse; false otherwise.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="RateCategoryDeterminationRulesetFamilyRelationshipCohabitationRule" nillable="false" type="hix-pm:FamilyRelationshipCohabitationRuleType">
+    <xsd:annotation>
+      <xsd:documentation source="">A [TTM] A rule that determines whether an allowed relationship must live in the same household as the primary subscriber for the purpose of qualifying for a rate.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="RateCategoryDeterminationRulesetChildrenOnlyContractMaxChildrenRuleCode" nillable="false" type="hix-pm:PersonCountRuleCodeSimpleType">
+    <xsd:annotation>
+      <xsd:documentation source="">A [TTM] A rule to quantify a group of children to determine if a child-only rate applies.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:simpleType name="PersonCountRuleCodeSimpleType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for [TTM] A data type for a rule to quantify a group of children to determine if a child-only rate applies.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:token">
+      <xsd:enumeration value="One">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A numeric value of one</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Two">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A numeric value of two</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="ThreeOrMore">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A numeric value of three or more. </xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:element abstract="false" name="RateCategoryDeterminationRulesetAgeDeterminationRuleCode" nillable="false" type="hix-pm:AgeDeterminationCodeSimpleType">
+    <xsd:annotation>
+      <xsd:documentation source="">A [TTM] A rule for calculating a person's age which determines the insurance plan rate.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:simpleType name="AgeDeterminationCodeSimpleType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for [TTM] A data type for a rule for calculating a person's age which determines the insurance plan rate.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:token">
+      <xsd:enumeration value="AgeOnEffectiveDate">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A value implying using the effective date as point of reference for age calculation</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="AgeOnJanuary1stOfEffectiveDateYear">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A value implying using the beginning of calendar year as point of reference for age calculation</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="AgeOnNearestBirthdayToEffectiveDate">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A value implying using nearest birth day to the effective date as point of reference for age calculation.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="AgeOnJanuary1stOrJuly1stOfEffectiveDateYear">
+        <xsd:annotation>
+          <xsd:documentation source="">Use the beginning or middle of calendar year as point of reference for age calculation.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:element abstract="false" name="RateCategoryDeterminationRulesetEnrolleeContractRateDeterminationRuleCode" nillable="false" type="hix-pm:EnrolleeContractRateDeterminationCodeSimpleType">
+    <xsd:annotation>
+      <xsd:documentation source="">A [TTM] A rule for determining how a return rate is calculated for a group of people.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:simpleType name="EnrolleeContractRateDeterminationCodeSimpleType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for [TTM] A data type for a rule for determining how a return rate is calculated for a group of people.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:token">
+      <xsd:enumeration value="UseGroupRate">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A value specifying use of group rate to calculate</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="AddIndividualRates">
+        <xsd:annotation>
+          <xsd:documentation source="">[CDM] A value specifying adding up individual rate to calculate. </xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:element abstract="false" name="RateCategoryDeterminationRulesetSingleParentFamilyMaxDependentsRuleCode" nillable="false" type="hix-pm:PersonCountRuleCodeSimpleType">
+    <xsd:annotation>
+      <xsd:documentation source="">A [TTM] A rule to quantify group of dependents to determine if a single parent plus dependents rate applies.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="RateCategoryDeterminationRulesetTwoParentFamilyMaxDependentsRuleCode" nillable="false" type="hix-pm:PersonCountRuleCodeSimpleType">
+    <xsd:annotation>
+      <xsd:documentation source="">A [TTM] A rule to quantify a group of dependents to determine if a two-parent plus dependents rate applies.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:complexType abstract="false" mixed="false" name="InsurancePlanType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for a pairing of a package of benefits with a cost-sharing option.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="s:ComplexObjectType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsurancePlanIdentification"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:InsurancePlanRateCategoryDeterminationRuleset"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element abstract="false" name="InsurancePlanIdentification" nillable="false" type="nc:IdentificationType">
+    <xsd:annotation>
+      <xsd:documentation source="">An identifier for the insurance plan.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsurancePlanRateCategoryDeterminationRuleset" nillable="false" type="hix-pm:RateCategoryDeterminationRulesetType"/>
+  <xsd:complexType abstract="false" mixed="false" name="InsuranceProductType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for a package of benefits that serves as a template for a set of related insurance plans.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="s:ComplexObjectType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" ref="hix-pm:InsurancePlan"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:InsuranceProductIdentification"/>
+          <xsd:element maxOccurs="1" minOccurs="0" ref="hix-pm:InsuranceProductRateCategoryDeterminationRuleset"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element abstract="false" name="InsurancePlan" type="hix-pm:InsurancePlanType">
+    <xsd:annotation>
+      <xsd:documentation source="">An Insurance plan refers to the discrete pairing of a package of benefits with a particular cost-sharing (for example deductibles, copayments) option.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceProductIdentification" nillable="false" type="nc:IdentificationType">
+    <xsd:annotation>
+      <xsd:documentation source="">An identification of an insurance product.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="InsuranceProductRateCategoryDeterminationRuleset" nillable="false" type="hix-pm:RateCategoryDeterminationRulesetType"/>
+  <xsd:complexType abstract="false" mixed="false" name="IssuerType">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <i:Base i:name="Object" i:namespace="http://niem.gov/niem/structures/2.0"/>
+      </xsd:appinfo>
+      <xsd:documentation source="">A data type for a licensed health insurance issuing organization registered in a specific state.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="s:ComplexObjectType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:IssuerIdentification"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:IssuerFederalTaxIdentification"/>
+          <xsd:element maxOccurs="unbounded" minOccurs="0" ref="hix-pm:InsuranceProduct"/>
+          <xsd:element maxOccurs="1" minOccurs="1" ref="hix-pm:IssuerRateCategoryDeterminationRuleset"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element abstract="false" name="IssuerIdentification" nillable="false" type="nc:IdentificationType">
+    <xsd:annotation>
+      <xsd:documentation source="">An identifier for the issuer.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerFederalTaxIdentification" nillable="false" type="nc:IdentificationType"/>
+  <xsd:element abstract="false" name="InsuranceProduct" type="hix-pm:InsuranceProductType">
+    <xsd:annotation>
+      <xsd:documentation source="">A health insurance product as a package of benefits that an issuer offers that is reported to State regulators in an insurance filing.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element abstract="false" name="IssuerRateCategoryDeterminationRuleset" nillable="false" type="hix-pm:RateCategoryDeterminationRulesetType"/>
+</xsd:schema>

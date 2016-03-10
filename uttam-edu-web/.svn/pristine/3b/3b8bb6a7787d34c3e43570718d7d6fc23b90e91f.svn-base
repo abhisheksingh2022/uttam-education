@@ -1,0 +1,19 @@
+<%@page import="com.hixapi.framework.service.ServiceLocator"%>
+<%@page import="com.hixapi.framework.common.env.IEnvironmentProvider"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp" %>
+
+<div class="row">
+	<div class="body-bg">
+		<b><s:text name="msg.logout.success"/>
+		</b>
+	</div>
+</div>
+<script>
+<%if(ServiceLocator.getInstance().getService(IEnvironmentProvider.class).getProperty("global.authrequired", Boolean.class, true)){ %>
+	top.window.location.href = "/pkmslogout";
+<%}%>
+</script>
+<%@include file="/jsp/includes/footer.jsp" %>
+

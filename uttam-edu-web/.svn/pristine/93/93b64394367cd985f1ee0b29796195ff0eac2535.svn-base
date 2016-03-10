@@ -1,0 +1,141 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp"%>
+<%@include file="/jsp/includes/datatable.jsp"%>
+
+<div class="body-con">
+	<div class="container maincont">
+		<div class="row">
+			<div class="body-bg bodymargin">
+				<h2 class="inner-heading">
+					<s:text name="txt.report.header1"></s:text>
+				</h2>
+					<p class="mandatory-criteria"><s:text name="msg.loginhistory.enter_mandatory_criteria"></s:text></p>
+				<div class="carrier-data">
+				
+					<s:form id="id_form_loginhistory" action="loginhistory-report" autocomplete="off">
+						<s:token />
+						<s:hidden name="ajaxRequest" value="false" />
+						<s:hidden name="formId" />
+						<div class="carrier-field">
+							<s:label>
+								<s:text name="txt.report.datefrom" />
+								<span class="astrcs"></span>
+							</s:label>
+							<span> <s:textfield name="criteria.dateFrom" id="datefrom"
+									cssClass="form-control" />
+							</span>
+						</div>
+						<div class="carrier-field">
+							<s:label>
+								<s:text name="txt.report.dateto" />
+								<span class="astrcs"></span>
+							</s:label>
+							<span> <s:textfield name="criteria.dateTo" id="dateto"
+									cssClass="form-control" />
+							</span>
+						</div>
+						<div class="carrier-field">
+							<s:label>
+								<s:text name="txt.report.organization" />
+								<span class="astrcs"></span>
+							</s:label>
+							<span> <s:select list="carrierList"
+									name="criteria.organisation" class="form-control"
+									listValue="carrierName" listKey="carrierIdNbr" headerKey=""
+									headerValue="%{selectBoxHeader}"></s:select>
+							</span>
+						</div>
+						<div class="carrier-field">
+							<s:label>
+								<s:text name="txt.carrieruser.userid" />
+								<span class="astrcs"></span>
+							</s:label>
+							<span> <s:textfield name="criteria.userId"
+									id="criteria.userId" cssClass="form-control" />
+							</span>
+						</div>
+
+						<div class="form-btn">
+							<button class="save-btn"
+								onclick="return setActionAndSubmit('id_form_loginhistory', 'search');">
+								<s:text name="txt.report.button1" />
+							</button>
+						</div>
+					</s:form>
+					<div class="clearfix"></div>
+				</div>
+				<div class="clearfix"></div>
+				<s:hidden id="isSeacrh" name="isSeacrh"></s:hidden>
+				<s:if test="isSeacrh == true">
+					<div id="loginhistorydiv">
+
+						<h2 class="inner-heading" style="margin: 40px 0 0 0;">
+							<s:text name="txt.report.report" />
+						</h2>
+
+						<div class="plan-table content ">
+							<div class="carrier-data">
+								<table width="100%" border="0" cellpadding="0" cellspacing="0" id="datatable" class="pretty searchtabel">
+                            
+                            <thead>
+                                    <tr class="ac-trHd serchtr">
+											<th class="padng10"><s:text name="txt.carrieruser.userid" /></th>
+											<th class="padng10"><s:text
+													name="txt.report.organizationhdr"></s:text></th>
+											<th class="padng10"><s:text name="txt.report.logindate" /></th>
+										</tr>
+									</thead>
+									<s:if test="loginHistoryList.size > 0">
+										<s:iterator value="loginHistoryList" var="user">
+											<tr>
+												<td class="padng10"><s:property value="userId" /></td>
+												<td class="padng10"><s:property value="organizationName" /></td>
+												<td class="padng10"><s:property value="loginDate" /></td>
+											</tr>
+										</s:iterator>
+									</s:if>
+									
+								</table>
+
+
+							</div>
+
+						</div>
+
+					</div>
+				</s:if>
+				<div class="clearfix"></div>
+
+			</div>
+		</div>
+	</div>
+	<div class="clearfix"></div>
+</div>
+
+<%@include file="/jsp/includes/footer.jsp"%>
+<script>
+  $(function() {
+    $( "#datefrom" ).datepicker({      
+    });
+    $( "#dateto" ).datepicker({      
+    });
+  });
+  </script>
+
+<script>
+  	(function ($) {
+ 		<s:if test="!hasMessages()">
+			 if($("#loginhistorydiv").length){
+				$('html,body').animate({scrollTop: $("#loginhistorydiv").offset().top}, 'slow');
+			 } 
+		</s:if>
+			
+      $(document).ready(function() {
+      if($("#isSeacrh").val()=='true'){
+				 $('#loginhistorydiv').show();
+			}
+  });
+    })(jQuery);
+  </script>

@@ -1,0 +1,34 @@
+package com.hixapi.pmp.api.model.plandetails;
+
+import java.io.Serializable;
+
+
+public class PhysicianServices implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6646982541639236993L;
+	private CopayAndCoinsurance preventiveCare;
+	private CopayAndCoinsurance pVPInjury;
+	private CopayAndCoinsurance specialistVisit;
+	public CopayAndCoinsurance getPreventiveCare() {
+		return preventiveCare;
+	}
+	public void setPreventiveCare(CopayAndCoinsurance preventiveCare) {
+		this.preventiveCare = preventiveCare;
+	}
+	
+	public CopayAndCoinsurance getPVPInjury() {
+		return pVPInjury;
+	}
+	public void setPVPInjury(CopayAndCoinsurance pVPInjury) {
+		this.pVPInjury = pVPInjury;
+	}
+	public CopayAndCoinsurance getSpecialistVisit() {
+		return specialistVisit;
+	}
+	public void setSpecialistVisit(CopayAndCoinsurance specialistVisit) {
+		this.specialistVisit = specialistVisit;
+	}
+}

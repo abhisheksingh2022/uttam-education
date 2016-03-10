@@ -1,0 +1,49 @@
+<%@page import="com.hixapi.framework.common.APIConstants"%>
+<%@page import="com.hixapi.framework.common.env.IEnvironmentProvider"%>
+<%@page import="com.hixapi.framework.service.ServiceLocator"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp" %>
+<%@ taglib uri="/WEB-INF/tld/hixapi.tld" prefix="common"%>
+<%
+IEnvironmentProvider environment = ServiceLocator.getInstance().getService(IEnvironmentProvider.class);
+if(!environment.isProduction() 
+&& !environment.getProperty(APIConstants.PROPKEY_AUTH_REQUIRED, Boolean.class, true)
+){%>
+<div class="row">
+	<div class="body-bg">
+	
+			 	
+	
+		<s:form autocomplete="off" action="login" namespace="/main" id="id_form_login">
+			<s:hidden name="formId" />
+			<s:token />
+			<table>
+				<tr>
+					<td><s:text name="msg.login.userid"/></td>
+					<td><s:textfield name="userId" id="id_tf_userId" maxlength="32" size="15" />
+				</tr>
+				<tr>
+					<td>&#160;</td>
+				</tr>
+				 <tr>
+					<td><s:text name="msg.login.role"/></td>
+					<td><s:select name="roles" id="id_sel_roles" list="availableRoles" multiple="true" name="roles"
+							listKey="roleHeaderName" listValue="roleName"></s:select></td>
+				</tr> 
+				<tr>
+					<td>
+						<div class="form-btn">
+							<button class="save-btn"
+								onclick="return setActionAndSubmit('id_form_login', 'execute');">
+								<s:text name="txt.login.login_btn" />
+							</button>
+						</div>
+				</tr>
+			</table>
+		</s:form>
+	</div>
+</div>
+<%}%>
+<%@include file="/jsp/includes/footer.jsp" %>
+

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+	http://www.springframework.org/schema/jee
+	http://www.springframework.org/schema/jee/spring-jee-4.1.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location">
+			<value>application.properties</value>
+		</property>
+	</bean>
+	<alias name="dbEnvironmentProvider" alias="currentEnvironmentProvider" />
+	<bean id="globalServiceLocator" class="com.uttam.framework.service.ServiceLocator" factory-method="getInstance">
+		<property name="services">
+			<map key-type="java.lang.Class" value-type="com.uttam.framework.service.IService">
+				<entry key="com.uttam.framework.common.env.IEnvironmentProvider" value-ref="dbEnvironmentProvider" />
+				<entry key="com.uttam.education.service.user.UserService" value-ref="userService" />
+				<entry key="com.uttam.framework.common.i18n.IResourceBundleDao" value-ref="resourceBundleDao" />
+				<entry key="com.uttam.education.service.admin.SystemAdministrationService" value-ref="systemAdministrationService" />
+			</map>
+		</property>
+		<!-- Taken from application.properties -->
+		<property name="applicationId">
+			<value>${application.systemid}</value>
+		</property>
+	</bean>
+
+	<import resource="classpath:/spring/spring-context-services.xml" />
+	<import resource="classpath:/spring/spring-context-dao.xml" />
+
+
+
+</beans>

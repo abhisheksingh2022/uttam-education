@@ -1,0 +1,795 @@
+package com.hixapi.pmp.service.plan.mapping.hix;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.framework.dao.LookupManager;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanVariant;
+import com.hixapi.pmp.dao.plan.TDsplPlanStgUpdate;
+import com.hixapi.pmp.entity.model.CarrierFormularyInfo;
+import com.hixapi.pmp.entity.model.CarrierNetwork;
+import com.hixapi.pmp.entity.model.PlanBenefitMstr;
+import com.hixapi.pmp.entity.model.PlanMstr;
+import com.hixapi.pmp.entity.model.PlanVariantDtl;
+import com.hixapi.pmp.entity.model.PlanVariantDtlCopayCoins;
+import com.hixapi.pmp.entity.model.PlanVariantDtlDeductible;
+import com.hixapi.pmp.entity.model.PlanVariantDtlMaxOop;
+import com.hixapi.pmp.entity.model.TDsplPlanStg;
+import com.hixapi.pmp.entity.model.TDsplPlanStgId;
+import com.hixapi.pmp.service.plan.mapping.HIXBenefitFieldIdentifier;
+
+public class HIXDisplayPlanMapper {
+
+	private static final Logger log = LogManager.getLogger(HIXDisplayPlanMapper.class);
+
+	private Set<TDsplPlanStg> covered = new HashSet<TDsplPlanStg>();
+	private Set<TDsplPlanStg> toAdd = new HashSet<TDsplPlanStg>();
+
+	public TDsplPlanStgUpdate getTDsplPlanUpdateRecord(PlanVariantDtlCopayCoins entity, String language, String year,
+			String variantHiosId) {
+		TDsplPlanStgUpdate update = new TDsplPlanStgUpdate();
+		update.setLanguage(language);
+		final Map<Object, Object> fieldMap = update.getFieldUpdates();
+		update.setPlanVariantHiosId(variantHiosId);
+		update.setYear(year);
+		HIXBenefitFieldIdentifier helper = new HIXBenefitFieldIdentifier();
+		if ("PCV".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("csrPcpCopayInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("csrPcpCopayOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("SPV".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+			fieldMap.put("csrSplstCopayInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("csrSplstCopayOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("OCD".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("orthodonticServsInNetTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("orthodonticServsOutNetTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("PSI".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("psPrvntvCareImmnInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("psPrvntvCareImmnOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("PPC".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("prntlPostntlInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("prntlPostntlOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("ERS".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("emrgncyRmSrvceInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("emrgncyRmSrvceOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("ETA".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("emrgncyTrnsprtInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("emrgncyTrnsprtOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("IHS".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("inPntHospSrvcsInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("inPntHospSrvcsOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("SNF".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("skilledNrsngSrvcInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("skilledNrsngSrvcOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("HHC".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("homeHlthCareSrvcInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("homeHlthCareSrvcOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("XDI".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("xrayAndImgngSrvcInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("xrayAndImgngSrvcOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("LOP".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("labOutPntProfSrvcInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("labOutPntProfSrvcOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("BHI".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("mntlHlthInPntInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("mntlHlthInPntOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("BHO".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("mntlHlthOutPntInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("mntlHlthOutPntOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("SDG".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("spcltyDrgInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("spcltyDrgOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("GDG".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("prfrrdGnrcDrgInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("prfrrdGnrcDrgOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("PBD".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("prfrrdBrandDrgInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("prfrrdBrandDrgOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		}
+
+		else if ("NBD".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("nonPrfrrdBrandDrgInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("nonPrfrrdBrandDrgOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("UCC".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("urgntCareFacInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("urgntCareFacOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		}
+
+		else if ("CCG".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("chrpcSrvcInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("chrpcSrvcOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("EGC".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("eyeGlassForChildInTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("eyeGlassForChildOutTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("DCC".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("childDntlChkupInNetCopCoinsTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("childDntlChkupOutNetCopCoinsTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("BDC".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("childDntlBasicInNetCopCoinsTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("childDntlBasicOutNetCopCoinsTx", helper.findOutNetworkDisplayValue(entity));
+
+		} else if ("MDC".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkCopayCoinsTypeCd()))) {
+
+			fieldMap.put("childDntlMajorInNetCopCoinsTx", helper.findInNetworkDisplayValue(entity));
+			fieldMap.put("childDntlMajorOutNetCopCoinsTx", helper.findOutNetworkDisplayValue(entity));
+
+		}
+
+		return update;
+	}
+
+	public TDsplPlanStgUpdate getTDsplPlanUpdateRecord(PlanVariantDtlDeductible entity, String language, String year,
+			String variantHiosId) {
+		TDsplPlanStgUpdate update = new TDsplPlanStgUpdate();
+		update.setLanguage(language);
+		final Map<Object, Object> fieldMap = update.getFieldUpdates();
+		update.setPlanVariantHiosId(variantHiosId);
+		update.setYear(year);
+		if ("DRD".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkPlanVariantDtlDeductibleCd()))) {
+
+			fieldMap.put("csrPrescDrgDdbleInTx", entity.getInNetworkIndv());
+			fieldMap.put("csrPrescDrgDdbleOutTx", entity.getOutOfNetworkIndv());
+			fieldMap.put("csrPrescDrgDdblFmlyInTx", entity.getInNetworkFamily());
+			fieldMap.put("csrPrescDrgDdblFmlyOutTx", entity.getOutOfNetworkFamily());
+
+		} else if ("CMD".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkPlanVariantDtlDeductibleCd()))) {
+
+			fieldMap.put("csrDdbleInTx", entity.getInNetworkIndv());
+			fieldMap.put("csrDdbleOutTx", entity.getOutOfNetworkIndv());
+			fieldMap.put("csrDdblFmlyInTx", entity.getInNetworkFamily());
+			fieldMap.put("csrDdblFmlyOutTx", entity.getOutOfNetworkFamily());
+			String dedAm = ConversionUtil.dollarStringToAmount(getDollars(entity.getInNetworkIndv()));
+			if (NumberUtils.isParsable(dedAm)) {
+				fieldMap.put("plnsummAnnualDeductAm", Double.parseDouble(dedAm));
+			}
+
+		} else if ("MED".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkPlanVariantDtlDeductibleCd()))) {
+			//Same fields as above, only one of them shouldbe sent
+			fieldMap.put("csrDdbleInTx", entity.getInNetworkIndv());
+			fieldMap.put("csrDdbleOutTx", entity.getOutOfNetworkIndv());
+			fieldMap.put("csrDdblFmlyInTx", entity.getInNetworkFamily());
+			fieldMap.put("csrDdblFmlyOutTx", entity.getOutOfNetworkFamily());
+			String dedAm = ConversionUtil.dollarStringToAmount(getDollars(entity.getInNetworkIndv()));
+			if (NumberUtils.isParsable(dedAm)) {
+				fieldMap.put("plnsummAnnualDeductAm", Double.parseDouble(dedAm));
+			}
+
+		}
+
+		return update;
+	}
+
+	public TDsplPlanStgUpdate getTDsplPlanUpdateRecord(PlanVariantDtlMaxOop entity, String language, String year,
+			String variantHiosId) {
+		TDsplPlanStgUpdate update = new TDsplPlanStgUpdate();
+		update.setLanguage(language);
+		final Map<Object, Object> fieldMap = update.getFieldUpdates();
+		update.setPlanVariantHiosId(variantHiosId);
+		update.setYear(year);
+		if ("MPD".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkPlanVariantDtlMaxOopCd()))) {
+
+			fieldMap.put("csrPresDrgOutOfPcktInTx", entity.getInNetworkTier1Indv());
+			fieldMap.put("csrPresDrgOutOfPcktOutTx", entity.getOutOfNetworkIndv());
+			fieldMap.put("csrPrescDrgOutOfPcktFmlyInTx", entity.getInNetworkTier1Family());
+			fieldMap.put("csrPrescDrgOutOfPcktFmlyOutTx", entity.getOutOfNetworkFamily());
+
+		} else if ("MMD".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkPlanVariantDtlMaxOopCd()))) {
+
+			fieldMap.put("csrOutOfPcktMaxInTx", entity.getInNetworkTier1Indv());
+			fieldMap.put("csrOutOfPcktMaxOutTx", entity.getOutOfNetworkIndv());
+			fieldMap.put("csrOutOfPcktMaxFmlyInTx", entity.getInNetworkTier1Family());
+			fieldMap.put("csrOutOfPcktMaxFmlyOutTx", entity.getOutOfNetworkFamily());
+			fieldMap.put("plnsummAnnualOopocketMaxAm", getDollars(entity.getInNetworkTier1Indv()));
+
+		} else if ("MPM".equalsIgnoreCase(StringUtils.trimToEmpty(entity.getLkPlanVariantDtlMaxOopCd()))) {
+			//This overwrites the MMD fields. Both should not be sent the same time
+			fieldMap.put("csrOutOfPcktMaxInTx", entity.getInNetworkTier1Indv());
+			fieldMap.put("csrOutOfPcktMaxOutTx", entity.getOutOfNetworkIndv());
+			fieldMap.put("csrOutOfPcktMaxFmlyInTx", entity.getInNetworkTier1Family());
+			fieldMap.put("csrOutOfPcktMaxFmlyOutTx", entity.getOutOfNetworkFamily());
+			fieldMap.put("plnsummAnnualOopocketMaxAm", getDollars(entity.getInNetworkTier1Indv()));
+
+		}
+
+		return update;
+	}
+
+	public List<TDsplPlanStgUpdate> getTDsplPlanUpdateRecord(PlanMstr entity, CarrierNetwork network, String language,
+			String planHiosId, String year) {
+		List<TDsplPlanStgUpdate> updates = new ArrayList<TDsplPlanStgUpdate>(2);
+
+		if (entity != null) {
+			TDsplPlanStgUpdate commonUpdate = new TDsplPlanStgUpdate();
+
+			commonUpdate.setPlanHiosId(planHiosId);
+			commonUpdate.setYear(year);
+			final Map<Object, Object> fieldUpdates = commonUpdate.getFieldUpdates();
+			updates.add(commonUpdate);
+			//fieldUpdates.put("planId", entity.getPlanHiosId());
+
+			TDsplPlanStgUpdate langSpecificUpdate = new TDsplPlanStgUpdate();
+
+			langSpecificUpdate.setPlanHiosId(planHiosId);
+			langSpecificUpdate.setYear(year);
+			langSpecificUpdate.setLanguage(language);
+			updates.add(langSpecificUpdate);
+			final Map<Object, Object> langUpdates = langSpecificUpdate.getFieldUpdates();
+
+			Set<PlanBenefitMstr> benefitMstrs = entity.getPlanBenefitMstrs();
+			for (PlanBenefitMstr benefitMstr : benefitMstrs) {//get these from 0th index
+				langUpdates.put("planNa", benefitMstr.getPlanNameTxt());
+				langUpdates.put("planLevelNa", benefitMstr.getMetalLevelTxt());
+				break;
+			}
+			//update.getValues().put("carrNa", entity.getCarrierAdminInfo().getCarrierMstr().getCarrierName());
+			//update.getValues().put("carrierId", entity.getCarrierAdminInfo().getCarrierMstr().getCarrierId());
+			fieldUpdates.put("planTypeNa", LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "PlanManageType", entity.getPlanTypCd()));
+
+			if (entity.getQltyRating() != null) {
+				fieldUpdates.put("qltyRatingNb", new Integer(entity.getQltyRating()));
+			} else {
+				fieldUpdates.put("qltyRatingNb", 0);
+			}
+			fieldUpdates.put("ehbNb", entity.getEhbPercent());
+		}
+		if (network != null) {
+			TDsplPlanStgUpdate commonUpdate = new TDsplPlanStgUpdate();
+
+			commonUpdate.setPlanHiosId(planHiosId);
+			commonUpdate.setYear(year);
+			final Map<Object, Object> fieldUpdates = commonUpdate.getFieldUpdates();
+			updates.add(commonUpdate);
+			fieldUpdates.put("hlthPrvdrUrlTx", network.getUrl());
+		}
+		//Exchange status
+		//update.getValues().put("crtdDt", entity.getCrtdDt());
+		//update.getValues().put("updtDt", entity.getUpdtDt());
+
+		/* values not displayed on page
+		update.getValues().put("dsplPlanIn", Character.valueOf('Y'));
+		
+		update.getValues().put("planEffvDt", entity.getEffDt());
+		update.getValues().put("planExpDt", entity.getExpDt());
+		update.getValues().put("createUsrId", entity.getCreateUsrId());
+		update.getValues().put("updtUserId", entity.getUpdtUserId());
+		update.getValues().put("rateEffDt", entity.getEffDt());
+		update.getValues().put("rateExpDt", entity.getExpDt());
+		*/
+		return updates;
+	}
+
+	public void mapToDisplayPlans(Set<PlanMstr> planMasterList, Collection<TDsplPlanStg> existing,
+			Collection<CarrierNetwork> networks, Collection<CarrierFormularyInfo> rxes) {
+		log.entry();
+		if (CollectionUtils.isNotEmpty(planMasterList)) {
+			for (PlanMstr mstr : planMasterList) {
+				CarrierNetwork network = findMatchingNetwork(networks, mstr.getNtwrkId());
+				CarrierFormularyInfo rx = findMatchingRx(rxes, mstr.getFrmltryId());
+				mapToDisplayPlan(mstr, existing, network, rx);
+			}
+		}
+		Iterator<TDsplPlanStg> iter = existing.iterator();
+		while (iter.hasNext()) {
+			TDsplPlanStg obj = iter.next(); // must be called before you can call i.remove()
+			boolean isCovered = false;
+			for (TDsplPlanStg coveredObj : covered) {
+				if (coveredObj.getId().equals(obj.getId())) {
+					isCovered = true;
+					break;
+				}
+			}
+			if (!isCovered) {
+				iter.remove();
+			}
+
+		}
+		existing.addAll(toAdd);
+		log.exit();
+	}
+
+	private CarrierFormularyInfo findMatchingRx(Collection<CarrierFormularyInfo> rxes, String frmltryId) {
+		CarrierFormularyInfo out = null;
+		if (CollectionUtils.isNotEmpty(rxes)) {
+			for (CarrierFormularyInfo rx : rxes) {
+				if (rx.getFormularyId().equals(frmltryId)) {
+					out = rx;
+					break;
+				}
+			}
+		}
+		return out;
+	}
+
+	private CarrierNetwork findMatchingNetwork(Collection<CarrierNetwork> networks, String ntwrkId) {
+		CarrierNetwork out = null;
+		if (CollectionUtils.isNotEmpty(networks)) {
+			for (CarrierNetwork network : networks) {
+				if (network.getNetworkId().equals(ntwrkId)) {
+					out = network;
+					break;
+				}
+			}
+		}
+		return out;
+	}
+
+	public void mapToDisplayPlan(PlanMstr entity, Collection<TDsplPlanStg> existing, CarrierNetwork network,
+			CarrierFormularyInfo rx) {
+		log.entry();
+
+		for (PlanBenefitMstr pb : entity.getPlanBenefitMstrs()) {
+			//populate each field, using the finder methods below, 
+			//items will need to be pulled from PlanMstr, PlanBenefitMstr, PlanVariantDtl or one of the collections under PlanVariantDtl
+
+			if (CollectionUtils.isNotEmpty(pb.getPlanVariantDtls())) {
+				for (PlanVariantDtl pv : pb.getPlanVariantDtls()) {
+					if (!PlanVariant.VAR_00.getCode().equals(pv.getVarId())) {
+						final String year = ConversionUtil.toString(entity.getCvgYr());
+						TDsplPlanStg stg = findDisplayPlanRecord(existing, pv, pb.getLanguageCd(), year);
+						if (stg == null) {
+							log.debug("Did not find matching display plan record for {}, {}", pv.getVariantHiosId(),
+									pb.getLanguageCd());
+							stg = new TDsplPlanStg();
+							stg.setId(new TDsplPlanStgId());
+							stg.getId().setLangCdTx(ConversionUtil.getTwoLetterLanguageCode(pb.getLanguageCd()));
+							stg.getId().setDsplPlanId(year + "-" + pv.getVariantHiosId());
+							toAdd.add(stg);
+						} else {
+							covered.add(stg);
+						}
+						setFieldsOnDsplPlan(entity, network, rx, pb, pv, stg);
+					}
+				}
+			}
+
+		}
+
+		log.exit();
+	}
+
+	private void setFieldsOnDsplPlan(PlanMstr entity, CarrierNetwork network, CarrierFormularyInfo rx, PlanBenefitMstr pb,
+			PlanVariantDtl pv, TDsplPlanStg stg) {
+		HIXBenefitFieldIdentifier helper = new HIXBenefitFieldIdentifier();
+		stg.setPlanId(entity.getPlanHiosId());
+		stg.setCsrVarId(pv.getVarId());
+		stg.setPlanNa(pb.getPlanNameTxt());
+		stg.setPlanVarncNa(pv.getPlanSecondaryName());
+		stg.setCarrNa(entity.getCarrierAdminInfo().getCarrierMstr().getCarrierName());
+		stg.setCarrierId(entity.getCarrierAdminInfo().getCarrierMstr().getCarrierId());
+		stg.setPlanTypeNa(entity.getPlanTypCd());
+		stg.setPlanLevelNa(pb.getMetalLevelTxt());
+		stg.setPlanSumOfBnftsTx(pv.getHsaBenifitCoverageUrlTxt());
+		stg.setDsplPlanIn(Character.valueOf('Y'));
+		if (entity.getQltyRating() != null) {
+			stg.setQltyRatingNb(new Integer(entity.getQltyRating()));
+		} else {
+			stg.setQltyRatingNb(0);
+		}
+		stg.setHavingBabyCoInsTx(pv.getSbcHavingBabyCoins());
+		stg.setHavingBabyCopayTx(pv.getSbcHavingBabyCopay());
+		stg.setHavingBabyDdbleTx(pv.getSbcHavingBabyDeductible());
+		stg.setHavingBabyLmtTx(pv.getSbcHavingBabyLimit());
+		stg.setType2DiabitiesCoInsTx(pv.getSbcDiabetesCoins());
+		stg.setType2DiabitiesCopayTx(pv.getSbcDiabetesCopay());
+		stg.setType2DiabitiesDdbleTx(pv.getSbcDiabetesDeductible());
+		stg.setType2DiabitiesLmtTx(pv.getSbcDiabetesLimit());
+		stg.setPlanEffvDt(entity.getEffDt());
+		stg.setPlanExpDt(entity.getExpDt());
+		/*for (PlanLifecycle lifecycle : entity.getPlanLifecycles()) {
+			if (YesNo.YES.getCode().equals(lifecycle.getActiveInd())) {
+				stg.setPlanStatusCd(lifecycle.getLkPlanStatusCd());
+				break;
+			}
+		}*/
+		stg.setCrtdDt(entity.getCrtdDt());
+		stg.setCreateUsrId(entity.getCreateUsrId());
+		stg.setUpdtDt(entity.getUpdtDt());
+		stg.setUpdtUserId(entity.getUpdtUserId());
+		stg.setRateEffDt(entity.getEffDt());
+		stg.setRateExpDt(entity.getExpDt());
+		stg.setYear(entity.getCvgYr());
+		stg.setEhbNb(entity.getEhbPercent());
+		stg.setPlanId(entity.getPlanHiosId());
+		if (network != null) {
+			stg.setHlthPrvdrUrlTx(network.getUrl());
+		}
+		if (rx != null) {
+			stg.setPrescDrgFrmlryUrlTx(rx.getFormularyUrlLink());
+		}
+
+		/*
+		PlanVariantDtlDeductible deductible = findDeductibleEntry(pv.getPlanVariantDtlDeductibles(), "");//cant find key for code
+		stg.setCsrDdbleInTx(deductible.getInNetworkIndv());
+		stg.setCsrDdbleOutTx(deductible.getOutOfNetworkIndv());
+		stg.setCsrDdblFmlyInTx(deductible.getInNetworkFamily());
+		stg.setCsrDdblFmlyOutTx(deductible.getOutOfNetworkFamily());
+		*/
+		PlanVariantDtlDeductible deductible = helper.findDeductibleForDrug(pv);
+		if (deductible != null) {
+			stg.setCsrPrescDrgDdbleInTx(deductible.getInNetworkIndv());
+			stg.setCsrPrescDrgDdbleOutTx(deductible.getOutOfNetworkIndv());
+			stg.setCsrPrescDrgDdblFmlyInTx(deductible.getInNetworkFamily());
+			stg.setCsrPrescDrgDdblFmlyOutTx(deductible.getOutOfNetworkFamily());
+		}
+		deductible = helper.findDeductibleForMedical(pv);
+		if (deductible != null) {
+			stg.setCsrDdbleInTx(deductible.getInNetworkIndv());
+			stg.setCsrDdbleOutTx(deductible.getOutOfNetworkIndv());
+			stg.setCsrDdblFmlyInTx(deductible.getInNetworkFamily());
+			stg.setCsrDdblFmlyOutTx(deductible.getOutOfNetworkFamily());
+			final String dedAm = ConversionUtil.dollarStringToAmount(getDollars(deductible.getInNetworkIndv()));
+			if (NumberUtils.isParsable(dedAm)) {
+				stg.setPlnsummAnnualDeductAm(Double.parseDouble(dedAm));
+			}
+		}
+
+		PlanVariantDtlMaxOop maxOop = helper.findMoopForDrug(pv);
+		if (maxOop != null) {
+			stg.setCsrPresDrgOutOfPcktInTx(maxOop.getInNetworkTier1Indv());
+			stg.setCsrPresDrgOutOfPcktOutTx(maxOop.getOutOfNetworkIndv());
+			stg.setCsrPrescDrgOutOfPcktFmlyInTx(maxOop.getInNetworkTier1Family());
+			stg.setCsrPrescDrgOutOfPcktFmlyOutTx(maxOop.getOutOfNetworkFamily());
+		}
+		maxOop = helper.findMoopForMedical(pv);
+		if (maxOop != null) {
+			stg.setCsrOutOfPcktMaxInTx(maxOop.getInNetworkTier1Indv());
+			stg.setCsrOutOfPcktMaxOutTx(maxOop.getOutOfNetworkIndv());
+			stg.setCsrOutOfPcktMaxFmlyInTx(maxOop.getInNetworkTier1Family());
+			stg.setCsrOutOfPcktMaxFmlyOutTx(maxOop.getOutOfNetworkFamily());
+
+			stg.setPlnsummAnnualOopocketMaxAm(getDollars(maxOop.getInNetworkTier1Indv()));
+		}
+		PlanVariantDtlCopayCoins copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "PCV");
+		if (copayCoins != null) {
+			stg.setCsrPcpCopayInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setCsrPcpCopayOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+			stg.setPlnsummPrmryCareCopayAm(getDollars(helper.findInNetworkDisplayValue(copayCoins)));
+		}
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "SPV");
+		if (copayCoins != null) {
+			stg.setCsrSplstCopayInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setCsrSplstCopayOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "OCD");
+		if (copayCoins != null) {
+			stg.setOrthodonticServsInNetTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setOrthodonticServsOutNetTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "PSI");
+		if (copayCoins != null) {
+			stg.setPsPrvntvCareImmnInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setPsPrvntvCareImmnOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "PPC");
+		if (copayCoins != null) {
+			stg.setPrntlPostntlInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setPrntlPostntlOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "ERS");
+		if (copayCoins != null) {
+			stg.setEmrgncyRmSrvceInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setEmrgncyRmSrvceOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "ETA");
+		if (copayCoins != null) {
+			stg.setEmrgncyTrnsprtInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setEmrgncyTrnsprtOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "IHS");
+		if (copayCoins != null) {
+			stg.setInPntHospSrvcsInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setInPntHospSrvcsOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		//Not required, no data in 2015, only used in 2014 (see hix.t_dspl_plan)
+		//					copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "");
+		//					stg.setMtrntyNewBornSrvcInTx(copayCoins.getCoinsInNetworkTier1());
+		//					stg.setMtrntyNewBornSrvcOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "SNF");
+		if (copayCoins != null) {
+			stg.setSkilledNrsngSrvcInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setSkilledNrsngSrvcOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+		//Not required, no data in 2015, only used in 2014 (see hix.t_dspl_plan)
+		//					copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "");
+		//					stg.setOutPntSrvcInTx(copayCoins.getCoinsInNetworkTier1());
+		//					stg.setOutPntSrvcOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "HHC");
+		if (copayCoins != null) {
+			stg.setHomeHlthCareSrvcInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setHomeHlthCareSrvcOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		//Not required, no data in 2015, only used in 2014 (see hix.t_dspl_plan)
+		//					copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "");
+		//					stg.setAdvImgngSrvcInTx(copayCoins.getCoinsInNetworkTier1());
+		//					stg.setAdvImgngSrvcOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "XDI");
+		if (copayCoins != null) {
+			stg.setXrayAndImgngSrvcInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setXrayAndImgngSrvcOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "LOP");
+		if (copayCoins != null) {
+			stg.setLabOutPntProfSrvcInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setLabOutPntProfSrvcOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "BHI");
+		if (copayCoins != null) {
+			stg.setMntlHlthInPntInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setMntlHlthInPntOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "BHO");
+		if (copayCoins != null) {
+			stg.setMntlHlthOutPntInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setMntlHlthOutPntOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "SDG");
+		if (copayCoins != null) {
+			stg.setSpcltyDrgInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setSpcltyDrgOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "GDG");
+		if (copayCoins != null) {
+			stg.setPrfrrdGnrcDrgInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setPrfrrdGnrcDrgOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "PBD");
+		if (copayCoins != null) {
+			stg.setPrfrrdBrandDrgInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setPrfrrdBrandDrgOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "NBD");
+		if (copayCoins != null) {
+			stg.setNonPrfrrdBrandDrgInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setNonPrfrrdBrandDrgOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "UCC");
+		if (copayCoins != null) {
+			stg.setUrgntCareFacInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setUrgntCareFacOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "CCG");
+		if (copayCoins != null) {
+			stg.setChrpcSrvcInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setChrpcSrvcOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "EGC");
+		if (copayCoins != null) {
+			stg.setEyeGlassForChildInTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setEyeGlassForChildOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "DCC");
+		if (copayCoins != null) {
+			stg.setChildDntlChkupInNetCopCoinsTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setChildDntlChkupOutNetCopCoinsTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "BDC");
+		if (copayCoins != null) {
+			stg.setChildDntlBasicInNetCopCoinsTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setChildDntlBasicOutNetCopCoinsTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "MDC");
+		if (copayCoins != null) {
+			stg.setChildDntlMajorInNetCopCoinsTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setChildDntlMajorOutNetCopCoinsTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+		copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "OCD");
+		if (copayCoins != null) {
+			stg.setOrthodonticServsInNetTx(helper.findInNetworkDisplayValue(copayCoins));
+			stg.setOrthodonticServsOutNetTx(helper.findOutNetworkDisplayValue(copayCoins));
+		}
+
+		//Not required, no data in 2015, only used in 2014 (see hix.t_dspl_plan)
+		//					copayCoins = findCopayCoinsEntry(pv.getPlanVariantDtlCopayCoinses(), "DCC");
+		//					if(copayCoins != null){
+		//						stg.setChildDntlChkupInNetCopCoinsTx(helper.findInNetworkDisplayValue(copayCoins));
+		//						stg.setMntlHlthOutPntOutTx(helper.findOutNetworkDisplayValue(copayCoins));
+		//					}
+
+		/*
+		
+			rehabOutPntSrvcInTx
+			rehabOutPntSrvcOutTx
+			rehabOutPntSrvcLmtTx
+			eyeExamInTx
+			eyeExamOutTx
+			eyeExamLmtTx
+			
+			eyeGlassForChildInTx
+			eyeGlassForChildOutTx
+			eyeGlassForChildLmtTx
+			*/
+
+		/*not found for mapping
+		//Not required, PMP does the url not from CP
+		planEvidCovTx
+		
+		skilledNrsngSrvcLimitTx
+		csrAm
+		
+		plnsummAnnualOopocketMaxAm
+		plnsummPrmryCareCopayAm
+		plnsummEmrgncyRoomAm
+		plnsummAnnualDeductAm
+		
+		homeHlthCareSrvcLmtTx
+		
+		
+		*/
+		/* all values null or empty
+		
+		planCarrLogoNa
+		addlDtls1Tx
+		addlDtls2Tx
+		logclDeleteIn
+		nonPrfrrdGnrcDrgInTx
+		nonPrfrrdGnrcDrgOutTx
+		nonPrfrrdGnrcDrgLmtTx
+		habiliationSrvcInTx
+		habiliationSrvcOutTx
+		habiliationSrvcLmtTx
+		adultOrChildIn
+		*/
+	}
+
+	private String getDollars(String str) {
+		String out = StringUtils.trimToEmpty(str);
+		out = "$" + out.replaceAll("\\D+", "");
+		log.debug("getDollars: {} : {}", str, out);
+		return out;
+
+	}
+
+	private TDsplPlanStg findDisplayPlanRecord(Collection<TDsplPlanStg> results, PlanVariantDtl pv, String languageCd,
+			String year) {
+		TDsplPlanStg record = null;
+		final String dsplPlanId = year + "-" + pv.getVariantHiosId();
+		if (CollectionUtils.isNotEmpty(results)) {
+			for (TDsplPlanStg entity : results) {
+				if (entity.getId() != null) {
+					if (entity.getId().getDsplPlanId().equals(dsplPlanId)
+							&& entity.getId().getLangCdTx()
+									.equalsIgnoreCase(ConversionUtil.getTwoLetterLanguageCode(languageCd))) {
+						record = entity;
+						log.debug("Found matching display plan record for {}, {}", pv.getVariantHiosId(), languageCd);
+						break;
+					}
+				}
+			}
+		}
+
+		return record;
+	}
+
+	//	private PlanVariantDtl findPlanVariantDtl(Set<PlanVariantDtl> list, PlanBenefitMstr pb) {
+	//		PlanVariantDtl value = null;
+	//		if (CollectionUtils.isNotEmpty(list)) {
+	//			for (PlanVariantDtl item : list) {
+	//				if (pb.equals(item.getPlanBenefitMstr())) {
+	//					value = item;
+	//					break;
+	//				}
+	//			}
+	//		}
+	//
+	//		return value;
+	//	}
+
+	private PlanVariantDtlCopayCoins findCopayCoinsEntry(Set<PlanVariantDtlCopayCoins> list, String code) {
+		PlanVariantDtlCopayCoins value = null;
+		if (CollectionUtils.isNotEmpty(list)) {
+			for (PlanVariantDtlCopayCoins item : list) {
+				if (code.equals(item.getLkCopayCoinsTypeCd())) {
+					value = item;
+					break;
+				}
+			}
+		}
+
+		log.debug("Value for CSR type {}, found as '{}'", code, value);
+		return value;
+	}
+
+	private PlanVariantDtlDeductible findDeductibleEntry(Set<PlanVariantDtlDeductible> list, String code) {
+		PlanVariantDtlDeductible value = null;
+		if (CollectionUtils.isNotEmpty(list)) {
+			for (PlanVariantDtlDeductible item : list) {
+				if (code.equals(item.getLkPlanVariantDtlDeductibleCd())) {
+					value = item;
+					break;
+				}
+			}
+		}
+
+		log.debug("Value for deductible type {}, found as '{}'", code, value);
+		return value;
+	}
+
+	private PlanVariantDtlMaxOop findMaxOOPEntry(Set<PlanVariantDtlMaxOop> list, String code) {
+		PlanVariantDtlMaxOop value = null;
+		if (CollectionUtils.isNotEmpty(list)) {
+			for (PlanVariantDtlMaxOop item : list) {
+				if (code.equals(item.getLkPlanVariantDtlMaxOopCd())) {
+					value = item;
+					break;
+				}
+			}
+		}
+
+		log.debug("Value for PlanVariantDtlMaxOop type {}, found as '{}'", code, value);
+		return value;
+	}
+
+}

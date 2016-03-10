@@ -1,0 +1,11 @@
+package com.hixapi.pmp.service.prescreen;
+
+import com.hixapi.framework.service.IService;
+import com.hixapi.prescreening.api.model.plan.HealthPlanDeterminant;
+import com.hixapi.prescreening.api.model.plan.PlanContainer;
+
+public interface PlanListingService extends IService{
+	
+	PlanContainer getPlansList(HealthPlanDeterminant planDeterminant) throws Exception;
+
+}

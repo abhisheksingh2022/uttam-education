@@ -1,0 +1,238 @@
+/**
+ * @author ujjalb
+ * Jul 23, 2015 2015
+ */
+package com.hixapi.pmp.service.plan.mapping;
+
+import gov.hhs.cms.ffe.rx.vo.CostSharingTypeVO;
+import gov.hhs.cms.ffe.rx.vo.DrugListVO;
+import gov.hhs.cms.ffe.rx.vo.DrugTierLevelVO;
+import gov.hhs.cms.ffe.rx.vo.DrugVO;
+import gov.hhs.cms.ffe.rx.vo.ExcelCellVO;
+import gov.hhs.cms.ffe.rx.vo.FormularyCostSharingTypeVO;
+import gov.hhs.cms.ffe.rx.vo.FormularyVO;
+import gov.hhs.cms.ffe.rx.vo.PrescriptionDrugTemplateVO;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIUtil;
+import com.hixapi.pmp.api.model.APICodeConstants.PlanStatus;
+import com.hixapi.pmp.api.model.APICodeConstants.Severity;
+import com.hixapi.pmp.entity.model.CarrierAdminInfo;
+import com.hixapi.pmp.entity.model.CarrierDrugCoverage;
+import com.hixapi.pmp.entity.model.CarrierFormularyCoverage;
+import com.hixapi.pmp.entity.model.CarrierFormularyInfo;
+import com.hixapi.pmp.entity.model.PlanMstr;
+
+/**
+ * @author ujjalb
+ *
+ */
+public class DrugListTemplateMapping extends BaseMapper {
+
+	private static final Logger log = LogManager.getLogger(DrugListTemplateMapping.class);
+	private static final String IN_NETWORK = "In Network";
+	private static final String OUT_OF_NETWORK = "Out of Network";
+	private static final String THREE_MONTHS = "3";
+	private static final String ONE_MONTH = "1";
+
+	private Set<PlanMstr> updatedPlans = new LinkedHashSet<PlanMstr>();
+
+	public List<CarrierFormularyInfo> buildFormularyInfoRecords(PrescriptionDrugTemplateVO vo, CarrierAdminInfo baseEntity,
+			Set<PlanMstr> planList) {
+		log.entry();
+
+		List<CarrierFormularyInfo> list = new ArrayList<CarrierFormularyInfo>();
+
+		if (vo.getFormularyList() != null && CollectionUtils.isNotEmpty(vo.getFormularyList().getFormularyVO())) {
+			for (FormularyVO voEntry : vo.getFormularyList().getFormularyVO()) {
+				final String formularyID = getString(voEntry.getFormularyID(), 30);
+				PlanMstr mstr = findActivatedPlanOfFormularyId(formularyID, planList); // Check if an activated plan is using the same network id
+				if (mstr != null) {
+					List<Object> subs = new ArrayList<Object>();
+					subs.add(mstr.getPlanHiosId());
+					subs.add(formularyID);
+					addError("msg.planupload.formulary_upload_plan_activated", Severity.ERROR, subs);
+					break;
+				}
+
+				markUpdatedPlans(formularyID, planList); //Mark the impacted plans so that they can be moved to INCOMPLETE status.
+
+				CarrierFormularyInfo entityEntry = new CarrierFormularyInfo();
+				entityEntry.setCarrierAdminInfo(baseEntity);
+				entityEntry.setDrugListIdNbr(getString(voEntry.getDrugListID(), 10));
+
+				entityEntry.setFormularyId(formularyID);
+				entityEntry.setFormularyUrlLink(getString(voEntry.getFormularyUrl(), 2000));
+				entityEntry.setNumberOfTiers(getString(voEntry.getNumberTiers(), 3));
+				list.add(entityEntry);
+
+				if (voEntry.getFormularyCostSharingTypeList() != null
+						&& CollectionUtils.isNotEmpty(voEntry.getFormularyCostSharingTypeList()
+								.getFormularyCostSharingTypeVO())) {
+					for (FormularyCostSharingTypeVO coverageVO : voEntry.getFormularyCostSharingTypeList()
+							.getFormularyCostSharingTypeVO()) {
+						CarrierFormularyCoverage coverage = new CarrierFormularyCoverage();
+						entityEntry.getCarrierFormularyCoverages().add(coverage);
+						coverage.setCarrierFormularyInfo(entityEntry);
+
+						coverage.setDrgTierTypeTxt(getString(coverageVO.getDrugTierLevel(), 200));
+
+						if (coverageVO.getCostSharingTypeList() != null
+								&& CollectionUtils.isNotEmpty(coverageVO.getCostSharingTypeList().getCostSharingTypeVO())) {
+							for (CostSharingTypeVO csrTypeVO : coverageVO.getCostSharingTypeList().getCostSharingTypeVO()) {
+								if (ONE_MONTH.equals(StringUtils.trimToEmpty(csrTypeVO.getDrugPrescriptionPeriodType()))) {
+									if (IN_NETWORK.equals(StringUtils.trimToEmpty(csrTypeVO.getNetworkCostType()))) {
+										coverage.setOneMonthInNetworkRpCoinsAmount(getString(csrTypeVO.getCoInsurance(), 200));
+										coverage.setOneMonthInNetworkRpCopayAmount(getString(csrTypeVO.getCoPayment(), 200));
+									} else if (OUT_OF_NETWORK
+											.equals(StringUtils.trimToEmpty(csrTypeVO.getNetworkCostType()))) {
+										coverage.setOneMonthOoNetworkRpCoinsAmount(getString(csrTypeVO.getCoInsurance(), 200));
+										coverage.setOneMonthOoNetworkRpCopayAmount(getString(csrTypeVO.getCoPayment(), 200));
+									}
+								} else if (THREE_MONTHS.equals(StringUtils.trimToEmpty(csrTypeVO
+										.getDrugPrescriptionPeriodType()))) {
+									if (IN_NETWORK.equals(StringUtils.trimToEmpty(csrTypeVO.getNetworkCostType()))) {
+										coverage.setThreeMonthInNetworkMailCoinsAmount(getString(csrTypeVO.getCoInsurance(),
+												200));
+										coverage.setThreeMonthInNetworkMailCopayAmount(getString(csrTypeVO.getCoPayment(),
+												200));
+									} else if (OUT_OF_NETWORK
+											.equals(StringUtils.trimToEmpty(csrTypeVO.getNetworkCostType()))) {
+										coverage.setThreeMonthOoNetworkMailCoinsAmount(getString(csrTypeVO.getCoInsurance(),
+												200));
+										coverage.setThreeMonthOoNetworkMailCopayAmount(getString(csrTypeVO.getCoPayment(),
+												200));
+									}
+								}
+							}
+						}
+						coverage.setOneMonthOoNetworkRpBnftFlg(getChar(coverageVO
+								.getOneMonthOutNetworkRetailOfferedIndicator()));
+						coverage.setThreeMonthInNetworkMailBnftFlg(getChar(coverageVO
+								.getThreeMonthInNetworkMailOfferedIndicator()));
+						coverage.setThreeMonthOoNetworkMailBnftFlg(getChar(coverageVO
+								.getThreeMonthOutNetworkMailOfferedIndicator()));
+					}
+				} else {
+					log.warn("No formulary csr listing available, all records will be deleted if existing");
+				}
+			}
+		} else {
+			log.warn("No formulary list available, all records will be deleted if existing");
+		}
+
+		log.exit();
+		return list;
+	}
+
+	public List<CarrierDrugCoverage> buildDrugCoverageRecords(PrescriptionDrugTemplateVO vo, CarrierAdminInfo baseEntity) {
+		log.entry();
+
+		List<CarrierDrugCoverage> list = new ArrayList<CarrierDrugCoverage>();
+		Map<String, String> tierDescriptionMap = new HashMap<String, String>();
+		if (vo.getDrugList() != null && CollectionUtils.isNotEmpty(vo.getDrugList().getDrugListVO())) {
+			for (DrugListVO voEntry : vo.getDrugList().getDrugListVO()) {
+				if (voEntry.getDrugTierLevelList() != null && voEntry.getDrugTierLevelList().getDrugTierLevelVO() != null) {
+					for (DrugTierLevelVO tierLevelVO : voEntry.getDrugTierLevelList().getDrugTierLevelVO()) {
+						tierDescriptionMap.put(getString(tierLevelVO.getDrugTierLevel()),
+								getString(tierLevelVO.getDrugTierType()));
+					}
+				}
+				if (voEntry.getDrugVOList() != null && voEntry.getDrugVOList().getDrugVO() != null) {
+					for (DrugVO drug : voEntry.getDrugVOList().getDrugVO()) {
+						CarrierDrugCoverage entityEntry = new CarrierDrugCoverage();
+						entityEntry.setCarrierAdminInfo(baseEntity);
+						entityEntry.setDrugListIdCd(getString(voEntry.getDrugListID(), 10));
+						entityEntry.setPriorAuthReqFlg(getString(drug.getAuthorizationRequired(), 5));
+						entityEntry.setStepThrapyReqFlg(getString(drug.getStepTherapyRequired(), 5));
+						entityEntry.setRxcuiNbr(getString(drug.getRXCUI(), 10));
+						entityEntry.setTierLevelDescriptionTxt(StringUtils.trimToEmpty(tierDescriptionMap.get(getString(drug
+								.getTier()))));
+						entityEntry.setTierLvl(getString(drug.getTier(), 5));
+						list.add(entityEntry);
+					}
+
+				} else {
+					log.warn("No drug listing available, all records will be deleted if existing");
+				}
+			}
+		} else {
+			log.warn("No drug coverage list available, all records will be deleted if existing");
+		}
+
+		log.exit();
+		return list;
+	}
+
+	private String getString(ExcelCellVO vo) {
+		return getString(vo, 0);
+	}
+
+	private String getString(ExcelCellVO vo, int limit) {
+		if (vo == null || StringUtils.isBlank(vo.getCellValue())) {
+			return "";
+		}
+		if (limit == 0) {
+			return vo.getCellValue();
+		}
+		return APIUtil.truncateString(StringUtils.trimToEmpty(vo.getCellValue()), limit);
+	}
+
+	private Character getChar(ExcelCellVO vo) {
+		if (vo == null || StringUtils.isBlank(vo.getCellValue())) {
+			return null;
+		}
+		String value = StringUtils.trimToEmpty(vo.getCellValue());
+		if (value.length() > 1) {
+			log.info("Expecting character from String of length > 1, returning first char in upper case: {}", value);
+		}
+		return value.toUpperCase().charAt(0);
+	}
+
+	private PlanMstr findActivatedPlanOfFormularyId(String id, Set<PlanMstr> planList) {
+		PlanMstr mstr = null;
+
+		if (CollectionUtils.isNotEmpty(planList)) {
+			for (PlanMstr entry : planList) {
+				PlanStatus status = entry.getCurrentPlanStatus();
+				if (status != null && status == PlanStatus.ACTIVATED
+						&& StringUtils.trimToEmpty(id).equalsIgnoreCase(entry.getFrmltryId())) {
+					mstr = entry;
+					break;
+				}
+			}
+		}
+
+		return mstr;
+	}
+
+	private void markUpdatedPlans(String id, Set<PlanMstr> planList) {
+		if (CollectionUtils.isNotEmpty(planList)) {
+			for (PlanMstr entry : planList) {
+				if (StringUtils.trimToEmpty(id).equalsIgnoreCase(entry.getFrmltryId())) {
+					updatedPlans.add(entry);
+				}
+			}
+		}
+
+	}
+
+	public Set<PlanMstr> getUpdatedPlans() {
+		return updatedPlans;
+	}
+
+	public void setUpdatedPlans(Set<PlanMstr> updatedPlans) {
+		this.updatedPlans = updatedPlans;
+	}
+}

@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.UsrContactDetail" table="USR_CONTACT_DETAIL" optimistic-lock="version">
+        <id name="usrContactId" type="java.lang.Long">
+            <column name="USR_CONTACT_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_USR_CONTACT_DETAIL_SEQ</param>
+    		</generator>
+        </id>
+        <property name="frstNm" type="string">
+            <column name="FRST_NM" length="30" />
+        </property>
+        <property name="middlNm" type="string">
+            <column name="MIDDL_NM" length="30" />
+        </property>
+        <property name="lastNm" type="string">
+            <column name="LAST_NM" length="30" />
+        </property>
+        <property name="emailAdr" type="string">
+            <column name="EMAIL_ADR" length="125" />
+        </property>
+        <property name="phoneNum" type="string">
+            <column name="PHONE_NUM" length="32" />
+        </property>
+        <property name="phoneExtn" type="string">
+            <column name="PHONE_EXTN" length="32" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

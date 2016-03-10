@@ -1,0 +1,86 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+import java.util.List;
+
+public class AptcDeterminant implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Double applicablePercentage;
+	private Long annualIncome;
+	private String ratingAreaId;
+	private Integer coverageYear;
+	private String language;
+	
+	private List<String> hshlSubsidyAgeCategories;
+	private List<Individual> aptcMembers;
+
+	
+	public Double getApplicablePercentage() {
+		return applicablePercentage;
+	}
+
+	public void setApplicablePercentage(Double applicationPercentage) {
+		this.applicablePercentage = applicationPercentage;
+	}
+
+	public Long getAnnualIncome() {
+		return annualIncome;
+	}
+
+	public void setAnnualIncome(Long annualIncome) {
+		this.annualIncome = annualIncome;
+	}
+
+	public String getRatingAreaId() {
+		return ratingAreaId;
+	}
+
+	public void setRatingAreaId(String ratingAreaId) {
+		this.ratingAreaId = ratingAreaId;
+	}
+
+	public Integer getCoverageYear() {
+		return coverageYear;
+	}
+
+	public void setCoverageYear(Integer coverageYear) {
+		this.coverageYear = coverageYear;
+	}
+
+	
+
+	/**
+	 * @return the aptcMembers
+	 */
+	public List<Individual> getAptcMembers() {
+		return aptcMembers;
+	}
+
+	/**
+	 * @param aptcMembers the aptcMembers to set
+	 */
+	public void setAptcMembers(List<Individual> aptcMembers) {
+		this.aptcMembers = aptcMembers;
+	}
+
+	public List<String> getHshlSubsidyAgeCategories() {
+		return hshlSubsidyAgeCategories;
+	}
+
+	public void setHshlSubsidyAgeCategories(List<String> hshlSubsidyAgeCategories) {
+		this.hshlSubsidyAgeCategories = hshlSubsidyAgeCategories;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
+}

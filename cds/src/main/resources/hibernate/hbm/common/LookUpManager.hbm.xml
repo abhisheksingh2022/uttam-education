@@ -1,0 +1,178 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+
+	<class name="com.hixapi.web.framework.common.model.LookupBean">
+		<composite-id name="id"
+			class="com.hixapi.web.framework.common.model.LookupId">
+			<key-property name="lookupKey" type="string" />
+			<key-property name="langCode" type="string" />
+			<key-property name="value" type="string" />
+		</composite-id>
+		<property name="label" type="string" />
+		<property name="sortOrder" type="int" />
+
+	</class>
+
+	<sql-query name="com.hixapi.web.framework.lookups.Counties">
+		<return class="com.hixapi.web.framework.common.model.LookupBean"
+			alias="lookup">
+			<return-property name="id">
+				<return-column name="lookupKey" />
+				<return-column name="langCode" />
+				<return-column name="value" />
+			</return-property>
+			<return-property name="label" column="label" />
+			<return-property name="sortOrder" column="sortOrder" />
+		</return>
+		  <![CDATA[select 'com.hixapi.web.framework.lookups.Counties' as lookupKey, lookup.COUNTY_CD as value, lookup.COUNTY_CD_LONG_TXT as label, 
+		  lookup.LANGUAGE_CD as langCode, lookup.SORT_ORDER_NBR as sortOrder from lookup_counties_cd lookup where lookup.ACTIVE_CD ='Y'
+		  order by lookup.SORT_ORDER_NBR]]>
+	</sql-query>
+
+	<sql-query name="com.hixapi.web.framework.lookups.YesorNo">
+		<return class="com.hixapi.web.framework.common.model.LookupBean"
+			alias="lookup">
+			<return-property name="id">
+				<return-column name="lookupKey" />
+				<return-column name="langCode" />
+				<return-column name="value" />
+			</return-property>
+			<return-property name="label" column="label" />
+			<return-property name="sortOrder" column="sortOrder" />
+		</return>
+		  <![CDATA[select 'com.hixapi.web.framework.lookups.YesorNo' as lookupKey, lookup.YN_CD as value, lookup.YN_CD_LONG_TXT as label, 
+		  lookup.LANGUAGE_CD as langCode, lookup.SORT_ORDER_NBR as sortOrder from lookup_yn_cd lookup where lookup.ACTIVE_CD ='Y'
+		  order by lookup.SORT_ORDER_NBR]]>
+	</sql-query>
+
+
+
+	<sql-query name="com.hixapi.web.framework.lookups.Gender">
+		<return class="com.hixapi.web.framework.common.model.LookupBean"
+			alias="lookup">
+			<return-property name="id">
+				<return-column name="lookupKey" />
+				<return-column name="langCode" />
+				<return-column name="value" />
+			</return-property>
+			<return-property name="label" column="label" />
+			<return-property name="sortOrder" column="sortOrder" />
+		</return>
+		  <![CDATA[select 'com.hixapi.web.framework.lookups.Gender' as lookupKey, lookup.SEX_CD as value, lookup.SEX_CD_LONG_TXT as label, 
+		  lookup.LANGUAGE_CD as langCode, lookup.SORT_ORDER_NBR as sortOrder from lookup_sex_cd lookup where lookup.ACTIVE_CD = 'Y' order by lookup.SORT_ORDER_NBR]]>
+	</sql-query>
+	
+	<sql-query name="com.hixapi.web.framework.lookups.Disease">
+		<return class="com.hixapi.web.framework.common.model.LookupBean"
+			alias="lookup">
+			<return-property name="id">
+				<return-column name="lookupKey" />
+				<return-column name="langCode" />
+				<return-column name="value" />
+			</return-property>
+			<return-property name="label" column="label" />
+			<return-property name="sortOrder" column="sortOrder" />
+		</return>
+		  <![CDATA[select 'com.hixapi.web.framework.lookups.Disease' as lookupKey, lookup.DISEASE_CD as value, lookup.DISEASE_CD_LONG_TXT as label, 
+		  lookup.LANGUAGE_CD as langCode, lookup.SORT_ORDER_NBR as sortOrder from lookup_disease_cd lookup where lookup.ACTIVE_CD = 'Y' order by lookup.SORT_ORDER_NBR]]>
+	</sql-query>
+
+
+	<sql-query name="com.hixapi.web.framework.lookups.Relation">
+		<return class="com.hixapi.web.framework.common.model.LookupBean"
+			alias="lookup">
+			<return-property name="id">
+				<return-column name="lookupKey" />
+				<return-column name="langCode" />
+				<return-column name="value" />
+			</return-property>
+			<return-property name="label" column="label" />
+			<return-property name="sortOrder" column="sortOrder" />
+		</return>
+		  <![CDATA[select 'com.hixapi.web.framework.lookups.Relation' as lookupKey, lookup.RELATION_CD as value, lookup.RELATION_CD_LONG_TXT as label, 
+		  lookup.LANGUAGE_CD as langCode, lookup.SORT_ORDER_NBR as sortOrder from lookup_relation_cd lookup where lookup.ACTIVE_CD = 'Y' order by lookup.SORT_ORDER_NBR]]>
+	</sql-query>
+
+
+	<sql-query name="com.hixapi.web.framework.lookups.Surgery">
+		<return class="com.hixapi.web.framework.common.model.LookupBean"
+			alias="lookup">
+			<return-property name="id">
+				<return-column name="lookupKey" />
+				<return-column name="langCode" />
+				<return-column name="value" />
+			</return-property>
+			<return-property name="label" column="label" />
+			<return-property name="sortOrder" column="sortOrder" />
+		</return>
+		  <![CDATA[select 'com.hixapi.web.framework.lookups.Surgery' as lookupKey, lookup.SURGERY_CD as value, lookup.SURGERY_CD_LONG_TXT as label, 
+		  lookup.LANGUAGE_CD as langCode, lookup.SORT_ORDER_NBR as sortOrder from lookup_surgery_cd lookup where lookup.ACTIVE_CD = 'Y' order by lookup.SORT_ORDER_NBR]]>
+	</sql-query>
+
+	
+
+	<sql-query name="com.hixapi.web.framework.lookups.HouseholdIncomeType">
+	  <return class="com.hixapi.web.framework.common.model.LookupBean" alias="lookup">
+	   <return-property name="id">
+			<return-column name="lookupKey" />
+			<return-column name="langCode" />
+			<return-column name="value" />
+		</return-property>
+	   <return-property name="label" column="label" />
+	   <return-property name="sortOrder" column="sortOrder" />
+	  </return>
+	    <![CDATA[select 'com.hixapi.web.framework.lookups.HouseholdIncomeType' as lookupKey, lookup.INCOMETYPE_CD as value, lookup.INCOMETYPE_CD_LONG_TXT as label, 
+	    lookup.LANGUAGE_CD as langCode, lookup.SORT_ORDER_NBR as sortOrder from lookup_incometype_cd lookup where lookup.ACTIVE_CD = 'Y' order by lookup.SORT_ORDER_NBR]]>
+ </sql-query>
+	
+	<sql-query name="com.hixapi.web.framework.lookups.ResidentType">
+	  <return class="com.hixapi.web.framework.common.model.LookupBean"
+		   alias="lookup">
+		   <return-property name="id">
+			    <return-column name="lookupKey" />
+			    <return-column name="langCode" />
+			    <return-column name="value" />
+		   </return-property>
+		   <return-property name="label" column="label" />
+		   <return-property name="sortOrder" column="sortOrder" />
+	  </return>
+	    <![CDATA[select 'com.hixapi.web.framework.lookups.ResidentType' as lookupKey, lookup.RESIDENTTYPE_CD as value, lookup.RESIDENTTYPE_CD_LONG_TXT as label, 
+	    lookup.LANGUAGE_CD as langCode, lookup.SORT_ORDER_NBR as sortOrder from lookup_residenttype_cd lookup where lookup.ACTIVE_CD = 'Y' order by lookup.SORT_ORDER_NBR]]>
+ </sql-query>
+	
+
+	<sql-query name="com.hixapi.web.framework.lookups.Severity">
+		<return class="com.hixapi.web.framework.common.model.LookupBean"
+			alias="lookup">
+			<return-property name="id">
+				<return-column name="lookupKey" />
+				<return-column name="langCode" />
+				<return-column name="value" />
+			</return-property>
+			<return-property name="label" column="label" />
+			<return-property name="sortOrder" column="sortOrder" />
+		</return>
+		  <![CDATA[select 'com.hixapi.web.framework.lookups.Severity' as lookupKey, lookup.SEVERITY_CD as value, lookup.SEVERITY_CD_LONG_TXT as label, 
+		  lookup.LANGUAGE_CD as langCode, lookup.SORT_ORDER_NBR as sortOrder from lookup_severity_cd lookup where lookup.ACTIVE_CD = 'Y' order by lookup.SORT_ORDER_NBR]]>
+	</sql-query>
+	
+		<sql-query name="com.hixapi.web.framework.lookups.YearlyorMonthly">
+		<return class="com.hixapi.web.framework.common.model.LookupBean"
+			alias="lookup">
+			<return-property name="id">
+				<return-column name="lookupKey" />
+				<return-column name="langCode" />
+				<return-column name="value" />
+			</return-property>
+			<return-property name="label" column="label" />
+			<return-property name="sortOrder" column="sortOrder" />
+		</return>
+		  <![CDATA[select 'com.hixapi.web.framework.lookups.YearlyorMonthly' as lookupKey, lookup.PLAN_DETAILS_YM_CD as value, lookup.PLAN_DETAILS_YM_CD_LONG_TXT as label, 
+		  lookup.LANGUAGE_CD as langCode, lookup.SORT_ORDER_NBR as sortOrder from lookup_plan_details_ym_cd lookup where lookup.ACTIVE_CD ='Y'
+		  order by lookup.SORT_ORDER_NBR]]>
+	</sql-query>
+</hibernate-mapping>

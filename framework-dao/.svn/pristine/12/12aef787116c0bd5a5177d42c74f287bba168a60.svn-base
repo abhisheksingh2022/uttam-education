@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.CarrierFormularyCoverage" table="CARRIER_FORMULARY_COVERAGE" optimistic-lock="version">
+        <id name="carrierFormularyCoverageId" type="java.lang.Long">
+            <column name="CARRIER_FORMULARY_COVERAGE_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_CARRIER_FORMULARY_COVERAGE_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="carrierFormularyInfo" class="com.hixapi.pmp.entity.model.CarrierFormularyInfo" fetch="select">
+            <column name="CARRIER_FORMULARY_INFO_ID" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="drgTierTypeTxt" type="string">
+            <column name="DRG_TIER_TYPE_TXT" length="200" />
+        </property>
+        <property name="oneMonthInNetworkRpCopayAmount" type="string">
+            <column name="ONE_MONTH_IN_NETWORK_RP_COPAY_AMOUNT" length="200" />
+        </property>
+        <property name="oneMonthInNetworkRpCoinsAmount" type="string">
+            <column name="ONE_MONTH_IN_NETWORK_RP_COINS_AMOUNT" length="200" />
+        </property>
+        <property name="oneMonthOoNetworkRpBnftFlg" type="java.lang.Character">
+            <column name="ONE_MONTH_OO_NETWORK_RP_BNFT_FLG" length="1" />
+        </property>
+        <property name="oneMonthOoNetworkRpCopayAmount" type="string">
+            <column name="ONE_MONTH_OO_NETWORK_RP_COPAY_AMOUNT" length="200" />
+        </property>
+        <property name="oneMonthOoNetworkRpCoinsAmount" type="string">
+            <column name="ONE_MONTH_OO_NETWORK_RP_COINS_AMOUNT" length="200" />
+        </property>
+        <property name="threeMonthInNetworkMailBnftFlg" type="java.lang.Character">
+            <column name="THREE_MONTH_IN_NETWORK_MAIL_BNFT_FLG" length="1" />
+        </property>
+        <property name="threeMonthInNetworkMailCopayAmount" type="string">
+            <column name="THREE_MONTH_IN_NETWORK_MAIL_COPAY_AMOUNT" length="200" />
+        </property>
+        <property name="threeMonthInNetworkMailCoinsAmount" type="string">
+            <column name="THREE_MONTH_IN_NETWORK_MAIL_COINS_AMOUNT" length="200" />
+        </property>
+        <property name="threeMonthOoNetworkMailBnftFlg" type="java.lang.Character">
+            <column name="THREE_MONTH_OO_NETWORK_MAIL_BNFT_FLG" length="1" />
+        </property>
+        <property name="threeMonthOoNetworkMailCopayAmount" type="string">
+            <column name="THREE_MONTH_OO_NETWORK_MAIL_COPAY_AMOUNT" length="200" />
+        </property>
+        <property name="threeMonthOoNetworkMailCoinsAmount" type="string">
+            <column name="THREE_MONTH_OO_NETWORK_MAIL_COINS_AMOUNT" length="200" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

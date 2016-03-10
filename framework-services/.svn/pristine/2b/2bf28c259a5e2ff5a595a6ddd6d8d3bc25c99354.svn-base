@@ -1,0 +1,34 @@
+package com.hixapi.pmp.service.account;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.pmp.api.model.WorkItemVO;
+import com.hixapi.pmp.api.model.criteria.WorkItemSearchCriteria;
+import com.hixapi.pmp.service.account.WorkItemsService;
+
+public class WorkItemsServiceImpl implements WorkItemsService {
+
+	@Override
+	public List<WorkItemVO> retrieveWorkItemsForUser(WorkItemSearchCriteria criteria) throws BusinessServiceException {
+		//call DAO method to get list of taskIds for user
+		//for each taskid get details from Task table.
+				//set to Vo
+		List<WorkItemVO> dummyWorkItems = new ArrayList<WorkItemVO>();
+		WorkItemVO wrkvo1 = new WorkItemVO();
+		wrkvo1.setWorkItemId("123");
+		wrkvo1.setMessage("Please validate workItem 1");
+		dummyWorkItems.add(wrkvo1);
+		WorkItemVO wrkvo2 = new WorkItemVO();
+		wrkvo2.setWorkItemId("234");
+		wrkvo2.setMessage("Please validate workItem 2");
+		dummyWorkItems.add(wrkvo2);
+		WorkItemVO wrkvo3 = new WorkItemVO();
+		wrkvo3.setWorkItemId("345");
+		wrkvo3.setMessage("Please validate workItem 3");
+		dummyWorkItems.add(wrkvo3);
+		return dummyWorkItems;
+	}
+
+}

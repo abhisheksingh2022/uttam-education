@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.CarrierUser" table="CARRIER_USER" optimistic-lock="version">
+        <id name="carrierUserId" type="java.lang.Long">
+            <column name="CARRIER_USER_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_CARRIER_USER_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="carrierMstr" class="com.hixapi.pmp.entity.model.CarrierMstr" fetch="join" >
+            <column name="CARRIER_ID_NBR" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <many-to-one name="usrContactDetail" class="com.hixapi.pmp.entity.model.UsrContactDetail" fetch="join" cascade="all">
+            <column name="CARRIER_USER_CONTACT_ID" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+         <many-to-one name="pmpAdrId" class="com.hixapi.pmp.entity.model.Address" fetch="join" cascade="all">
+            <column name="PMP_ADR_ID" precision="12" scale="0" />
+        </many-to-one>
+        <property name="userLoginId" type="string">
+            <column name="USER_LOGIN_ID" length="30" not-null="true" />
+        </property>
+        
+        <property name="prefTimeZoneCd" type="string">
+            <column name="PREF_TIME_ZONE_CD" length="3" />
+        </property>
+        <property name="prefDateFormatCd" type="string">
+            <column name="PREF_DATE_FORMAT_CD" length="3" />
+        </property>
+        <property name="prefTimeFormatCd" type="string">
+            <column name="PREF_TIME_FORMAT_CD" length="3" />
+        </property>
+        <property name="usrStatusCd" type="string">
+            <column name="USR_STATUS_CD" length="1" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+    </class>
+</hibernate-mapping>

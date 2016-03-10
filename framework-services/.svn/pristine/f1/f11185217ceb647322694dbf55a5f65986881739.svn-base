@@ -1,0 +1,250 @@
+package com.hixapi.pmp.service.plan.mapping;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.APIConstants;
+import com.hixapi.framework.dao.LookupManager;
+import com.hixapi.pmp.api.model.APICodeConstants.Language;
+import com.hixapi.pmp.api.model.PlanChangeVO;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.api.model.PlanVariantDetailsVO;
+import com.hixapi.pmp.api.modeltranslator.PlanModelTranslator;
+import com.hixapi.pmp.entity.model.PlanVariantDtlCopayCoins;
+import com.hixapi.pmp.entity.model.PlanVariantDtlDeductible;
+import com.hixapi.pmp.entity.model.PlanVariantDtlMaxOop;
+
+public class PlanBenefitUpdateHelper {
+
+	private List<PlanChangeVO> planChanges = new ArrayList<PlanChangeVO>();
+	private PlanModelTranslator planModelTranslator = new PlanModelTranslator();
+
+	private static final Logger log = LogManager.getLogger(PlanBenefitUpdateHelper.class);
+
+	public List<PlanChangeVO> getPlanChanges() {
+		return planChanges;
+	}
+
+	public void setPlanChanges(List<PlanChangeVO> planChanges) {
+		this.planChanges = planChanges;
+	}
+
+	public void populateChangeVOCopay(PlanVariantDetailsVO planVariantDetailsVO,
+			PlanVariantDetailsVO oldPlanVariantDetailsVO, PlanVO oldPlanVO) {
+		Set<PlanVariantDtlCopayCoins> oldPlanVariantDtlCopay = new HashSet<PlanVariantDtlCopayCoins>();
+		Set<PlanVariantDtlCopayCoins> planVariantDtlCopay = new HashSet<PlanVariantDtlCopayCoins>();
+		int count = 1;
+
+		planModelTranslator.initializePlanVariantDtlCopayCoinsEntity(oldPlanVariantDetailsVO.getCopayDetails(),
+				oldPlanVariantDtlCopay);
+		planModelTranslator.initializePlanVariantDtlCopayCoinsEntity(planVariantDetailsVO.getCopayDetails(),
+				planVariantDtlCopay);
+		for (PlanVariantDtlCopayCoins planVariantDtlCopayCoins : planVariantDtlCopay) {
+			for (PlanVariantDtlCopayCoins oldPlanVariantDtlCopayCoins : oldPlanVariantDtlCopay) {
+				log.debug(count++ + "*********************" + oldPlanVariantDtlCopayCoins.getPlanVariantDtlCopayCoinsId()
+						+ " ********************** " + planVariantDtlCopayCoins.getPlanVariantDtlCopayCoinsId());
+				if (oldPlanVariantDtlCopayCoins.getPlanVariantDtlCopayCoinsId().equals(
+						planVariantDtlCopayCoins.getPlanVariantDtlCopayCoinsId())) {
+					//Check if CoinsInNetworkTier1 is updated.
+					planVariantDtlCopayCoins.setLkCopayCoinsTypeCd(oldPlanVariantDtlCopayCoins.getLkCopayCoinsTypeCd());
+					if (!oldPlanVariantDtlCopayCoins.getCopayInNetworkTier1().equalsIgnoreCase(
+							planVariantDtlCopayCoins.getCopayInNetworkTier1())) {
+						PlanChangeVO changeVO = new PlanChangeVO();
+						changeVO.setId("CP_" + planVariantDtlCopayCoins.getPlanVariantDtlCopayCoinsId());
+						changeVO.setFieldUpdated("CopayCoins: "
+								+ LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "DtlCopayCoins",
+										oldPlanVariantDtlCopayCoins.getLkCopayCoinsTypeCd()) + " : In Network");
+						changeVO.setPlanId(oldPlanVariantDetailsVO.getVariantHiosId());
+						changeVO.setLanguage(Language.getEnum(oldPlanVO.getLanguage()).getDescription());
+						changeVO.setYear(oldPlanVO.getCoverageYear());
+						changeVO.setOldValue(oldPlanVariantDtlCopayCoins.getCopayInNetworkTier1());
+						changeVO.setNewValue(planVariantDtlCopayCoins.getCopayInNetworkTier1());
+						planChanges.add(changeVO);
+					}
+					//Check if CoinsOutOfNetwork is updated.
+					if (!oldPlanVariantDtlCopayCoins.getCoinsOutOfNetwork().equalsIgnoreCase(
+							planVariantDtlCopayCoins.getCoinsOutOfNetwork())) {
+						PlanChangeVO changeVO = new PlanChangeVO();
+						changeVO.setId("CP_" + planVariantDtlCopayCoins.getPlanVariantDtlCopayCoinsId());
+						changeVO.setFieldUpdated("CopayCoins: "
+								+ LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "DtlCopayCoins",
+										oldPlanVariantDtlCopayCoins.getLkCopayCoinsTypeCd()) + " :  Out-Of-Network");
+						changeVO.setPlanId(oldPlanVariantDetailsVO.getVariantHiosId());
+						changeVO.setLanguage(Language.getEnum(oldPlanVO.getLanguage()).getDescription());
+						changeVO.setYear(oldPlanVO.getCoverageYear());
+						changeVO.setOldValue(oldPlanVariantDtlCopayCoins.getCoinsOutOfNetwork());
+						changeVO.setNewValue(planVariantDtlCopayCoins.getCoinsOutOfNetwork());
+						planChanges.add(changeVO);
+					}
+				}
+			}
+		}
+
+	}
+
+	public void populateChangeVODeductible(PlanVariantDetailsVO planVariantDetailsVO,
+			PlanVariantDetailsVO oldPlanVariantDetailsVO, PlanVO oldPlanVO) {
+		Set<PlanVariantDtlDeductible> oldPlanVariantDtlDeductible = new HashSet<PlanVariantDtlDeductible>();
+		Set<PlanVariantDtlDeductible> planVariantDtlDeductible = new HashSet<PlanVariantDtlDeductible>();
+
+		planModelTranslator.initializePlanVariantDtlDeductibleEntity(oldPlanVariantDetailsVO.getDeductibleDetails(),
+				oldPlanVariantDtlDeductible);
+		planModelTranslator.initializePlanVariantDtlDeductibleEntity(planVariantDetailsVO.getDeductibleDetails(),
+				planVariantDtlDeductible);
+		for (PlanVariantDtlDeductible planVariantDtlDed : planVariantDtlDeductible) {
+			for (PlanVariantDtlDeductible oldPlanVariantDtlDed : oldPlanVariantDtlDeductible) {
+				if (oldPlanVariantDtlDed.getPlanVariantDtlDeductibleId().equals(
+						planVariantDtlDed.getPlanVariantDtlDeductibleId())) {
+					planVariantDtlDed.setLkPlanVariantDtlDeductibleCd(oldPlanVariantDtlDed.getLkPlanVariantDtlDeductibleCd());
+					//Check if InNetworkIndv is updated.
+					if (!oldPlanVariantDtlDed.getInNetworkIndv().equalsIgnoreCase(planVariantDtlDed.getInNetworkIndv())) {
+						PlanChangeVO changeVO = new PlanChangeVO();
+						changeVO.setId("DED_" + planVariantDtlDed.getPlanVariantDtlDeductibleId());
+						changeVO.setFieldUpdated("Deductible: "
+								+ LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "DeductibleCd",
+										oldPlanVariantDtlDed.getLkPlanVariantDtlDeductibleCd()) + " : In-Network Individual");
+						changeVO.setLanguage(Language.getEnum(oldPlanVO.getLanguage()).getDescription());
+						changeVO.setYear(oldPlanVO.getCoverageYear());
+						changeVO.setPlanId(oldPlanVariantDetailsVO.getVariantHiosId());
+						changeVO.setOldValue(oldPlanVariantDtlDed.getInNetworkIndv());
+						changeVO.setNewValue(planVariantDtlDed.getInNetworkIndv());
+						planChanges.add(changeVO);
+					}
+					//Check if InNetworkFamily is updated.
+					if (!oldPlanVariantDtlDed.getInNetworkFamily().equalsIgnoreCase(planVariantDtlDed.getInNetworkFamily())) {
+						PlanChangeVO changeVO = new PlanChangeVO();
+						changeVO.setId("DED_" + planVariantDtlDed.getPlanVariantDtlDeductibleId());
+						changeVO.setFieldUpdated("Deductible: "
+								+ LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "DeductibleCd",
+										oldPlanVariantDtlDed.getLkPlanVariantDtlDeductibleCd()) + " : In-Network Family");
+						changeVO.setLanguage(Language.getEnum(oldPlanVO.getLanguage()).getDescription());
+						changeVO.setYear(oldPlanVO.getCoverageYear());
+						changeVO.setPlanId(oldPlanVariantDetailsVO.getVariantHiosId());
+						changeVO.setOldValue(oldPlanVariantDtlDed.getInNetworkFamily());
+						changeVO.setNewValue(planVariantDtlDed.getInNetworkFamily());
+						planChanges.add(changeVO);
+					}
+
+					//Check if OutOfNetworkFamily is updated.
+					if (!oldPlanVariantDtlDed.getOutOfNetworkFamily().equalsIgnoreCase(
+							planVariantDtlDed.getOutOfNetworkFamily())) {
+						PlanChangeVO changeVO = new PlanChangeVO();
+						changeVO.setId("DED_" + planVariantDtlDed.getPlanVariantDtlDeductibleId());
+						changeVO.setFieldUpdated("Deductible: "
+								+ LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "DeductibleCd",
+										oldPlanVariantDtlDed.getLkPlanVariantDtlDeductibleCd()) + " : Out-of-Network Family");
+						changeVO.setPlanId(oldPlanVariantDetailsVO.getVariantHiosId());
+						changeVO.setLanguage(Language.getEnum(oldPlanVO.getLanguage()).getDescription());
+						changeVO.setYear(oldPlanVO.getCoverageYear());
+						changeVO.setOldValue(oldPlanVariantDtlDed.getOutOfNetworkFamily());
+						changeVO.setNewValue(planVariantDtlDed.getOutOfNetworkFamily());
+						planChanges.add(changeVO);
+					}
+					//Check if OutOfNetworkIndv is updated.
+					if (!oldPlanVariantDtlDed.getOutOfNetworkIndv()
+							.equalsIgnoreCase(planVariantDtlDed.getOutOfNetworkIndv())) {
+						PlanChangeVO changeVO = new PlanChangeVO();
+						changeVO.setId("DED_" + planVariantDtlDed.getPlanVariantDtlDeductibleId());
+						changeVO.setFieldUpdated("Deductible: "
+								+ LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "DeductibleCd",
+										oldPlanVariantDtlDed.getLkPlanVariantDtlDeductibleCd())
+								+ " : Out-of-Network Individual");
+						changeVO.setPlanId(oldPlanVariantDetailsVO.getVariantHiosId());
+						changeVO.setLanguage(Language.getEnum(oldPlanVO.getLanguage()).getDescription());
+						changeVO.setYear(oldPlanVO.getCoverageYear());
+						changeVO.setOldValue(oldPlanVariantDtlDed.getOutOfNetworkIndv());
+						changeVO.setNewValue(planVariantDtlDed.getOutOfNetworkIndv());
+						planChanges.add(changeVO);
+					}
+				}
+			}
+		}
+		log.debug("############################" + planChanges.size());
+	}
+
+	public void populateChangeVOMoop(PlanVariantDetailsVO planVariantDetailsVO,
+			PlanVariantDetailsVO oldPlanVariantDetailsVO, PlanVO oldPlanVO) {
+		Set<PlanVariantDtlMaxOop> oldPlanVariantDtlMaxOop = new HashSet<PlanVariantDtlMaxOop>();
+		Set<PlanVariantDtlMaxOop> planVariantDtlMaxOop = new HashSet<PlanVariantDtlMaxOop>();
+
+		planModelTranslator.initializePlanVariantDtlMaxOopEntity(oldPlanVariantDetailsVO.getMoopDetails(),
+				oldPlanVariantDtlMaxOop);
+		planModelTranslator
+				.initializePlanVariantDtlMaxOopEntity(planVariantDetailsVO.getMoopDetails(), planVariantDtlMaxOop);
+		for (PlanVariantDtlMaxOop planVariantDtlMoop : planVariantDtlMaxOop) {
+			for (PlanVariantDtlMaxOop oldPlanVariantDtlMoop : oldPlanVariantDtlMaxOop) {
+				if (oldPlanVariantDtlMoop.getPlanVariantDtlMaxOopId().equals(planVariantDtlMoop.getPlanVariantDtlMaxOopId())) {
+					planVariantDtlMoop.setLkPlanVariantDtlMaxOopCd(oldPlanVariantDtlMoop.getLkPlanVariantDtlMaxOopCd());
+					//Check if InNetworkTier1Indv is updated.
+					if (!oldPlanVariantDtlMoop.getInNetworkTier1Indv().equalsIgnoreCase(
+							planVariantDtlMoop.getInNetworkTier1Indv())) {
+						PlanChangeVO changeVO = new PlanChangeVO();
+						changeVO.setId("MOOP_" + planVariantDtlMoop.getPlanVariantDtlMaxOopId());
+						changeVO.setFieldUpdated("Max OOP: "
+								+ LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "DtlMaxOop",
+										oldPlanVariantDtlMoop.getLkPlanVariantDtlMaxOopCd()) + " : In Network Individual");
+						changeVO.setPlanId(oldPlanVariantDetailsVO.getVariantHiosId());
+						changeVO.setLanguage(Language.getEnum(oldPlanVO.getLanguage()).getDescription());
+						changeVO.setYear(oldPlanVO.getCoverageYear());
+						changeVO.setOldValue(oldPlanVariantDtlMoop.getInNetworkTier1Indv());
+						changeVO.setNewValue(planVariantDtlMoop.getInNetworkTier1Indv());
+						planChanges.add(changeVO);
+					}
+					//Check if InNetworkTier1Family is updated.
+					if (!oldPlanVariantDtlMoop.getInNetworkTier1Family().equalsIgnoreCase(
+							planVariantDtlMoop.getInNetworkTier1Family())) {
+						PlanChangeVO changeVO = new PlanChangeVO();
+						changeVO.setId("MOOP_" + planVariantDtlMoop.getPlanVariantDtlMaxOopId());
+						changeVO.setFieldUpdated("Max OOP: "
+								+ LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "DtlMaxOop",
+										oldPlanVariantDtlMoop.getLkPlanVariantDtlMaxOopCd()) + " : In-Network Family");
+						changeVO.setPlanId(oldPlanVariantDetailsVO.getVariantHiosId());
+						changeVO.setLanguage(Language.getEnum(oldPlanVO.getLanguage()).getDescription());
+						changeVO.setYear(oldPlanVO.getCoverageYear());
+
+						changeVO.setOldValue(oldPlanVariantDtlMoop.getInNetworkTier1Family());
+						changeVO.setNewValue(planVariantDtlMoop.getInNetworkTier1Family());
+						planChanges.add(changeVO);
+					}
+					//Check if OutOfNetworkFamily is updated.
+					if (!oldPlanVariantDtlMoop.getOutOfNetworkFamily().equalsIgnoreCase(
+							planVariantDtlMoop.getOutOfNetworkFamily())) {
+						PlanChangeVO changeVO = new PlanChangeVO();
+						changeVO.setId("MOOP_" + planVariantDtlMoop.getPlanVariantDtlMaxOopId());
+						changeVO.setFieldUpdated("Max OOP: "
+								+ LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "DtlMaxOop",
+										oldPlanVariantDtlMoop.getLkPlanVariantDtlMaxOopCd()) + " : Out-of-Network Family");
+						changeVO.setPlanId(oldPlanVariantDetailsVO.getVariantHiosId());
+						changeVO.setLanguage(Language.getEnum(oldPlanVO.getLanguage()).getDescription());
+						changeVO.setYear(oldPlanVO.getCoverageYear());
+						changeVO.setOldValue(oldPlanVariantDtlMoop.getOutOfNetworkFamily());
+						changeVO.setNewValue(planVariantDtlMoop.getOutOfNetworkFamily());
+						planChanges.add(changeVO);
+					}
+					//Check if OutOfNetworkIndv is updated.
+					if (!oldPlanVariantDtlMoop.getOutOfNetworkIndv().equalsIgnoreCase(
+							planVariantDtlMoop.getOutOfNetworkIndv())) {
+						PlanChangeVO changeVO = new PlanChangeVO();
+						changeVO.setId("MOOP_" + planVariantDtlMoop.getPlanVariantDtlMaxOopId());
+						changeVO.setFieldUpdated("Max OOP: "
+								+ LookupManager.getLookupDisplayValue(APIConstants.LOCALE_EN, "DtlMaxOop",
+										oldPlanVariantDtlMoop.getLkPlanVariantDtlMaxOopCd())
+								+ " : Out-of-Network Individual");
+						changeVO.setPlanId(oldPlanVariantDetailsVO.getVariantHiosId());
+						changeVO.setLanguage(Language.getEnum(oldPlanVO.getLanguage()).getDescription());
+						changeVO.setYear(oldPlanVO.getCoverageYear());
+						changeVO.setOldValue(oldPlanVariantDtlMoop.getOutOfNetworkIndv());
+						changeVO.setNewValue(planVariantDtlMoop.getOutOfNetworkIndv());
+						planChanges.add(changeVO);
+					}
+				}
+			}
+		}
+	}
+
+}

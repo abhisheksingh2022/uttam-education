@@ -1,0 +1,276 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp"%>
+<%@include file="/jsp/includes/datatable.jsp"%>
+<script>
+	//Map in action --> with all lookup names.
+	//get sort order as key and label as value
+
+	//create hashmap in js where key = label and value is sortorder
+		manageStatusLookup = {};
+
+$(document).ready(function(){
+
+	<s:if test="!hasMessages()">
+				 if($("#result").length){
+					$('html,body').animate({scrollTop: $("#result").offset().top}, 'slow');
+				 } 
+	</s:if>
+			
+	<s:iterator value = "manageStatusMap.entrySet()" var="manageStatus" status="i">
+	manageStatusLookup["<s:property value="#manageStatus.getValue()" />"] = [<s:property value="key" />];
+	</s:iterator>
+	
+});
+	
+													var hashmap = {};
+													//alert('<s:property value="role"/>');
+													<s:if test="role == 'HIX_PlanManager'">
+													hashmap[1] = [ 1, 2 ]; //I
+													hashmap[2] = [ 1, 2, 3 ]; //VIP
+													hashmap[3] = [ 1, 2, 3, 4 ]; //V
+													hashmap[4] = [ 1, 2, 3, 4,
+															5 ]; //UCR
+													hashmap[5] = [ 1, 2, 3, 4,
+															5, 6 ]; //CSO
+													hashmap[6] = [ 1, 2, 3, 4,
+															5, 6, 7, 8, 9 ]; //PA
+													hashmap[7] = [ 6, 7, 8 ]; //A
+													hashmap[8] = [ 1, 2, 3, 4,
+															5, 6, 8, 9 ]; //D
+													hashmap[9] = [ 9 ]; //W
+													</s:if>
+													<s:elseif test="role == 'HIX_PlanSpecialist'">
+													hashmap[1] = [ 1, 2 ]; //I
+													hashmap[2] = [ 1, 2, 3 ]; //VIP
+													hashmap[3] = [ 1, 2, 3, 4 ]; //V
+													hashmap[4] = [ 1, 2, 3, 4,
+															5 ]; //UCR
+													hashmap[5] = [ 1, 2, 3, 4,
+															5, 6 ]; //CSO
+													hashmap[6] = [ 1, 2, 3, 4,
+															5, 6, 7, 8, 9 ]; //PA
+													hashmap[7] = [ 7 ]; //A
+													hashmap[8] = [ 1, 2, 3, 4,
+															5, 6, 8, 9 ]; //D
+													hashmap[9] = [ 9 ]; //W
+													</s:elseif>
+													<s:elseif test="role == 'HIX_Carriers'">
+													hashmap[1] = [ 1 ]; //I
+													hashmap[2] = [ 2 ]; //VIP
+													hashmap[3] = [ 3 ]; //V
+													hashmap[4] = [ 4, 5 ]; //UCR
+													hashmap[5] = [ 5 ]; //CSO
+													hashmap[6] = [ 6 ]; //PA
+													hashmap[7] = [ 7 ]; //A
+													hashmap[8] = [ 8 ]; //D
+													hashmap[9] = [ 9 ]; //W
+													</s:elseif>
+													<s:else>
+													hashmap[1] = [ 1 ]; //I
+													hashmap[2] = [ 2 ]; //VIP
+													hashmap[3] = [ 3 ]; //V
+													hashmap[4] = [ 4 ]; //UCR
+													hashmap[5] = [ 5 ]; //CSO
+													hashmap[6] = [ 6 ]; //PA
+													hashmap[7] = [ 7 ]; //A
+													hashmap[8] = [ 8 ]; //D
+													hashmap[9] = [ 9 ]; //W
+													</s:else>
+
+	function statusCheck(updatedElementId) {
+
+		//enable all
+		$(".planChecked").each(function() {
+			$(this).removeAttr("disabled");
+		});
+		//get firstchecked status
+		var firstCheckedStatus = getFirstCheckedStatus();
+		//if not null disable if(getfirstcheckedstatus != optionstatus)
+		if (firstCheckedStatus != null) {
+			$(".planChecked").each(function() {
+				if (firstCheckedStatus != $(this).attr("status")) {
+					$(this)[0].disabled = "true";
+				}
+			});
+		}
+
+		onChangeStatusLoad(manageStatusLookup[firstCheckedStatus]);
+	}
+
+	function getFirstCheckedStatus() {
+		try {
+			$(".planChecked").each(function() {
+				if ($(this).is(':checked') == true) {
+					var a = $(this).attr("status");
+					throw a;
+				}
+			});
+		} catch (e) {
+			return e;
+		}
+	}
+
+	function onChangeStatusLoad(abc) {
+		var op = document.getElementById("exchangestatus")
+		var e = document.getElementById("exchangestatus");
+
+		var values = hashmap[abc];
+		for (var i = 1; i < op.length; i++) {
+			// lowercase comparison for case-insensitivity
+			op[i].disabled = true;
+			for (var j = 0; j < values.length; j++) {
+				if (parseInt(op[i].getAttribute("title")) == parseInt(values[j])) {
+					op[i].disabled = false;
+					break;
+				}
+			}
+		}
+	}
+	function updateChanges(){
+		var statusDropdown = document.getElementById("exchangestatus");
+		var newStatus = statusDropdown.options[statusDropdown.selectedIndex].value;
+		$(".planChecked").each(
+				function() {
+					if ($(this)[0].checked) {
+						var oldStatus = $(this).attr("status");
+						if (newStatus == "AC" && oldStatus !="Activated") {
+							$('#activateModal').modal('show');
+						}
+						else{
+							if (oldStatus == "Activated" && newStatus != "AC") {
+								$("#pendingModal").modal('show');
+							}
+							else{
+								place_selected_status1();
+							}
+						}
+						
+					} 
+				});
+	}
+		function place_selected_status1(){
+			i = 0;
+			toBeUpdatedId = new Array();
+			$(".planChecked").each(function(){
+				if($(this).is(':checked') == true){
+					toBeUpdatedId[i] = $(this).attr("valueToBeSent");
+					i++;			
+				}
+			});
+			
+			document.getElementById('updatedIds').value = toBeUpdatedId;
+			setActionAndSubmit("id_form_searchForm", "changeStatus")
+		}
+		function place_selected_status(){
+			place_selected_status1();
+		}
+	
+</script>
+<div class="row">
+	<div class="body-bg">
+		<h2 class="inner-heading">
+			<s:text name="txt.plansearch.manageplans"></s:text>
+		</h2>
+
+
+		<s:form autocomplete="off" id='id_form_searchForm' action="plan-search">
+		<div class="carrier-data" style="height: 350px;">
+			<h3 class="inner-heading2">
+				<s:text name="txt.plansearch.searchcriteria"></s:text>
+			</h3>
+			
+				<s:token />
+				<s:hidden name="ajaxRequest" value="false" />
+				<s:hidden name="formId" />
+
+				<div class="carrier-field">
+
+					<label><s:text name="txt.global.year"></s:text><span class="astrcs"></span></label> <span> <s:select
+							list="years" class="form-control" headerKey="" headerValue="%{selectBoxHeader}" name="criteria.searchYear"></s:select>
+					</span>
+				</div>
+				<div class="carrier-field">
+					<label><s:text name="txt.plansearch.carriername"></s:text><span class="astrcs"></span></label> <span> <s:select
+							list="carriers" name="criteria.searchCarrierNbr" class="form-control" listValue="carrierName"
+							listKey="carrierIdNbr" headerKey="" headerValue="%{selectBoxHeader}"></s:select>
+					</span>
+				</div>
+				<div class="carrier-field">
+					<label><s:text name="txt.plansearch.planid"></s:text><span class="astrcs"></span></label> <span> <s:textfield
+							class="form-control" name="criteria.searchPlanId" id="id_tf_userId" maxlength="32" size="15"></s:textfield>
+					</span>
+				</div>
+				<div class="carrier-field">
+					<label><s:text name="txt.plansearch.planname"></s:text><span class="astrcs"></span></label> <span> <s:textfield
+							class="form-control" name="criteria.searchPlanName" id="id_tf_userId" maxlength="32" size="15"></s:textfield>
+					</span>
+				</div>
+				<div class="form-btn">
+					<button class="save-btn" onclick="return setActionAndSubmit('id_form_searchForm', 'search');">
+						<s:text name="txt.plansearch.search"></s:text>
+					</button>
+				</div>
+		</div>
+		<div>
+			<s:hidden name="updatedIds" value="updatedIds" id="updatedIds"></s:hidden>
+			<s:if test="searchFlag==true">
+				<s:if test="planList !=null">
+
+					<div class="plan-table content" id="result">
+						<div class="carrier-data" id="table-div">
+							
+							<table class="searchtabel pretty" id="datatable" width="100%" border="0" cellpadding="0" cellspacing="0">
+								<thead>
+									<tr class="ac-trHd serchtr">
+										<th class="plan-table-input padng10 nwidth"> </th>
+										<th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.plansearch.year"></s:text></th>
+										<th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.plansearch.carrierid"></s:text></th>
+										<th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.plansearch.carriername"></s:text></th>
+										<th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.plansearch.planid"></s:text></th>
+										<th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.plansearch.planname"></s:text></th>
+										<th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.planmanage.metallevel"></s:text></th>
+										<th class="padng10 fixed-width-datacolumn-8"><s:text name="txt.plansearch.status"></s:text></th>
+									</tr>
+								</thead>
+								<tbody>
+									<s:iterator value="planList" var="plan" status="planIndex">
+										<tr>
+											<td class="plan-table-input padng10"><input type="checkbox" status="<s:property value="#plan.exchangeStatus" />"
+												name="plan[]" planId="<s:property value="#plan.planId" />" onchange="statusCheck(this.id);"
+												valueToBeSent="<s:property value="#plan.planId" />" class="planChecked"></td>
+											<td class="padng10 fixed-width-datacolumn-8"><s:property value="#plan.coverageYear" /></td>
+											<td class="padng10 fixed-width-datacolumn-8"><s:property value="#plan.carrierId" /></td>
+											<td class="padng10 fixed-width-datacolumn-8"><s:property value="#plan.carrierName" /></td>
+											<td class="padng10 fixed-width-datacolumn-8"><a href="plan-manage_input?planId=<s:property value="#plan.planId" />"><s:property
+														value="#plan.planHiosId" /></a></td>
+											<td class="padng10 fixed-width-datacolumn-8"><a href="plan-manage_input?planId=<s:property value="#plan.planId" />"><s:property
+														value="#plan.planName" /></a></td>
+											<td class="padng10 fixed-width-datacolumn-8"><s:property value="metalLevel" /></td>
+											<td class="padng10 fixed-width-datacolumn-8" id="activate_2016"><s:property value="#plan.exchangeStatus" /></td>
+										</tr>
+									</s:iterator>
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+				</s:if>
+				<s:else>
+				NO DATA FOUND
+				</s:else>
+			</s:if>
+		</div>
+		</s:form>
+
+	</div>
+
+
+	<div class="clearfix"></div>
+
+	<div class="clearfix"></div>
+	<div id="showmsg" style="display: none; width: 100%; float: left; color: #f00; padding-top: 15px;"></div>
+	<div class="clearfix"></div>
+</div>
+</div>
+<%@include file="/jsp/includes/footer.jsp"%>

@@ -1,0 +1,76 @@
+package com.hixapi.pmp.struts.publicdata;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.struts2.ServletActionContext;
+
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.service.carrier.CarrierService;
+import com.hixapi.web.framework.struts.BaseAction;
+
+public class CarrierImageAction extends BaseAction {
+
+	private static final Logger LOG = LogManager.getLogger(CarrierImageAction.class);
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7296331027656555878L;
+
+	private String carrierId;
+
+	private InputStream imageInputStream;
+
+	/** Input Objects end **/
+
+	@Override
+	protected String handleExecute() throws Exception {
+		LOG.entry();
+		boolean paramsValid = true;
+		if (StringUtils.isBlank(carrierId)) {
+			paramsValid = false;
+		}
+		if (paramsValid) {
+
+			byte[] result = ServiceLocator.getInstance().getService(CarrierService.class).retrieveCarrierLogo(carrierId);
+			if (result != null && result.length > 0) {
+				imageInputStream = new ByteArrayInputStream(result);
+			}
+		}
+		if (imageInputStream == null) {
+			String path = ServletActionContext.getServletContext().getRealPath("/");
+			String noImageFoundFile = path + ("/static/custom/images/logoUnavailable_en.png");
+			imageInputStream = FileUtils.openInputStream(new File(noImageFoundFile));
+		}
+		return "image";
+
+	}
+
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		//no-op
+	}
+
+	public String getCarrierId() {
+		return carrierId;
+	}
+
+	public void setCarrierId(String carrierId) {
+		this.carrierId = carrierId;
+	}
+
+	public InputStream getImageInputStream() {
+		return imageInputStream;
+	}
+
+	public void setImageInputStream(InputStream imageStream) {
+		this.imageInputStream = imageStream;
+	}
+
+}

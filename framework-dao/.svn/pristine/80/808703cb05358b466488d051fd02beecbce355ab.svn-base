@@ -1,0 +1,26 @@
+General.yesNo =com.hixapi.framework.lookups.YesorNo
+General.states =com.hixapi.framework.lookups.States
+General.PlanTemplateTypes = com.hixapi.framework.lookups.PlanTemplateTypes
+General.ExchangeStatus =com.hixapi.framework.lookups.ExchangeStatus
+General.userStatus =com.hixapi.framework.lookups.UserStatus
+ManagePlan.languages = com.hixapi.framework.lookups.Languages
+ManagePlan.qualityRating = com.hixapi.framework.lookups.QualityRating
+ManagePlan.planManageType = com.hixapi.framework.lookups.PlanManageType
+ManagePlan.metalLevel = com.hixapi.framework.lookups.MetalLevel
+PlanBenefit.benefitDetail = com.hixapi.framework.lookups.BenefitDetail
+PlanBenefit.ehbVarRsncd=com.hixapi.framework.lookups.EhbVarRsnCd
+PlanMstr.chldOnlyOffering=com.hixapi.framework.lookups.ChldOnlyOffering
+PlanRateDetail.age=com.hixapi.framework.lookups.Age
+PlanRateDetail.ratingArea=com.hixapi.framework.lookups.RatingArea
+PlanRateDetail.tobacco=com.hixapi.framework.lookups.Tobacco
+PlanVarientDtlCopayCoins.dtlCopayCoins=com.hixapi.framework.lookups.DtlCopayCoins
+PlanVarientDtlDeductible.deductibleCd=com.hixapi.framework.lookups.DeductibleCd
+WorkItem.statusCd=com.hixapi.framework.lookups.StatusCd
+PlanVarientDtlMaxOop.dtlMaxOop=com.hixapi.framework.lookups.DtlMaxOop
+WorkItem.priorityCd=com.hixapi.framework.lookups.PriorityCd
+PlanBenefit.benefitDetailType = com.hixapi.framework.lookups.BenefitDetailType
+
+General.counties =com.hixapi.framework.lookups.Counties
+General.relation=com.hixapi.framework.lookups.Relation
+General.payment=com.hixapi.framework.lookups.HouseholdIncomeType
+General.residentType=com.hixapi.framework.lookups.ResidentType

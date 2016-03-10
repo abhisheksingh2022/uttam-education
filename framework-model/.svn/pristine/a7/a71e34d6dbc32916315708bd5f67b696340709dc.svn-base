@@ -1,0 +1,30 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+
+public class DocumentView implements Serializable{
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8619746446697228352L;
+
+	private String viewUrl;
+
+	public String getViewUrl() {
+		return viewUrl;
+	}
+
+	public void setViewUrl(String viewUrl) {
+		this.viewUrl = viewUrl;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("DocumentView [viewUrl=");
+		builder.append(viewUrl);
+		builder.append(']');
+		return builder.toString();
+	}
+}

@@ -1,0 +1,23 @@
+package com.hixapi.pmp.service.plan;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.pmp.api.model.PlanVO;
+import com.hixapi.pmp.service.plan.PlanAuditService;
+
+public class PlanAuditServiceImpl implements PlanAuditService {
+	
+	private static final Logger LOG = LogManager.getLogger(PlanAuditServiceImpl.class);
+
+	@Override
+	public void recordPlanChangeAudit(PlanVO original, PlanVO updated) throws BusinessServiceException {
+		LOG.entry();
+		LOG.exit();
+		
+	}
+
+	
+
+}

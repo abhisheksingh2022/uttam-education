@@ -1,0 +1,496 @@
+package com.hixapi.pmp.struts.prescreen;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import com.hixapi.framework.common.model.UserMessage;
+import com.hixapi.framework.service.ServiceLocator;
+import com.hixapi.pmp.service.prescreen.PlanListingService;
+import com.hixapi.prescreening.api.model.AptcDeterminant;
+import com.hixapi.prescreening.api.model.Eligibility;
+import com.hixapi.prescreening.api.model.Household;
+import com.hixapi.prescreening.api.model.plan.HealthPlanDeterminant;
+import com.hixapi.prescreening.api.model.plan.Plan;
+import com.hixapi.prescreening.api.model.plan.PlanContainer;
+import com.hixapi.web.framework.struts.BaseAction;
+import com.hixapi.web.framework.struts.SessionController;
+
+public class PlanListingAction extends BaseAction {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5036585345699319849L;
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager
+			.getLogger(PlanListingAction.class);
+
+	HealthPlanDeterminant planDeterminant;
+	private PlanContainer planContainer;
+	private List<Plan> bronzePlans;
+	private List<Plan> silverPlans;
+	private List<Plan> goldPlans;
+	private List<Plan> platinumPlans;
+	private List<Plan> catastrophicPlans;
+	private BigDecimal bronzeMin;
+	private BigDecimal bronzeMax;
+	private BigDecimal silverMin;
+	private BigDecimal silverMax;
+	private BigDecimal goldMin;
+	private BigDecimal goldMax;
+	private BigDecimal platinumMin;
+	private BigDecimal platinumMax;
+	private BigDecimal catastrophicMin;
+	private BigDecimal catastrophicMax;
+	private Set<Double> sliderValues;
+	private Set<Double> sliderValuesYearly;
+	private Boolean catastrophicFlag;
+	private String yearlyOrMonthly = "M";
+
+	public PlanContainer getPlanContainer() {
+		return planContainer;
+	}
+
+	public void setPlanContainer(PlanContainer planContainer) {
+		this.planContainer = planContainer;
+	}
+
+	public String getYearlyOrMonthly() {
+		return yearlyOrMonthly;
+	}
+
+	public void setYearlyOrMonthly(String yearlyOrMonthly) {
+		this.yearlyOrMonthly = yearlyOrMonthly;
+	}
+
+	public List<Plan> getBronzePlans() {
+		return bronzePlans;
+	}
+
+	public void setBronzePlans(List<Plan> bronzePlans) {
+		this.bronzePlans = bronzePlans;
+	}
+
+	public List<Plan> getSilverPlans() {
+		return silverPlans;
+	}
+
+	public void setSilverPlans(List<Plan> silverPlans) {
+		this.silverPlans = silverPlans;
+	}
+
+	public List<Plan> getGoldPlans() {
+		return goldPlans;
+	}
+
+	public void setGoldPlans(List<Plan> goldPlans) {
+		this.goldPlans = goldPlans;
+	}
+
+	public List<Plan> getPlatinumPlans() {
+		return platinumPlans;
+	}
+
+	public void setPlatinumPlans(List<Plan> platinumPlans) {
+		this.platinumPlans = platinumPlans;
+	}
+
+	public List<Plan> getCatastrophicPlans() {
+		return catastrophicPlans;
+	}
+
+	public void setCatastrophicPlans(List<Plan> catastrophicPlans) {
+		this.catastrophicPlans = catastrophicPlans;
+	}
+
+	public BigDecimal getBronzeMin() {
+		return bronzeMin;
+	}
+
+	public void setBronzeMin(BigDecimal bronzeMin) {
+		this.bronzeMin = bronzeMin;
+	}
+
+	public BigDecimal getBronzeMax() {
+		return bronzeMax;
+	}
+
+	public void setBronzeMax(BigDecimal bronzeMax) {
+		this.bronzeMax = bronzeMax;
+	}
+
+	public BigDecimal getSilverMin() {
+		return silverMin;
+	}
+
+	public void setSilverMin(BigDecimal silverMin) {
+		this.silverMin = silverMin;
+	}
+
+	public BigDecimal getSilverMax() {
+		return silverMax;
+	}
+
+	public void setSilverMax(BigDecimal silverMax) {
+		this.silverMax = silverMax;
+	}
+
+	public BigDecimal getGoldMin() {
+		return goldMin;
+	}
+
+	public void setGoldMin(BigDecimal goldMin) {
+		this.goldMin = goldMin;
+	}
+
+	public BigDecimal getGoldMax() {
+		return goldMax;
+	}
+
+	public void setGoldMax(BigDecimal goldMax) {
+		this.goldMax = goldMax;
+	}
+
+	public BigDecimal getPlatinumMin() {
+		return platinumMin;
+	}
+
+	public void setPlatinumMin(BigDecimal platinumMin) {
+		this.platinumMin = platinumMin;
+	}
+
+	public BigDecimal getPlatinumMax() {
+		return platinumMax;
+	}
+
+	public void setPlatinumMax(BigDecimal platinumMax) {
+		this.platinumMax = platinumMax;
+	}
+
+	public BigDecimal getCatastrophicMin() {
+		return catastrophicMin;
+	}
+
+	public void setCatastrophicMin(BigDecimal catastrophicMin) {
+		this.catastrophicMin = catastrophicMin;
+	}
+
+	public BigDecimal getCatastrophicMax() {
+		return catastrophicMax;
+	}
+
+	public void setCatastrophicMax(BigDecimal catastrophicMax) {
+		this.catastrophicMax = catastrophicMax;
+	}
+
+	public Set<Double> getSliderValues() {
+		return sliderValues;
+	}
+
+	public void setSliderValues(Set<Double> sliderValues) {
+		this.sliderValues = sliderValues;
+	}
+
+	public Set<Double> getSliderValuesYearly() {
+		return sliderValuesYearly;
+	}
+
+	public void setSliderValuesYearly(Set<Double> sliderValuesYearly) {
+		this.sliderValuesYearly = sliderValuesYearly;
+	}
+
+	private void initPlanList() {
+		bronzePlans = new ArrayList<Plan>();
+		silverPlans = new ArrayList<Plan>();
+		goldPlans = new ArrayList<Plan>();
+		platinumPlans = new ArrayList<Plan>();
+		catastrophicPlans = new ArrayList<Plan>();
+	}
+
+	void setPlanList() {
+		List<Plan> plans = getPlanContainer().getPlans();
+		Iterator<Plan> iterator = plans.iterator();
+		while (iterator.hasNext()) {
+			Plan plan = iterator.next();
+			if ("Bronze".equalsIgnoreCase(plan.getMetalLevelCode())) {
+				bronzePlans.add(plan);
+			} else if ("Silver".equalsIgnoreCase(plan.getMetalLevelCode())) {
+				silverPlans.add(plan);
+			} else if ("Gold".equalsIgnoreCase(plan.getMetalLevelCode())) {
+				goldPlans.add(plan);
+			} else if ("Platinum".equalsIgnoreCase(plan.getMetalLevelCode())) {
+				platinumPlans.add(plan);
+			} else if ("Catastrophic".equalsIgnoreCase(plan.getMetalLevelCode())) {
+				catastrophicPlans.add(plan);
+			}
+		}
+	}
+
+	String getNumbers(String s) {
+		return s.contains("$") ? s.substring(1) : s;
+	}
+
+	BigDecimal findMinMax(List<Plan> plans, String s) {
+		Iterator<Plan> iterator = plans.iterator();
+		BigDecimal minMax = new BigDecimal(
+				(plans.get(0).getPremiumAmt().doubleValue() - planContainer.getMaxAPTCAmount() <= Double
+						.parseDouble(getNumbers(plans.get(0).getMinPremium()))) ? Double.parseDouble(getNumbers(plans.get(0)
+						.getMinPremium())) : (plans.get(0).getPremiumAmt().doubleValue() - planContainer.getMaxAPTCAmount())
+						+ Double.parseDouble(getNumbers(plans.get(0).getOutOfPocketMaxAmt())));
+		while (iterator.hasNext()) {
+			Plan plan = (Plan) iterator.next();
+			BigDecimal planMin = new BigDecimal(
+					(plan.getPremiumAmt().doubleValue() - planContainer.getMaxAPTCAmount() <= Double
+							.parseDouble(getNumbers(plan.getMinPremium()))) ? Double.parseDouble(getNumbers(plan
+							.getMinPremium())) : (plan.getPremiumAmt().doubleValue() - planContainer.getMaxAPTCAmount())
+							+ Double.parseDouble(getNumbers(plan.getOutOfPocketMaxAmt())));
+			if (s.equalsIgnoreCase("min")) {
+				if (planMin.doubleValue() < minMax.doubleValue()) {
+					minMax = planMin;
+				}
+			} else {
+				if (planMin.doubleValue() > minMax.doubleValue()) {
+					minMax = planMin;
+				}
+			}
+		}
+		return minMax;
+	}
+
+	private void calculateMinMaxForAll() {
+		if (bronzePlans.size() > 0) {
+			setBronzeMin(findMinMax(bronzePlans, "min"));
+			setBronzeMax(findMinMax(bronzePlans, "max"));
+		}
+		if (silverPlans.size() > 0) {
+			setSilverMin(findMinMax(silverPlans, "min"));
+			setSilverMax(findMinMax(silverPlans, "max"));
+		}
+		if (goldPlans.size() > 0) {
+			setGoldMin(findMinMax(goldPlans, "min"));
+			setGoldMax(findMinMax(goldPlans, "max"));
+		}
+		if (platinumPlans.size() > 0) {
+			setPlatinumMin(findMinMax(platinumPlans, "min"));
+			setPlatinumMax(findMinMax(platinumPlans, "max"));
+		}
+		if (catastrophicPlans.size() > 0) {
+			// if (catastrophicFlag == true) {
+			setCatastrophicMin(findMinMax(catastrophicPlans, "min"));
+			setCatastrophicMax(findMinMax(catastrophicPlans, "max"));
+			// }
+		}
+
+	}
+
+	private Set<Double> calculateSlider(Double maxAPTC) {
+		Integer max = (int) Math.floor(maxAPTC);
+		Set<Double> sliderValues = new TreeSet<Double>();
+		for (int i = 0; i <= max; i++) {
+			sliderValues.add((double) i);
+		}
+		sliderValues.add(maxAPTC);
+		return sliderValues;
+	}
+
+	/*
+	 * Method for returning to HealthStatus Page on click of Back Button
+	 */
+	public String goBack() {
+		log.debug("IN GOBACK");
+
+		return BACK;
+	}
+
+	@Override
+	protected void loadDisplayContents() throws Exception {
+		Eligibility eligibility = SessionController.getEligibility();
+		Household household = SessionController.getHousehold();
+		AptcDeterminant aptcFactors = eligibility.getAptcFactors();
+		Double aptcAmount = eligibility.getAptcAmount();
+		Double aptcAmountYearly = aptcAmount * 12;
+
+		setYearlyOrMonthly("M");
+		planDeterminant = new HealthPlanDeterminant();
+		planDeterminant.setCoverageYear(Integer.parseInt(eligibility.getCoverageYearStr()));
+		planDeterminant.setCounty(household.getCounty());
+		planDeterminant.setPregnantPersonPresent(eligibility.isPregHouse());
+
+		if (eligibility.isCreditEligibility()) {
+			planDeterminant.setRatingAreaId(aptcFactors.getRatingAreaId());
+			planDeterminant.setMemberList(aptcFactors.getAptcMembers());
+			planDeterminant.setAgeCategories(aptcFactors.getHshlSubsidyAgeCategories());
+			planDeterminant.setAptcAmount(aptcAmount);
+		} else {
+			planDeterminant.setMemberList(SessionController.getHousehold().getHouseholdMembers());
+		}
+		planDeterminant.setCsrVarIdForPlansFetch(eligibility.getCsrVarIdForPlansFetch());
+		setPlanContainer(ServiceLocator.getInstance().getService(PlanListingService.class).getPlansList(planDeterminant));
+		planContainer.setMaxAPTCAmount(aptcAmount);
+		setCatastrophicFlag(planContainer.getCatastrophicFlag());
+		// This below estimatedAmount is for household need to get the cost for
+		// household by multiplying totalUtliz*AvgCost For service.
+
+		Double estimatedCost = null; //medicalCost.getEstimatedCost();
+		BigDecimal monthlyEst = setEstimatedCost(estimatedCost);
+		planContainer.setEstimatedAmount(monthlyEst);
+
+		initPlanList();
+		setPlanList();
+
+		// below code is used for display in that expected Max oop on
+		// PlanListing page.
+		//		if(medicalCost.getNoMedicalConditionsHouse() == false)
+		//		{
+		//		Map<String, Double> expectedOOPMap = medicalCost.getExpectedOOP();
+		//		
+		//		setExpectedOOP(expectedOOPMap);
+		//		}
+		//		else
+		//		{
+		//		setExpectedOOP(planContainer.getPlans());
+		//		}
+		calculateMinMaxForAll();
+		// old -
+		// setSliderValues(calculateSlider(getPlanContainer().getMaxAPTCAmount()));
+		setSliderValues(calculateSlider(aptcAmount));
+		// old -
+		// setSliderValuesYearly(calculateSlider(getPlanContainer().getMaxAPTCAmount()*12));
+		setSliderValuesYearly(calculateSlider(aptcAmountYearly));
+	}
+
+	private BigDecimal setEstimatedCost(Double estimatedCost) {
+		BigDecimal monthlyEstCost = null;
+
+		Double monthlyEstDoubleVal = roundToFactorOf5(estimatedCost / 12);
+		//}
+
+		if (monthlyEstDoubleVal == 0D) {
+			monthlyEstCost = new BigDecimal(monthlyEstDoubleVal);
+
+		} else {
+			monthlyEstCost = new BigDecimal(Math.round(monthlyEstDoubleVal * 100) / 100);
+		}
+
+		return monthlyEstCost;
+	}
+
+	//when no medical conditions in household
+	private void setExpectedOOP(List<Plan> plans) {
+		Double expectedOOP = 0D;
+		for (Plan pl : plans) {
+			pl.setExpectedOOP(new BigDecimal(expectedOOP));
+		}
+
+	}
+
+	private Double roundToFactorOf5(Double doubleValue) {
+		// System.out.println("EXOOP " + expectedOOP);
+		doubleValue = Math.rint(doubleValue);
+		if (doubleValue == 0.0) {
+			return doubleValue;
+		} else {
+			return (Math.rint((doubleValue + 4) / 5) * 5);
+		}
+
+	}
+
+	/**
+	 * Setting the calculated expectedMaxOOP for displaying in UI
+	 * 
+	 * @param expectedOOPMap
+	 */
+	private void setExpectedOOP(Map<String, Double> expectedOOPMap) {
+		for (String planId : expectedOOPMap.keySet()) {
+			Plan plan = findPlan(planId);
+			Double expectedOOP = 0D;
+			log.debug(plan.getMetalLevelCode());
+			//if (!(plan.getMetalLevelCode().equalsIgnoreCase("catastrophic"))) {
+			expectedOOP = roundToFactorOf5(expectedOOPMap.get(planId) / 12);
+			//}
+
+			if (expectedOOP == 0D) {
+				plan.setExpectedOOP(new BigDecimal(expectedOOP));
+				log.debug(plan.getExpectedOOP());
+			} else {
+				plan.setExpectedOOP(new BigDecimal(Math.round(expectedOOP * 100) / 100));
+			}
+			/*
+			 * plan.setExpectedOOP(new BigDecimal( Math.round(expectedOOP * 100)
+			 * / 100));
+			 */
+		}
+
+	}
+
+	private Plan findPlan(String planId) {
+		if (bronzePlans != null && bronzePlans.size() > 0) {
+			for (Plan plan : bronzePlans) {
+				if (planId.equalsIgnoreCase(plan.getPlanId())) {
+					return plan;
+				}
+			}
+		}
+		if (silverPlans != null && silverPlans.size() > 0) {
+			for (Plan plan : silverPlans) {
+				if (planId.equalsIgnoreCase(plan.getPlanId())) {
+					return plan;
+				}
+			}
+		}
+		if (goldPlans != null && goldPlans.size() > 0) {
+			for (Plan plan : goldPlans) {
+				if (planId.equalsIgnoreCase(plan.getPlanId())) {
+					return plan;
+				}
+			}
+		}
+		if (platinumPlans != null && platinumPlans.size() > 0) {
+			for (Plan plan : platinumPlans) {
+				if (planId.equalsIgnoreCase(plan.getPlanId())) {
+					return plan;
+				}
+			}
+		}
+		if (catastrophicPlans != null && catastrophicPlans.size() > 0) {
+			for (Plan plan : catastrophicPlans) {
+				if (planId.equalsIgnoreCase(plan.getPlanId())) {
+					return plan;
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
+	protected String handleExecute() throws Exception {
+		// Store information from input to session via SessionController, do any
+		// action that is required
+		if (System.currentTimeMillis() % 2 == 0) {
+			super.addBusinessMessage(new UserMessage(1, "This is random error message that will come once in a  while",
+					null, null));
+			return FLASH;
+		}
+		return PAGE;
+	}
+
+	public HealthPlanDeterminant getPlanDeterminant() {
+		return planDeterminant;
+	}
+
+	public void setPlanDeterminant(HealthPlanDeterminant planDeterminant) {
+		this.planDeterminant = planDeterminant;
+	}
+
+	public Boolean getCatastrophicFlag() {
+		return catastrophicFlag;
+	}
+
+	public void setCatastrophicFlag(Boolean catastrophicFlag) {
+		this.catastrophicFlag = catastrophicFlag;
+	}
+
+}

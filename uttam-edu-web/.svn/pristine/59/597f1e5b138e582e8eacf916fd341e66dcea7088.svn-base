@@ -1,0 +1,153 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp" %>
+<%@include file="/jsp/includes/datatable.jsp"%>
+
+
+<div id="wrapper">
+    <div class="body-con">
+    	<div class="container maincont">
+        	<div class="row">
+             <div class="body-bg">              	
+             <s:form autocomplete="off" action="carrieruser-search" id="id_form_carrieruser_search">  
+                <h2 class="inner-heading"><s:text name="txt.carrieruser.carrieraccess"></s:text></h2>
+				     <div class="carrier-data">  
+                     	<h3 class="inner-heading2"><s:text name="txt.carrieruser.searchcriteria"></s:text></h3>                      
+		                        <s:token />
+								<s:hidden name="ajaxRequest" value="false" />
+								<s:hidden name="formId" />
+                        <div class="carrier-field">
+                            <label><s:text name="txt.carrieruser.firstname"></s:text>:<span class="astrcs"></span></label>
+                            <span>
+                                <s:textfield name="criteria.firstName" class="form-control alphabets" />
+                            </span>
+                        </div>   
+                        <div class="carrier-field">
+                            <label><s:text name="txt.carrieruser.lastname"></s:text>:<span class="astrcs"></span></label>
+                            <span>
+                                <s:textfield name="criteria.lastName" class="form-control alphabets" />
+                            </span>
+                        </div>
+                        <div class="carrier-field">
+                                <label><s:text name="txt.carrieruser.userid"></s:text>:<span class="astrcs"></span></label>
+                            <span>
+                                <s:textfield name="criteria.userId" class="form-control"/>
+                            </span>
+                        </div>
+                        <div class="carrier-field">
+                            <label><s:text name="txt.carrieruser.carrier"></s:text>:<span class="astrcs"></span></label>
+                            <span>
+                                <s:select  list="carrierList" name="criteria.carrierIdNbr" class="form-control" listKey="carrierIdNbr"  listValue="carrierName" headerKey="" headerValue="%{selectBoxHeader}"></s:select>
+                            </span>
+                        </div>  
+                        <div class="carrier-field">
+                            <label><s:text name="txt.global.status"></s:text>:<span class="astrcs"></span></label>
+                            <span>
+                                <s:select list="lookups.UserStatus" listKey="value" name="criteria.statusCode" listValue="label" class="form-control" headerKey="" headerValue="%{selectBoxHeader}"></s:select>
+                            </span>
+                        </div>   
+                        
+                        <div class="form-btn">
+                             <button class="save-btn" 
+								onclick="return setActionAndSubmit('id_form_carrieruser_search', 'search');">
+								 <s:text name="txt.global.search" />
+							</button>
+							
+                        </div>    
+                    	<div class="clearfix"></div>    
+                    </div>  
+                    
+                     <s:if test="isSearch == true">
+                    <div class="plan-table content ">
+                        <div class="carrier-data" id="result">
+                            <table width="100%" id="datatable" class="pretty searchtabel">
+                            <thead>
+                                    <tr class="ac-trHd serchtr">
+                                        <th class="plan-table-input padng10 nwidth"></th>
+                                        <th class="padng10"><s:text name="txt.global.name"></s:text></th>
+                                        <th class="padng10"><s:text name="txt.carrieruser.userid"></s:text></th>
+                                        <th class="padng10"><s:text name="txt.carrieruser.carrier"></s:text></th>
+                                        <th class="padng10"><s:text name="txt.carrieruser.phoneno"></s:text></th>
+                                        <th class="padng10"><s:text name="txt.global.status"></s:text></th>
+									</tr>
+                              </thead>
+                                    <s:iterator value="carrierUserList"  var="user">
+                                    <tr>
+                                        <td class="plan-table-input padng10"><input type="radio" name="userId"  value="<s:property value='userId' />"/></td>
+                                        <td class="padding-gav padng10"><s:property value="firstName"/>&nbsp;<s:property value="lastName"/> </td>
+                                        <td class="padng10"><a href="carrieruser-search_view?userId=<s:property value="userId"/>"><s:property value="loginId"/></a></td>
+                                        <td class="padng10"><s:property value="organizationName"/></td>
+                                        <td class="padng10 phone"><s:property value="phoneNo"/></td>
+                                        <td class="padng10"><s:property value="%{getLookupDisplay('UserStatus',#user.statusCode)}"/></td>
+                                    </tr>
+                                   </s:iterator> 
+                                </table>
+                                
+                                <div class="form-btn">
+								  <s:if test="editAccess == true">
+	                                   <button class="save-btn btn_enable_class" onclick="return setActionAndSubmit('id_form_carrieruser_search', 'edit');">
+									 		<s:text name="txt.global.edit" /> 
+									  </button>
+								  </s:if>
+								   <s:if test="viewAccess == true">
+									  <button class="cancel-btn btn_enable_class" onclick="return setActionAndSubmit('id_form_carrieruser_search', 'view');">
+									 		<s:text name="txt.global.view" />
+									 </button>
+								 </s:if>
+								 
+								
+                               </div>
+                        </div>
+                      </div>  
+                      </s:if>
+                      <s:if test="addAccess == true">
+	                     <div class="carrier-data"> 
+	                   
+	                     	<table style="width:100%">
+	                     		<tr>
+	                     			<td>
+										<h4>  &nbsp;&nbsp;&nbsp; <s:text name="text.global.adduserlabel" /></h4> 
+									</td>
+									<td style="width:60%">
+										<button class="save-btn" onclick="return setActionAndSubmit('id_form_carrieruser_search', 'add');" title="click here to add New Carrier User">
+											 	<s:text name="txt.carrieruser.add" />
+										 </button>
+									 </td>
+								 </tr>
+							</table>		
+	                    	 <div class="clearfix"></div>
+						</div>
+					</s:if>
+                  <div class="clearfix"></div>  
+	              </s:form>
+                </div>
+        </div>         
+      </div>
+      <div class="clearfix"></div>
+    </div> 
+</div>
+
+
+<script>
+	$(document).ready(function(){
+			<s:if test="!hasMessages()">
+				 if($("#result").length){
+					$('html,body').animate({scrollTop: $("#result").offset().top}, 'slow');
+				 } 
+			</s:if>
+			
+			if((typeof $('input[name=userId]:checked', '#id_form_carrieruser_search').val()== "undefined")
+							 || ($('input[name=userId]:checked', '#id_form_carrieruser_search').val()=='')){
+				$('.btn_enable_class').prop('disabled',true);
+				$('.btn_enable_class').prop('title','please select an user from list');
+				$('.btn_enable_class').css({"background-color":"grey","border": "1px solid rgb(128,128,128)"});
+			}
+	});
+	$('input[name=userId]','#id_form_carrieruser_search').click(function(){
+		$('.btn_enable_class').prop('disabled',false);
+		$('.btn_enable_class').prop('title','');
+		$('.btn_enable_class').css({"background-color":"","border":""});
+	});
+</script>
+<%@include file="/jsp/includes/footer.jsp" %>
+

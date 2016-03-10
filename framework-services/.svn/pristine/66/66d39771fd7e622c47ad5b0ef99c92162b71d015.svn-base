@@ -1,0 +1,161 @@
+package com.hixapi.pmp.api.modeltranslator;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.hixapi.framework.common.ConversionUtil;
+import com.hixapi.pmp.api.model.CarrierUserVO;
+import com.hixapi.pmp.api.model.LoginHistoryVO;
+import com.hixapi.pmp.entity.model.Address;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+import com.hixapi.pmp.entity.model.CarrierUser;
+import com.hixapi.pmp.entity.model.UsrContactDetail;
+import com.hixapi.pmp.entity.model.idm.IDMUser;
+
+public class UserModelTranslator {
+
+	public CarrierUserVO initializeCarrierUserVO(CarrierUser user) {
+		//Initialize the VO fields from the entity
+		final CarrierUserVO vo = new CarrierUserVO();
+		vo.setLoginId(user.getUserLoginId());
+		if (user.getCarrierMstr() != null) {
+			vo.setOrganizationName(StringUtils.trimToEmpty(user.getCarrierMstr().getCarrierName()));
+			vo.setOrganizationId(ConversionUtil.toString(user.getCarrierMstr().getCarrierIdNbr()));
+			vo.setOrgIdStr(user.getCarrierMstr().getCarrierId());
+		}
+		vo.setUserId(user.getCarrierUserId());
+		vo.setStatusCode(StringUtils.trimToEmpty(user.getUsrStatusCd()));
+		if (user.getUsrContactDetail() != null) {
+			vo.setFirstName(StringUtils.trimToEmpty(user.getUsrContactDetail().getFrstNm()));
+			vo.setMiddleInitial(StringUtils.trimToEmpty(user.getUsrContactDetail().getMiddlNm()));
+			vo.setLastName(StringUtils.trimToEmpty(user.getUsrContactDetail().getLastNm()));
+			vo.setContactInfoId(user.getUsrContactDetail().getUsrContactId());
+			vo.setEmail(user.getUsrContactDetail().getEmailAdr());
+			vo.setPhoneNo(user.getUsrContactDetail().getPhoneNum());
+		}
+		
+		final Address address = user.getPmpAdrId();
+		if (address != null) {
+			vo.setCity(address.getCityNm());
+			vo.setContactAddress(address.getAdrLine1());
+			vo.setAddressLine2(StringUtils.trimToEmpty(address.getAdrLine2()));
+			vo.setState(address.getStateCd());
+			vo.setZipcode(address.getZipCd());
+			vo.setAddressId(address.getAddressId());
+		}
+
+		return vo;
+	}
+
+	
+	
+	
+
+
+	
+
+	public CarrierUser initializeCarrierUserEntity(CarrierUserVO vo) {
+		//Translate the VO to an entity instance
+		final CarrierUser u = new CarrierUser();
+		final UsrContactDetail usrContactDetail = new UsrContactDetail();
+		final CarrierMstr carrierMstr = new CarrierMstr();
+		usrContactDetail.setFrstNm(StringUtils.trimToEmpty(vo.getFirstName()));
+		usrContactDetail.setMiddlNm(StringUtils.trimToEmpty(vo.getMiddleInitial()));
+		usrContactDetail.setLastNm(StringUtils.trimToEmpty(vo.getLastName()));
+		usrContactDetail.setPhoneNum(StringUtils.trimToEmpty(vo.getPhoneNo()));
+		usrContactDetail.setEmailAdr(StringUtils.trimToEmpty(vo.getEmail()));
+		u.setUsrContactDetail(usrContactDetail);
+		u.setCarrierUserId(vo.getUserId());
+		u.setUserLoginId(StringUtils.lowerCase(vo.getLoginId()));
+		u.setCarrierMstr(carrierMstr);
+		carrierMstr.setCarrierIdNbr(ConversionUtil.toLong(vo.getOrganizationId()));
+		u.setUsrStatusCd(StringUtils.trimToEmpty(vo.getStatusCode()));
+		
+		final Address address = new Address();
+		u.setPmpAdrId(address);
+		address.setAddressId(vo.getAddressId());
+		address.setAdrLine1(vo.getContactAddress());
+		address.setAdrLine2(StringUtils.trimToEmpty(vo.getAddressLine2()));
+		address.setCityNm(vo.getCity());
+		address.setStateCd(vo.getState());
+		address.setZipCd(vo.getZipcode());
+		return u;
+	}
+	
+	public CarrierUser updateCarrierUserEntity(CarrierUserVO vo, CarrierUser entity) {
+		//Translate the VO to an entity instance
+		UsrContactDetail usrContactDetail = entity.getUsrContactDetail();
+		if(usrContactDetail == null){
+			usrContactDetail = new UsrContactDetail();
+			entity.setUsrContactDetail(usrContactDetail);
+		}
+		
+		CarrierMstr carrierMstr = entity.getCarrierMstr();
+		if(carrierMstr == null){
+			carrierMstr = new CarrierMstr();
+			entity.setCarrierMstr(carrierMstr);
+			carrierMstr.setCarrierIdNbr(ConversionUtil.toLong(vo.getOrganizationId()));
+		}
+		usrContactDetail.setFrstNm(StringUtils.trimToEmpty(vo.getFirstName()));
+		usrContactDetail.setMiddlNm(StringUtils.trimToEmpty(vo.getMiddleInitial()));
+		usrContactDetail.setLastNm(StringUtils.trimToEmpty(vo.getLastName()));
+		usrContactDetail.setPhoneNum(StringUtils.trimToEmpty(vo.getPhoneNo()));
+		usrContactDetail.setEmailAdr(StringUtils.trimToEmpty(vo.getEmail()));
+		
+		entity.setCarrierUserId(vo.getUserId());
+		entity.setUserLoginId(StringUtils.lowerCase(vo.getLoginId()));
+		
+		
+		entity.setUsrStatusCd(StringUtils.trimToEmpty(vo.getStatusCode()));
+		
+		Address address = entity.getPmpAdrId();
+		if(address == null){
+			address = new Address();
+			entity.setPmpAdrId(address);
+		}
+		
+		address.setAddressId(vo.getAddressId());
+		address.setAdrLine1(vo.getContactAddress());
+		address.setAdrLine2(StringUtils.trimToEmpty(vo.getAddressLine2()));
+		address.setCityNm(vo.getCity());
+		address.setStateCd(vo.getState());
+		address.setZipCd(vo.getZipcode());
+		return entity;
+	}
+
+
+	public IDMUser initializeIDMUser(CarrierUserVO user) {
+		IDMUser idmUser = new IDMUser();
+		idmUser.setEmail(user.getEmail());
+		idmUser.setFirstName(user.getFirstName());
+		idmUser.setLastName(user.getLastName());
+		idmUser.setLoginId(StringUtils.lowerCase(user.getLoginId()));
+		idmUser.setPhoneNumber(user.getPhoneNo());
+		idmUser.setPassword(user.getPassword());
+		//idmUser.setUserSource(userSource);
+		return idmUser;
+	}
+	
+	
+	public List<LoginHistoryVO> initializeLoginHistory(List<Object[]> loginvo){
+		
+		List<LoginHistoryVO> loginHistoryList = new ArrayList<LoginHistoryVO>();
+		//Set<String> keys = new HashSet<String>();
+		for (Object[] objects : loginvo) {
+		    LoginHistoryVO vo = new LoginHistoryVO();
+			vo.setUserId(ConversionUtil.toString(objects[0]));
+			vo.setOrganizationName(ConversionUtil.toString(objects[1]));
+			vo.setLoginDate(ConversionUtil.toTimestampString((Date) objects[2]));
+			////if(!keys.contains(vo.getUserId()+"_"+vo.getLoginDate())){
+			//	keys.add(vo.getUserId()+"_"+vo.getLoginDate());
+				loginHistoryList.add(vo);
+			//}
+		}
+		return loginHistoryList;
+	}
+}

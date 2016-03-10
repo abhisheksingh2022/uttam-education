@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD//EN"
+                                         "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+	<session-factory name="sessionFactory">
+		<property name="hibernate.connection.pool_size">50</property>
+		<property name="dialect">org.hibernate.dialect.DB2Dialect</property>
+		<!-- <property name="dialect">org.hibernate.dialect.H2Dialect</property> -->
+		<property name="hibernate.transaction.factory_class">org.hibernate.transaction.JDBCTransactionFactory</property>
+		<!-- Added entries for Hibernate Caching -->
+		<property name="hibernate.cache.use_query_cache">true</property>
+		<property name="hibernate.cache.use_second_level_cache">true</property>
+		<property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory</property>
+		<property name="net.sf.ehcache.configurationResourceName">hibernate/ehcache.xml</property>
+
+		<property name="hibernate.generate_statistics">false</property>
+		<property name="hibernate.jdbc.use_get_generated_keys">true</property>
+
+
+		<!-- <property name="hibernate.show_sql">true</property> -->
+		<property name="hibernate.format_sql">false</property>
+		<property name="hibernate.use_sql_comments">false</property>
+		<property name="hibernate.jdbc.batch_size">0</property>
+		<property name="hibernate.validator.apply_to_ddl">false</property>
+		<property name="hibernate.validator.autoregister_listeners">false</property>
+
+		<mapping resource="/hibernate/hbm/common/LookUpManager.hbm.xml" />
+
+		<!-- <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Attchmnt.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/BasePlanDtl.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/BnftInfo.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/CustSvc.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/DrgLst.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/DrgTierTyp.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/FunctionMstr.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/FunctionRole.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Issuer.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/LoginHist.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Msg.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/MsgAttchmnt.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/NotifAlrt.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/NotifDtl.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/NotifGrp.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Ntwrk.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanHist.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PmpAdr.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PmpGrp.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PmpUsr.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PmpUsrContact.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PrscprptnDrg.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PrscrptnDrgMstr.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/RateData.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/RateMstr.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Rcpnt.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/RoleMstr.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Task.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/TaskMapping.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/VarPlanDtl.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/VarPlanDtlScenarioCpCi.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/VarPlanDtlScenarioIo.hbm.xml" 
+			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PmpUsrGrp.hbm.xml" 
+			/> -->
+
+		<!-- Modified Mapping Files configuration -->
+
+		<mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Address.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Attachment.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/CarrierAdminInfo.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/CarrierDrugCoverage.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/CarrierFormularyCoverage.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/CarrierFormularyInfo.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/CarrierMstr.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/CarrierNetwork.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/CarrierUser.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/CustomerServiceCenter.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/ExceptionLog.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/FunctionMstr.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/FunctionRole.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanBenefitDetail.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanBenefitMstr.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanLifecycle.hbm.xml" />
+		<mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanMstr.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanMstrHist.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanRateDetail.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanUploadHist.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanVariantDtl.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanVariantDtlCopayCoins.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanVariantDtlDeductible.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanVariantDtlMaxOop.hbm.xml" />
+		<mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/RoleMstr.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/TCarrierStg.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/TDsplPlanStg.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/TPlanIndivRtStg.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/TPlanMapStg.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/UsrContactDetail.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/UsrLoginHistory.hbm.xml" />
+		<mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/WorkItem.hbm.xml" />
+
+		<!-- prescreen related ,some of them are above -->
+
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/EligLkupFplAmounts.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/EligLkupFplLimitsWithDisregards.hbm.xml" />
+		<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/LkupCountyDetails.hbm.xml" />
+			<mapping
+			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/EligLkupApplicablePercentageRange.hbm.xml" />
+
+
+
+	</session-factory>
+
+
+</hibernate-configuration>

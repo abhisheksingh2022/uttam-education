@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+	<class name="com.hixapi.prescreening.api.model.EligLkupApplicablePercentageRange" table="elig_lkup_applicable_percentage_range">
+		<id name="appId" column="appl_Id">
+            <generator class="native"/>
+        </id>  
+		<property name="startDate" column="range_Min_Start_Dt" />
+		<property name="rangeMin" column="range_minimum" />
+		<property name="endDate" column="range_Min_End_Dt" />
+		<property name="rangeMax" column="range_maximum" />
+		<property name="initialPerc" column="initial_perc" />
+		<property name="finalPerc" column="final_perc" />
+		
+	</class>	
+</hibernate-mapping>

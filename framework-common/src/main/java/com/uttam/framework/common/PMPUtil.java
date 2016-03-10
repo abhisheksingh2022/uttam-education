@@ -1,0 +1,106 @@
+package com.uttam.framework.common;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.uttam.education.api.model.APICodeConstants.Language;
+import com.uttam.framework.common.APIUtil;
+
+public class PMPUtil {
+
+	public static List<Integer> getCoverageYearList() {
+		Date d = APIUtil.getCurrentDate();
+		Calendar cal = Calendar.getInstance();
+		cal.setLenient(false);
+		cal.setTime(d);
+		int year = cal.get(Calendar.YEAR);
+		List<Integer> yearList = new ArrayList<Integer>();
+		if (year <= 2015) {
+			yearList.add(2016);
+		} else {
+			for (int i = 2016; i <= year; i++) {
+				yearList.add(i);
+			}
+			yearList.add(year + 1);
+		}
+		return yearList;
+	}
+
+	public static String getStringWithoutMask(String maskedString) {
+		return maskedString.replaceAll("[^\\d.]", "");
+	}
+
+	public static boolean isEmailValid(String email) {
+		String emailPattern = "\\b(^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@([A-Za-z0-9-])+((\\.com)|(\\.net)|(\\.org)|(\\.info)|(\\.edu)|(\\.mil)|(\\.gov)|(\\.biz)|(\\.ws)|(\\.us)|(\\.tv)|(\\.cc)|(\\.aero)|(\\.arpa)|(\\.coop)|(\\.int)|(\\.jobs)|(\\.museum)|(\\.name)|(\\.pro)|(\\.travel)|(\\.nato)|(\\..{2,3})|(\\..{2,3}\\..{2,3}))$)\\b";
+		return email.matches(emailPattern);
+	}
+
+	public static boolean isZipcodeValid(String zipCode) {
+		String zipCodePattern = "^(\\d{5})([-](\\d{4}))?$";
+		return zipCode.matches(zipCodePattern);
+	}
+
+	public static boolean isPhoneNumberValid(String phoneNumber) {
+		boolean isValid = false;
+		String expression = "^\\(?(\\d{3})\\)?[- ]?(\\d{3})[- ]?(\\d{4})$";
+		CharSequence inputStr = phoneNumber;
+		Pattern pattern = Pattern.compile(expression);
+		Matcher matcher = pattern.matcher(inputStr);
+		if (matcher.matches()) {
+			isValid = true;
+		}
+		return isValid;
+	}
+
+	public static boolean isIntegerNumber(String number) {
+		try {
+			Integer.parseInt(number);
+			return true;
+		} catch (NumberFormatException nfe) {
+		}
+		return false;
+	}
+
+	public static boolean isFloatNumber(String number) {
+		try {
+			Float.parseFloat(number);
+			return true;
+		} catch (NumberFormatException nfe) {
+		}
+		return false;
+	}
+
+	public static boolean isUrlValid(String carrierUrl) {
+		boolean isValid = false;
+		Pattern pattern = Pattern.compile("(\b(https?|ftp|file)://)?[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]");
+		Matcher matcher = pattern.matcher("carrierUrl");
+		if (matcher.matches()) {
+			isValid = true;
+		}
+		return isValid;
+	}
+
+	/**
+	 * Returns Language Enum, Default Language returned is English in case string is null
+	 * 
+	 * @param String
+	 *            language
+	 * @return
+	 */
+	public static Language getLanguage(String s) {
+		if (s != null) {
+			if (s.equalsIgnoreCase(Language.ENGLISH.getCode())) {
+				return Language.ENGLISH;
+			} else {
+				return Language.SPANISH;
+			}
+		} else {
+			return Language.ENGLISH;
+		}
+	}
+
+}

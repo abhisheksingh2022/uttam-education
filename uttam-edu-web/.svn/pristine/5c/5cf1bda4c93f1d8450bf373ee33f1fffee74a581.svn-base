@@ -1,0 +1,35 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<label class="conadd"><s:text name="txt.carrieruser.address"></s:text>:</label>
+							<div class="addressline">
+								<label><s:text name="txt.carrieruser.address_1"></s:text>:</label>
+								<span>
+								    <s:textfield class="form-control" name="carrierUser.contactAddress" maxlength="60" value="%{carrierUser.contactAddress}"></s:textfield>
+							    </span>
+							</div>
+							<div class="addressline">
+								<label><s:text name="txt.carrieruser.address_2"></s:text>:</label>
+								<span>
+								    <s:textfield class="form-control" name="carrierUser.addressLine2" maxlength="60" value="%{carrierUser.addressLine2}"></s:textfield>
+							    </span>
+							</div>
+							<div class="addressline">
+								<label><s:text name="txt.carrieruser.city"></s:text>:</label>
+								<span>
+								    <s:textfield class="form-control" name="carrierUser.city" maxlength="30" value="%{carrierUser.city}"></s:textfield>
+							    </span>
+							</div>
+							<div class="addressline">
+								<label><s:text name="txt.carrieruser.state"></s:text>:</label>
+								<span>
+								    <s:select
+										list="lookups.States" class="class_sel_lookupState form-control" id="id_sel_lookupState" name="carrierUser.state" headerKey=""
+										headerValue="%{selectBoxHeader}" listKey="value" listValue="label" value="carrierUser.state"></s:select>
+							    </span>
+							</div>
+							<div class="addressline">
+								<label><s:text name="txt.carrieruser.zip"></s:text>:</label>
+								<span>
+								    <s:textfield class="form-control zip" name="carrierUser.zipcode" maxlength="10" value="%{carrierUser.zipcode}"></s:textfield>
+							    </span>
+							</div>

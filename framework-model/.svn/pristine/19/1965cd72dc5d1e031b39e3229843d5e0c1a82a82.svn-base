@@ -1,0 +1,360 @@
+<exch:Payload  xmlns:hix-core="http://hix.cms.gov/0.1/hix-core" xmlns:exch="http://admin-data.ffe.cms.gov/exchange/1.0" xmlns:nc="http://niem.gov/niem/niem-core/2.0" xmlns:hix-pm="http://hix.cms.gov/0.1/hix-pm" xmlns:usps="http://niem.gov/niem/usps_states/2.0" xmlns:ext="http://admin-data.ffe.cms.gov/extension/1.0" xmlns:s="http://niem.gov/niem/structures/2.0" xmlns:i="http://niem.gov/niem/appinfo/2.0" xmlns:niem-xsd="http://niem.gov/niem/proxy/xsd/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ xsi:schemaLocation="http://admin-data.ffe.cms.gov/exchange/1.0 ./../XMLschemas/exchange/ExchangeModel.xsd
+" >
+	<ext:Issuer >
+		<hix-pm:IssuerIndividualMarketContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:IssuerIndividualMarketContact>	
+		<hix-pm:IssuerSmallGroupMarketContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:IssuerSmallGroupMarketContact>	
+		<hix-pm:IssuerIdentification >
+			<nc:IdentificationID ></nc:IdentificationID>
+		</hix-pm:IssuerIdentification>	
+		<hix-pm:IssuerStateCode>AK</hix-pm:IssuerStateCode>	
+		<hix-pm:IssuerSHOPCustomerService  s:id="Payload.Payload.Issuer.IssuerSHOPCustomerService">
+			<hix-core:ContactMainTelephoneNumber >
+				<nc:FullTelephoneNumber >
+					<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+					<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+				</nc:FullTelephoneNumber>	
+			</hix-core:ContactMainTelephoneNumber>	
+			<hix-core:ContactTTYTelephoneNumber >
+				<nc:FullTelephoneNumber >
+					<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+					<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+				</nc:FullTelephoneNumber>	
+			</hix-core:ContactTTYTelephoneNumber>	
+			<hix-core:ContactTollFreeTelephoneNumber >
+				<nc:FullTelephoneNumber >
+					<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+					<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+				</nc:FullTelephoneNumber>	
+			</hix-core:ContactTollFreeTelephoneNumber>	
+			<nc:ContactEmailID ></nc:ContactEmailID>
+			<nc:ContactTelephoneNumber >
+				<nc:FullTelephoneNumber >
+					<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+					<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+				</nc:FullTelephoneNumber>	
+			</nc:ContactTelephoneNumber>	
+			<nc:ContactWebsiteURI ></nc:ContactWebsiteURI>
+		</hix-pm:IssuerSHOPCustomerService>	
+		<hix-pm:IssuerIndividualMarketCustomerService >
+			<hix-core:ContactMainTelephoneNumber >
+				<nc:FullTelephoneNumber >
+					<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+					<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+				</nc:FullTelephoneNumber>	
+			</hix-core:ContactMainTelephoneNumber>	
+			<hix-core:ContactTTYTelephoneNumber >
+				<nc:FullTelephoneNumber >
+					<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+					<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+				</nc:FullTelephoneNumber>	
+			</hix-core:ContactTTYTelephoneNumber>	
+			<hix-core:ContactTollFreeTelephoneNumber >
+				<nc:FullTelephoneNumber >
+					<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+					<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+				</nc:FullTelephoneNumber>	
+			</hix-core:ContactTollFreeTelephoneNumber>	
+			<nc:ContactEmailID ></nc:ContactEmailID>
+			<nc:ContactTelephoneNumber >
+				<nc:FullTelephoneNumber >
+					<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+					<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+				</nc:FullTelephoneNumber>	
+			</nc:ContactTelephoneNumber>	
+			<nc:ContactWebsiteURI ></nc:ContactWebsiteURI>
+		</hix-pm:IssuerIndividualMarketCustomerService>	
+		<hix-pm:RoleOfOrganizationReference s:ref="Payload.Payload.IssuerOrganization"/>
+		<hix-pm:IssuerEnrollmentThirdPartyAdministrationIndicator >false</hix-pm:IssuerEnrollmentThirdPartyAdministrationIndicator>
+		<hix-pm:IssuerClaimsProcessingThirdPartyAdministrationIndicator >false</hix-pm:IssuerClaimsProcessingThirdPartyAdministrationIndicator>
+		<hix-pm:IssuerEdgeServerHostThirdPartyAdministrationIndicator >false</hix-pm:IssuerEdgeServerHostThirdPartyAdministrationIndicator>
+		<hix-pm:IssuerCurrentSalesMarketCode>Individual</hix-pm:IssuerCurrentSalesMarketCode>	
+		<hix-pm:IssuerProposedExchangeMarketCoverageCode>Individual</hix-pm:IssuerProposedExchangeMarketCoverageCode>	
+		<ext:PrimaryContactInformationReference s:ref="Payload.Payload.InsuranceCompany.InsuranceCompanyAptcCsrContact"/>
+	</ext:Issuer>	
+	<ext:IssuerOrganization  s:id="Payload.Payload.IssuerOrganization">
+		<nc:OrganizationLocation >
+			<nc:LocationAddress >
+				<nc:StructuredAddress >
+					<nc:LocationStreet >
+						<nc:StreetFullText ></nc:StreetFullText>
+						<nc:StreetExtensionText ></nc:StreetExtensionText>
+					</nc:LocationStreet>	
+					<nc:LocationCityName ></nc:LocationCityName>
+					<nc:LocationStateUSPostalServiceCode>AK</nc:LocationStateUSPostalServiceCode>	
+					<nc:LocationPostalCode ></nc:LocationPostalCode>
+				</nc:StructuredAddress>	
+			</nc:LocationAddress>	
+		</nc:OrganizationLocation>	
+		<hix-core:OrganizationCEO >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-core:OrganizationCEO>	
+		<hix-core:OrganizationCFO >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-core:OrganizationCFO>	
+		<hix-core:OrganizationAugmentation >
+			<hix-core:OrganizationLegalName ></hix-core:OrganizationLegalName>
+			<hix-core:OrganizationMarketingName ></hix-core:OrganizationMarketingName>
+		</hix-core:OrganizationAugmentation>	
+	</ext:IssuerOrganization>	
+	<ext:PersonContactInformationAssociation >
+		<nc:PersonReference s:ref="Payload.Payload.InsuranceCompany.InsuranceCompanyAptcCsrContact"/>
+		<nc:ContactInformationReference s:ref="Payload.Payload.Issuer.IssuerSHOPCustomerService"/>
+	</ext:PersonContactInformationAssociation>	
+	<ext:ContactInformation >
+		<hix-core:ContactMainTelephoneNumber >
+			<nc:FullTelephoneNumber >
+				<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+				<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+			</nc:FullTelephoneNumber>	
+		</hix-core:ContactMainTelephoneNumber>	
+		<hix-core:ContactTTYTelephoneNumber >
+			<nc:FullTelephoneNumber >
+				<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+				<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+			</nc:FullTelephoneNumber>	
+		</hix-core:ContactTTYTelephoneNumber>	
+		<hix-core:ContactTollFreeTelephoneNumber >
+			<nc:FullTelephoneNumber >
+				<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+				<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+			</nc:FullTelephoneNumber>	
+		</hix-core:ContactTollFreeTelephoneNumber>	
+		<nc:ContactEmailID ></nc:ContactEmailID>
+		<nc:ContactTelephoneNumber >
+			<nc:FullTelephoneNumber >
+				<nc:TelephoneNumberFullID ></nc:TelephoneNumberFullID>
+				<nc:TelephoneSuffixID ></nc:TelephoneSuffixID>
+			</nc:FullTelephoneNumber>	
+		</nc:ContactTelephoneNumber>	
+		<nc:ContactWebsiteURI ></nc:ContactWebsiteURI>
+	</ext:ContactInformation>	
+	<ext:InsuranceCompany >
+		<hix-pm:InsuranceCompanyEnrollmentContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyEnrollmentContact>	
+		<hix-pm:InsuranceCompanyPrimaryOnlineEnrollmentCenterContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyPrimaryOnlineEnrollmentCenterContact>	
+		<hix-pm:InsuranceCompanySecondaryOnlineEnrollmentCenterContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanySecondaryOnlineEnrollmentCenterContact>	
+		<hix-pm:InsuranceCompanySystemContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanySystemContact>	
+		<hix-pm:InsuranceCompanyAppealOrGrievanceContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyAppealOrGrievanceContact>	
+		<hix-pm:InsuranceCompanyCustomerServiceOperationsContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyCustomerServiceOperationsContact>	
+		<hix-pm:InsuranceCompanyMarketingContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyMarketingContact>	
+		<hix-pm:InsuranceCompanyMedicalDirectorContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyMedicalDirectorContact>	
+		<hix-pm:InsuranceCompanyPaymentContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyPaymentContact>	
+		<hix-pm:InsuranceCompanyGovernmentRelationsContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyGovernmentRelationsContact>	
+		<hix-pm:InsuranceCompanyHIPAASecurityOfficerContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyHIPAASecurityOfficerContact>	
+		<hix-pm:InsuranceCompanyFinancialReportingContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyFinancialReportingContact>	
+		<hix-pm:InsuranceCompanyComplaintTrackingContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyComplaintTrackingContact>	
+		<hix-pm:InsuranceCompanyQualityContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyQualityContact>	
+		<hix-pm:InsuranceCompanyComplianceOfficerContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyComplianceOfficerContact>	
+		<hix-pm:InsuranceCompanyAptcCsrContact  s:id="Payload.Payload.InsuranceCompany.InsuranceCompanyAptcCsrContact">
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyAptcCsrContact>	
+		<hix-pm:InsuranceCompanyRiskCorridorsContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyRiskCorridorsContact>	
+		<hix-pm:InsuranceCompanyUserAccessPrimaryContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyUserAccessPrimaryContact>	
+		<hix-pm:InsuranceCompanyUserAccessSecondaryContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyUserAccessSecondaryContact>	
+		<hix-pm:InsuranceCompanyChiefDentalDirectorContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyChiefDentalDirectorContact>	
+		<hix-pm:InsuranceCompanyPharmacyBenefitManagerContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyPharmacyBenefitManagerContact>	
+		<hix-pm:InsuranceCompanyFinancialTransfersContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyFinancialTransfersContact>	
+		<hix-pm:InsuranceCompanyReinsuranceContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyReinsuranceContact>	
+		<hix-pm:InsuranceCompanyRiskAdjustmentContact >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-pm:InsuranceCompanyRiskAdjustmentContact>	
+		<hix-pm:InsuranceCompanyTIN-ID ></hix-pm:InsuranceCompanyTIN-ID>
+		<hix-pm:InsuranceCompanyNAIC-ID ></hix-pm:InsuranceCompanyNAIC-ID>
+		<hix-pm:InsuranceCompanyNAICGroupID ></hix-pm:InsuranceCompanyNAICGroupID>
+		<hix-pm:RoleOfOrganizationReference s:ref="Payload.Payload.IssuerOrganization"/>
+		<ext:HPID ></ext:HPID>
+	</ext:InsuranceCompany>	
+	<ext:InsuranceCompanyOrganization >
+		<nc:OrganizationLocation >
+			<nc:LocationAddress >
+				<nc:StructuredAddress >
+					<nc:LocationStreet >
+						<nc:StreetFullText ></nc:StreetFullText>
+						<nc:StreetExtensionText ></nc:StreetExtensionText>
+					</nc:LocationStreet>	
+					<nc:LocationCityName ></nc:LocationCityName>
+					<nc:LocationStateUSPostalServiceCode>AK</nc:LocationStateUSPostalServiceCode>	
+					<nc:LocationPostalCode ></nc:LocationPostalCode>
+				</nc:StructuredAddress>	
+			</nc:LocationAddress>	
+		</nc:OrganizationLocation>	
+		<hix-core:OrganizationCEO >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-core:OrganizationCEO>	
+		<hix-core:OrganizationCFO >
+			<nc:PersonName >
+				<nc:PersonGivenName ></nc:PersonGivenName>
+				<nc:PersonSurName ></nc:PersonSurName>
+			</nc:PersonName>	
+			<hix-core:PersonAugmentation/>
+		</hix-core:OrganizationCFO>	
+		<hix-core:OrganizationAugmentation >
+			<hix-core:OrganizationLegalName ></hix-core:OrganizationLegalName>
+			<hix-core:OrganizationMarketingName ></hix-core:OrganizationMarketingName>
+		</hix-core:OrganizationAugmentation>	
+	</ext:InsuranceCompanyOrganization>	
+</exch:Payload>	

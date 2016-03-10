@@ -1,0 +1,53 @@
+package com.hixapi.prescreening.api.model;
+
+import java.io.Serializable;
+
+public class UtilzAndCosts implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String id;
+	private String treatmentType;
+	private String drlDownDescCd;
+	private int utilizVal;
+	private Double unitCosts;
+	
+	public UtilzAndCosts(){}
+	
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	public String getTreatmentType() {
+		return treatmentType;
+	}
+	public void setTreatmentType(String treatmentType) {
+		this.treatmentType = treatmentType;
+	}
+	public String getDrlDownDescCd() {
+		return drlDownDescCd;
+	}
+	public void setDrlDownDescCd(String drlDownDescCd) {
+		this.drlDownDescCd = drlDownDescCd;
+	}
+	public int getUtilizVal() {
+		return utilizVal;
+	}
+	public void setUtilizVal(int utilizVal) {
+		this.utilizVal = utilizVal;
+	}
+	public Double getUnitCosts() {
+		return unitCosts;
+	}
+	public void setUnitCosts(Double unitCosts) {
+		this.unitCosts = unitCosts;
+	}
+	
+	
+	
+
+}

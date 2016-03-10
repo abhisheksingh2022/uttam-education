@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+
+
+	<package name="cds" extends="hixapi-basic" namespace="/eligibility">
+		<interceptors>
+			<interceptor name="sessionVerifier" class="com.hixapi.web.framework.struts.SessionVerifierInterceptor"></interceptor>
+		</interceptors>
+
+		<default-action-ref name="home_input"></default-action-ref>
+		<global-results>
+			<result name="DisclaimerNotAccepted" type="actionRedirect">disclaimer_input
+			</result>
+			<result name="HouseholdNotSet" type="actionRedirect">household_input
+			</result>
+		</global-results>
+		<action name="home_*" class="com.hixapi.ahct.cds.struts.HomeAction" method="{1}">
+			<result name="page">/main/eligibility/home.jsp</result>
+			<result name="flash" type="flashResult">home_flash</result>
+			<result name="next" type="actionRedirect">disclaimer_input</result>
+			<result name="sampleAjax">/main/eligibility/sample_ajaxResult.jsp</result>
+		</action>
+		
+		<action name="ping" class="com.hixapi.ahct.cds.struts.PingAction" method="input">
+			<result name="page">/main/eligibility/ping.jsp</result>
+		</action>
+
+		<action name="disclaimer_*" class="com.hixapi.ahct.cds.struts.DisclaimerAction" method="{1}">
+			<result name="page">/main/eligibility/disclaimer.jsp</result>
+			<result name="next" type="actionRedirect">household_input</result>
+			<result name="flash" type="flashResult">disclaimer_flash</result>
+		</action>
+
+		<!-- <action name="eligibilityResults_*" -->
+		<!-- class="com.hixapi.ahct.cds.struts.EligibilityResultsAction" method="{1}"> -->
+
+		<!-- <result name="page">/main/eligibility/home.jsp</result> -->
+		<!-- <result name="flash" type="flashResult">home_flash</result> -->
+		<!-- <result name="next" type="actionRedirect">conditions_input</result> -->
+		<!-- </action> -->
+
+		<action name="household_*" class="com.hixapi.ahct.cds.struts.HouseholdAction" method="{1}">
+			<interceptor-ref name="sessionVerifier"></interceptor-ref>
+			<interceptor-ref name="hixStack"></interceptor-ref>
+			<result name="page">/main/eligibility/household.jsp</result>
+			<result name="flash" type="flashResult">household_flash</result>
+			<result name="legalStatus">/main/eligibility/household_legalstatuscheck.jsp
+			</result>
+			<result name="next" type="actionRedirect">health-status_input</result>
+			<!-- <result name="DisclaimerNotAccepted" type="actionRedirect">disclaimer_input -->
+			<!-- </result> -->
+
+		</action>
+
+		<action name="health-status_*" class="com.hixapi.ahct.cds.struts.HealthStatusAction" method="{1}">
+			<interceptor-ref name="sessionVerifier"></interceptor-ref>
+			<interceptor-ref name="hixStack"></interceptor-ref>
+			<result name="page">/main/eligibility/health-status.jsp</result>
+			<result name="flash" type="flashResult">health-status_flash</result>
+			<result name="next" type="actionRedirect">
+				<param name="actionName">medical-cost-information_input</param>
+				<param name="namespace">/eligibility</param>
+			</result>
+			<result name="back" type="actionRedirect">
+				<param name="actionName">household_input</param>
+				<param name="namespace">/eligibility</param>
+			</result>
+			<!-- <result name="DisclaimerNotAccepted" type="actionRedirect">disclaimer_input -->
+			<!-- </result> -->
+			<!-- <result name="HouseholdNotSet" type="actionRedirect">household_input -->
+			<!-- </result> -->
+
+		</action>
+		<action name="medical-cost-information_*"
+			class="com.hixapi.ahct.cds.struts.MedicalCostInformationAction" method="{1}">
+			<interceptor-ref name="sessionVerifier"></interceptor-ref>
+			<interceptor-ref name="hixStack"></interceptor-ref>
+			<result name="page">/main/eligibility/medical-cost-information.jsp
+			</result>
+			<result name="flash" type="flashResult">medical-cost-information_flash
+			</result>
+			<result name="next" type="actionRedirect">
+				<param name="actionName">plan_input</param>
+				<param name="namespace">/plan</param>
+			</result>
+			<result name="back" type="actionRedirect">
+				<param name="actionName">health-status_input</param>
+				<param name="namespace">/eligibility</param>
+			</result>
+		</action>
+
+	</package>
+
+	<package name="cdsplan" extends="hixapi-basic" namespace="/plan">
+		<interceptors>
+			<interceptor name="sessionVerifier" class="com.hixapi.web.framework.struts.SessionVerifierInterceptor"></interceptor>
+		</interceptors>
+		<default-action-ref name="home_input"></default-action-ref>
+		<global-results>
+			<result name="DisclaimerNotAccepted" type="actionRedirect">
+				<param name="actionName">disclaimer_input</param>
+				<param name="namespace">/eligibility</param>
+			</result>
+			<result name="HouseholdNotSet" type="actionRedirect">
+				<param name="actionName">household_input</param>
+				<param name="namespace">/eligibility</param>
+			</result>
+			<result name="MedicalCostNotSet" type="actionRedirect">
+				<param name="actionName">health-status_input</param>
+				<param name="namespace">/eligibility</param>
+			</result>
+		</global-results>
+		<action name="plan_*" class="com.hixapi.ahct.cds.struts.AllPlanGridAction" method="{1}">
+			<interceptor-ref name="sessionVerifier"></interceptor-ref>
+			<interceptor-ref name="hixStack"></interceptor-ref>
+			<result name="page">/main/plan/allPlanGrid.jsp</result>
+			<result name="flash" type="flashResult">plan_flash</result>
+			<result name="back" type="actionRedirect">
+				<param name="actionName">medical-cost-information_input</param>
+				<param name="namespace">/eligibility</param>
+			</result>
+		</action>
+
+		<action name="plandetails_*" class="com.hixapi.ahct.cds.struts.PlanDetailsAction" method="{1}">
+			<result name="page">/main/plan/planDetails.jsp</result>
+			<result name="flash" type="flashResult">home_flash</result>
+		</action>
+
+		<action name="pingSession" class="com.hixapi.ahct.cds.struts.PlanDetailsAction" method="pingSession">
+			<result type="json"></result>
+		</action>
+	</package>
+</struts>

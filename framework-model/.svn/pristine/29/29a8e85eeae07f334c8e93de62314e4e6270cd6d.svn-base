@@ -1,0 +1,34 @@
+package com.hixapi.pmp.api.model.plandetails;
+
+import java.io.Serializable;
+
+public class InAndOutNetwork implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private String inNetwork1;
+	private String inNetwork2;
+	private String outOfNetwork;
+	public String getInNetwork1() {
+		return inNetwork1;
+	}
+	public void setInNetwork1(String inNetwork1) {
+		this.inNetwork1 = inNetwork1;
+	}
+	public String getInNetwork2() {
+		return inNetwork2;
+	}
+	public void setInNetwork2(String inNetwork2) {
+		this.inNetwork2 = inNetwork2;
+	}
+	public String getOutOfNetwork() {
+		return outOfNetwork;
+	}
+	public void setOutOfNetwork(String outOfNetwork) {
+		this.outOfNetwork = outOfNetwork;
+	}
+
+}

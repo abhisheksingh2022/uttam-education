@@ -1,0 +1,23 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.plan;
+
+import java.util.List;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.service.IService;
+import com.hixapi.pmp.api.model.PlanUploadHistoryVO;
+import com.hixapi.pmp.api.model.PlanUploadVO;
+import com.hixapi.pmp.api.model.PlanVO;
+
+/**
+ * @author admin
+ *
+ */
+public interface PlanUploadService extends IService {
+
+	void uploadPlan(PlanUploadVO vo) throws BusinessServiceException;
+	List<PlanUploadHistoryVO> retrievePlanUploadHistory(Short coverageYear, Long carrierId) throws BusinessServiceException;
+	
+}

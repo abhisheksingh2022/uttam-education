@@ -1,0 +1,247 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp"%>
+
+<div class="row">
+	<div class="body-con">
+		<div class="container maincont">
+			<div class="row">
+				<s:form action="carrieruser-profile" id="id_form_carrierUser" autocomplete="off">
+					<s:token />
+					<s:hidden name="ajaxRequest" value="false" />
+					<s:hidden name="formId" />
+					<s:hidden name="mode"></s:hidden>
+					<s:hidden name="carrierUser.addressId"></s:hidden>
+					<s:hidden name="carrierUser.contactInfoId"></s:hidden>
+					<s:hidden name="carrierUser.statusCode"/>
+					<s:hidden name="carrierUser.userId"/>
+					<div class="body-bg">
+						<div class="hedingsec">
+							<h2 class="inner-heading">
+								<s:if test="addMode == true">
+									<s:text name="txt.carrieruser.addheader"></s:text>
+								</s:if>
+								<s:else>
+									<s:text name="txt.carrieruser.header"></s:text>
+								</s:else>
+							</h2>
+						</div>
+
+						<div class="carrier-data">
+							<div class="carrier-field">
+								<label><s:text name="txt.carrieruser.firstname"></s:text>:<span class="astrcs">*</span></label> <span> <input
+									type="text" maxlength="30" name="carrierUser.firstName" class="form-control alphabets" value="<s:property value='carrierUser.firstName'/>" />
+								</span>
+							</div>
+							<div class="carrier-field">
+								<label><s:text name="txt.carrieruser.lastname"></s:text>:<span class="astrcs">*</span></label> <span> <input
+									type="text" maxlength="30" name="carrierUser.lastName" class="form-control alphabets" value="<s:property value='carrierUser.lastName'/>" />
+								</span>
+							</div>
+							<div class="carrier-field field-height">
+								<label><s:text name="txt.carrieruser.userid"></s:text>:<span class="astrcs">*</span></label> 
+								<span>
+									<s:if test="editMode == true">
+										<s:hidden name="carrierUser.loginId"></s:hidden>
+									</s:if>
+									<input
+									type="text" name="carrierUser.loginId" class="form-control" maxlength="15"
+									value="<s:property value='carrierUser.loginId'/>" id="loginId"/>
+									<small><s:text name="txt.carrieruser.userid_tip"></s:text></small>
+								</span>
+							</div>
+
+							<div class="carrier-field field-height">
+								<label><s:text name="txt.carrieruser.phoneno"></s:text>:<span class="astrcs"></span></label> <span> <input
+									type="text" maxlength="12" name="carrierUser.phoneNo" class="form-control phone" value="<s:property value='carrierUser.phoneNo'/>" />
+								</span>
+							</div>
+							
+							<div class="carerurl">
+							<div class="carrier-field">
+								<label><s:text name="txt.carrieruser.email"></s:text>:<span class="astrcs">*</span></label> <span> <input
+									type="text" maxlength="125"  name="carrierUser.email" class="form-control" value="<s:property value='carrierUser.email'/>" />
+								</span>
+							</div>
+							<div class="carrier-field">
+								<label><s:text name="txt.carrieruser.carriername"></s:text>:<span class="astrcs">*</span></label> <span>
+									<s:select list="carriers" class="class_sel_lookupState form-control" id="id_sel_lookupState" name="carrierUser.organizationId"
+										headerKey="" headerValue="%{selectBoxHeader}" listKey="carrierIdNbr" listValue="carrierName"
+										value="carrierUser.organizationId"></s:select>
+								</span>
+							</div>
+							
+							<s:if test="addMode == true">
+							<div class="carrier-field password-field">
+								<label><s:text name="txt.carrieruser.enterpassword"></s:text>:<span class="astrcs">*</span></label> <span> <input
+									type="password" maxlength="15" name="carrierUser.password" class="form-control"/>
+								<small><s:text name="txt.carrieruser.password_tip"></s:text></small>
+								</span>
+							</div>
+							<div class="carrier-field password-field">
+								<label><s:text name="txt.carrieruser.reenterpassword"></s:text>:<span class="astrcs">*</span></label> 
+								<span> <input
+									type="password" maxlength="15" name="carrierUser.confirmPassword" class="form-control"/>	
+								</span>
+							</div>
+							</s:if>
+							</div>
+							<div class="carrier-field adresline1" id="userAddress">
+							<%@include file="/jsp/usermgmt/carrieruser-address.jsp"%>
+                        	<%-- <label class="conadd"><s:text name="txt.carrieruser.address"></s:text>:</label>
+							<div class="addressline">
+								<label>Address Line 1</label>
+								<span>
+								    <s:textfield class="form-control" name="carrierUser.contactAddress" maxlength="60" value="%{carrierUser.contactAddress}"></s:textfield>
+							    </span>
+							</div>
+							<div class="addressline">
+								<label>Address Line 2</label>
+								<span>
+								    <s:textfield class="form-control" name="carrierUser.addressLine2" maxlength="60" value="%{carrierUser.addressLine2}"></s:textfield>
+							    </span>
+							</div>
+							<div class="addressline">
+								<label><s:text name="txt.carrieruser.city"></s:text></label>
+								<span>
+								    <s:textfield class="form-control" name="carrierUser.city" maxlength="30" value="%{carrierUser.city}"></s:textfield>
+							    </span>
+							</div>
+							<div class="addressline">
+								<label><s:text name="txt.carrieruser.state"></s:text></label>
+								<span>
+								    <s:select
+										list="lookups.States" class="class_sel_lookupState form-control" id="id_sel_lookupState" name="carrierUser.state" headerKey=""
+										headerValue="%{selectBoxHeader}" listKey="value" listValue="label" value="carrierUser.state"></s:select>
+							    </span>
+							</div>
+							<div class="addressline">
+								<label><s:text name="txt.carrieruser.zip"></s:text></label>
+								<span>
+								    <s:textfield class="form-control" name="carrierUser.zipcode" maxlength="5" value="%{carrierUser.zipcode}"></s:textfield>
+							    </span>
+							</div> --%>
+                        </div>
+                        
+							<div class="form-btn">
+								<s:if test="%{(addMode == true || editMode == true) && (addAccess == true || editAccess == true)}">
+								<button id="carrier-save" class="save-btn" onclick="return setActionAndSubmit('id_form_carrierUser', 'execute');">
+									<s:text name="txt.global.save"></s:text>
+								</button>
+								</s:if>
+								<button id="carrier-cancel" class="save-btn" onclick="return setActionAndSubmit('id_form_carrierUser', 'back');">
+									<s:if test="(editMode == true)">
+						            <s:text name="txt.global.discardchanges"></s:text>
+					                </s:if>
+					                <s:else>
+					                <s:text name="txt.global.cancel"></s:text> 
+					                </s:else>
+								</button>
+								<s:if test="%{editMode == true && editAccess == true}">
+								<button id="carrier-activate" class="save-btn" onclick="return setActionAndSubmit('id_form_carrierUser', 'changeStatus');">
+									<s:if test="userActivated == true">
+										<s:text name="txt.carrieruser.deactivate"></s:text>
+									</s:if>
+									<s:else>
+										<s:text name="txt.carrieruser.activate"></s:text>
+									</s:else>
+								</button>
+								<button id="carrier-reset" class="save-btn" onclick="return showPasswordDialog();">
+									<s:text name="txt.carrieruser.resetpassword"></s:text>
+								</button>
+								</s:if>
+
+							</div>
+							
+							
+
+							<div class="clearfix"></div>
+						</div>
+					</div>
+				</s:form>
+				<s:form action="carrieruser-profile" id="id_form_resetPassword" autocomplete="off">
+				<s:token />
+					<s:hidden name="ajaxRequest" value="false" />
+					<s:hidden name="formId" />
+					<s:hidden name="mode"></s:hidden>
+					<s:hidden name="carrierUser.addressId"></s:hidden>
+					<s:hidden name="carrierUser.contactInfoId"></s:hidden>
+					<s:hidden name="carrierUser.statusCode"/>
+					<s:hidden name="carrierUser.firstName"/>
+					<s:hidden name="carrierUser.lastName"/>
+					<s:hidden name="carrierUser.loginId"/>
+					<s:hidden name="carrierUser.userId"/>
+					<s:hidden name="carrierUser.phoneNo"/>
+					<s:hidden name="carrierUser.organizationId"/>
+					<s:hidden name="carrierUser.email"/>
+					<s:hidden name="carrierUser.contactAddress"/>
+					<s:hidden name="carrierUser.city"></s:hidden>
+					<s:hidden name="carrierUser.state"></s:hidden>
+					<s:hidden name="carrierUser.zipcode"></s:hidden>
+					<div class="modal fade modal1" id="passwordModal" role="dialog">
+								<div class="modal-dialog">
+					<div class="modal-content">
+										<div class="modal-header">
+											<!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
+											<h4 class="modal-title" style="text-align: left;"><s:text name="txt.carrieruser.resetpassword"></s:text></h4>
+										</div>
+										<div class="modal-body" style="margin-bottom: 20px;">
+											<div class="reset-pasword">
+												<label><s:text name="txt.carrieruser.enterpassword"></s:text></label> 
+												<span><input type="password" maxlength="15" name="carrierUser.password" class="form-control" />
+													<small style="text-align:left;"><s:text name="txt.carrieruser.password_tip"></s:text></small>
+												 </span>
+											</div>
+											<div class="reset-pasword">
+												<label><s:text name="txt.carrieruser.reenterpassword"></s:text></label> 
+												<span><input type="password" maxlength="15" name="carrierUser.confirmPassword" class="form-control" /> </span>
+											</div>
+											<div class="clear20"></div>
+											<div class="clear20"></div>
+											<s:if test="editAccess == true">
+									<button class="save-btn" onclick="return setActionAndSubmit('id_form_resetPassword', 'resetPassword');">
+										<s:text name="txt.global.save"></s:text>
+									</button>
+									<button id="carrier-cancel" class="save-btn" onclick="return hidePasswordDialog();">
+										<s:text name="txt.global.cancel"></s:text>
+									</button>
+									</s:if>
+										</div>
+									</div>
+									</div>
+									</div>
+				</s:form>
+			</div>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+</div>
+<script>
+	$(document).ready(function() {
+		<s:if test="readOnly == true">
+			$('.form-control').prop("disabled",true)		
+		</s:if>
+		<s:if test="editMode == true">
+			$('#loginId').prop("disabled",true)
+		</s:if>
+		
+		$("#id_sel_lookupState").change(function(){
+			 return ajaxGet({
+				resource : 'carrieruser-profile_ajaxGetCarrierDetails',
+				targetId : 'userAddress',
+				urlparams : {
+					"carrierUser.organizationId" :$(this).val()
+			}});
+		});
+	});
+	function showPasswordDialog() {
+		$('#passwordModal').modal('show');
+		return false
+	}
+	function hidePasswordDialog() {
+		$('#passwordModal').modal('hide');
+		return false
+	}
+</script>
+<%@include file="/jsp/includes/footer.jsp"%>
+

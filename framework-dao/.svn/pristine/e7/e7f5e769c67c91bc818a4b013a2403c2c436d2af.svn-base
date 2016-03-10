@@ -1,0 +1,230 @@
+package com.hixapi.pmp.dao.carrier.impl;
+
+import java.sql.Blob;
+import java.sql.SQLException;
+import java.util.List;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
+
+import com.hixapi.framework.dao.BaseDAO;
+import com.hixapi.pmp.api.model.criteria.CarrierSearchCriteria;
+import com.hixapi.pmp.common.util.PMPAccessController;
+import com.hixapi.pmp.dao.carrier.CarrierDAO;
+import com.hixapi.pmp.entity.model.CarrierMstr;
+
+public class CarrierDAOImpl extends BaseDAO implements CarrierDAO {
+	
+	private static final Logger log = LogManager.getLogger(CarrierDAOImpl.class);
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<CarrierMstr> searchCarrier(CarrierSearchCriteria criteria) {
+		Session session = getReadOnlySession();
+		Criteria criteriaObj = session.createCriteria(CarrierMstr.class);
+
+		if (!PMPAccessController.getInstance().hasAllCarrierAccessForCurrentUser()) {
+			criteriaObj.add(Restrictions.eq("carrierIdNbr", PMPAccessController.getInstance().getCurrentUserCarrierId()));
+		}
+
+		if (criteria != null) {
+
+			//any "where" clause can add here
+			if (!StringUtils.isEmpty(criteria.getCarrierId())) {
+				criteriaObj.add(Restrictions.eq("carrierId", criteria.getCarrierId()));
+			}
+			if (!StringUtils.isEmpty(criteria.getCarrierName())) {
+				criteriaObj.add(Restrictions.eq("carrierName", criteria.getCarrierName()));
+			}
+		}
+
+		criteriaObj.addOrder(Order.asc("carrierName"));
+
+		return criteriaObj.list();
+	}
+
+	@Override
+	public CarrierMstr retrieveCarrierByCarrierIdNumber(Long carrierIdNumber) {
+		Session session = getReadOnlySession();
+		Criteria criteriaObj = session.createCriteria(CarrierMstr.class);
+		//		if (!PMPAccessController.getInstance().hasAllCarrierAccessForCurrentUser()) {
+		//			criteriaObj.add(Restrictions.eq("carrierIdNbr", PMPAccessController.getInstance().getCurrentUserCarrierId()));
+		//		} else {
+		criteriaObj.add(Restrictions.eq("carrierIdNbr", carrierIdNumber));
+		//		}
+		return (CarrierMstr) criteriaObj.uniqueResult();
+	}
+
+	@Override
+	public void saveCarrier(CarrierMstr carrierMstr) {
+		Session session = getCurrentSession();
+		/*		if (null != carrierMstr.getCarrierIdNbr()) {
+					CarrierMstr carrierMstrDB = new CarrierMstr();
+					carrierMstrDB.setCarrierIdNbr(carrierMstr.getCarrierIdNbr());
+					carrierMstrDB.setCarrierId(carrierMstr.getCarrierId());
+					carrierMstrDB.setCarrierName(carrierMstr.getCarrierName());
+					carrierMstrDB.setNaicCmpnyCd(carrierMstr.getNaicCmpnyCd());
+					carrierMstrDB.setNaicGrpCd(carrierMstr.getNaicGrpCd());
+					carrierMstrDB.setTinIdNbr(carrierMstr.getTinIdNbr());
+					carrierMstrDB.setContactPhoneNbr(carrierMstr.getContactPhoneNbr());
+					carrierMstrDB.setPrimaryUrl(carrierMstr.getPrimaryUrl());
+					carrierMstrDB.setAddress(carrierMstr.getAddress());
+					carrierMstrDB.setStateCd(carrierMstr.getStateCd());
+					carrierMstrDB.setLogoAttchmntBlob(carrierMstr.getLogoAttchmntBlob());
+		*/
+		session.save(carrierMstr);
+		session.flush();
+		//		}
+	}
+
+	@Override
+	public void updateCarrier(CarrierMstr carrierMstr) {
+		Session session = getCurrentSession();
+		session.update(carrierMstr);
+		session.flush();
+
+	}
+
+	public boolean checkDuplicateCarrier(Long carrierIdNbr, String carrierId) {
+		Session session = getReadOnlySession();
+		Criteria criteriaObj = session.createCriteria(CarrierMstr.class);
+		criteriaObj.setProjection(Projections.property("carrierIdNbr"));
+
+		criteriaObj.add(Restrictions.eq("carrierId", carrierId));
+
+		if (carrierIdNbr != null) {
+			criteriaObj.add(Restrictions.ne("carrierIdNbr", carrierIdNbr));
+		}
+
+		@SuppressWarnings("rawtypes")
+		List col = criteriaObj.list();
+
+		if (CollectionUtils.isNotEmpty(col) && col.size() > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public void deleteCarrier(CarrierMstr carrierMstr) {
+		Session session = getCurrentSession();
+		session.delete(carrierMstr);
+		session.flush();
+	}
+
+	@Override
+	public void saveCarrierLogo(CarrierMstr carrierMstr) {
+		Session session = getCurrentSession();
+		SQLQuery pstmt = session
+				.createSQLQuery("UPDATE CARRIER_MSTR set LOGO_ATTCHMNT_BLOB=:blob where CARRIER_ID_NBR=:carrierIdNumber");
+		//		InputStream in = new ByteArrayInputStream(blob);
+
+		// the cast to int is necessary because with JDBC 4 there is  
+		// also a version of this method with a (int, long)  
+		// but that is not implemented by Oracle 
+		//pstmt.setSerializable(1, blob);
+		//pstmt.setParameter("blob", blob );
+		pstmt.setBinary("blob", carrierMstr.getLogoAttchmntBlob());
+		pstmt.setFloat("carrierIdNumber", carrierMstr.getCarrierIdNbr()); // set the PK value
+		pstmt.executeUpdate();
+
+		/*
+		String sql = "UPDATE CARRIER_MSTR set LOGO_ATTCHMNT_BLOB=" + blob + " where CARRIER_ID_NBR=" + carrierIdNumber;
+		SQLQuery query = session.createSQLQuery(sql);
+		query.executeUpdate();
+		/*
+				if (null != carrierMstr.getCarrierIdNbr()) {
+					criteriaObj.add(Restrictions.eq("carrierIdNbr", carrierMstr.getCarrierIdNbr()));
+					Object result = criteriaObj.uniqueResult();
+					CarrierMstr carrierMstrDB = null;
+					if (result != null) {
+						carrierMstrDB = (CarrierMstr) result;
+						carrierMstrDB.setLogoAttchmntBlob(carrierMstr.getLogoAttchmntBlob());
+					}
+
+				}*/
+		session.flush();
+
+	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public Blob retrieveCarrierLogo(Long carrierIdNumber) {
+		Session session = getCurrentSession();
+
+		String sql = "SELECT LOGO_ATTCHMNT_BLOB FROM CARRIER_MSTR where CARRIER_ID_NBR= :idNumber";
+		SQLQuery query = session.createSQLQuery(sql);
+		query.setParameter("idNumber", carrierIdNumber);
+		//		query.setResultTransformer(Criteria.ALIAS_TO_ENTITY_MAP);
+		List results = query.list();
+		if (results.get(0) != null)
+			return (Blob) results.get(0);
+		return null;
+
+		/*
+		Criteria criteriaObj = session.createCriteria(CarrierMstr.class);
+
+		if (null != carrierMstr.getCarrierIdNbr()) {
+			criteriaObj.add(Restrictions.eq("carrierIdNbr", carrierMstr.getCarrierIdNbr()));
+			Object result = criteriaObj.uniqueResult();
+			CarrierMstr carrierMstrDB = null;
+			if (result != null) {
+				carrierMstrDB = (CarrierMstr) result;
+				carrierMstrDB.setLogoAttchmntBlob(carrierMstr.getLogoAttchmntBlob());
+			}
+
+		}
+		session.flush();*/
+
+	}
+
+	@Override
+	public byte[] retrieveCarrierLogo(String carrierId) {
+		Session session = getCurrentSession();
+
+		String sql = "SELECT LOGO_ATTCHMNT_BLOB FROM CARRIER_MSTR where CARRIER_ID= :carrierId ";
+		SQLQuery query = session.createSQLQuery(sql);
+		query.setParameter("carrierId", carrierId);
+		//		query.setResultTransformer(Criteria.ALIAS_TO_ENTITY_MAP);
+		@SuppressWarnings("rawtypes")
+		List results = query.list();
+		if (results.get(0) != null) {
+			Blob blob = (Blob) results.get(0);
+			byte[] bytes;
+			try {
+				bytes = blob.getBytes(1, (int) blob.length());
+			} catch (SQLException e) {
+				log.error("Error retrieving logo", e);
+				throw new HibernateException(e);
+			}
+			return bytes;
+		}
+		return new byte[0];
+
+		/*
+		Criteria criteriaObj = session.createCriteria(CarrierMstr.class);
+
+		if (null != carrierMstr.getCarrierIdNbr()) {
+			criteriaObj.add(Restrictions.eq("carrierIdNbr", carrierMstr.getCarrierIdNbr()));
+			Object result = criteriaObj.uniqueResult();
+			CarrierMstr carrierMstrDB = null;
+			if (result != null) {
+				carrierMstrDB = (CarrierMstr) result;
+				carrierMstrDB.setLogoAttchmntBlob(carrierMstr.getLogoAttchmntBlob());
+			}
+
+		}
+		session.flush();*/
+
+	}
+}

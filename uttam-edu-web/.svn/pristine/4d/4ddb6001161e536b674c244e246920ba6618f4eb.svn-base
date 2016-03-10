@@ -1,0 +1,225 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@include file="/jsp/includes/container.jsp"%>
+<%@include file="/jsp/includes/datatable.jsp"%>
+
+
+<div class="row">
+	<div class="body-bg">
+		<h2 class="inner-heading">
+			<s:text name="txt.planmanage.manageplans"></s:text>
+		</h2>
+		
+		<div class="clear20"></div>
+		<div class="">
+		<s:form autocomplete="off" action="plan-rates" id="id_form_plan_rates">
+				<s:token />
+				<s:hidden name="ajaxRequest" value="false" />
+				<s:hidden name="formId" />
+			<%-- <div class="carrier-fieldA lange">
+				<label style="width: 100px;"><s:text name="txt.planmanage.viewplan"></s:text>:</label> <span> <s:select
+						list="lookups.Languages" class="form-control" id="id_sel_lookupLanguage" name="" headerKey=""
+						headerValue="%{selectBoxHeader}" listKey="value" listValue="label" value=""></s:select>
+				</span>
+			</div>
+			
+			<div class="manage-planright">
+				<input type="submit" value="<s:text name="txt.planmanage.allowcarrierupdates"></s:text>" class="save-btn"></input>
+			</div>
+ --%>
+			<div class="clear20"></div>
+			<div class="ratestab">
+				<div class="responsive-tabs" style="display:none;">
+
+					<h2 class="profileTab">
+						<s:text name="txt.planmanage.profile"></s:text>
+					</h2>
+					
+					<h2 class="ratesTab">
+						<s:text name="txt.planmanage.rates"></s:text>
+					</h2>
+					<div class="ratesSec">
+					<div class="ratesSec">
+							<b>Rate Effective Date:</b>&#160;<s:property value="plan.rateEffectiveDate"/><br/>
+							<b>Rate Expiration Date:</b>&#160;<s:property value="plan.rateExpirationDate"/>
+						</div>
+						<p><s:text name="txt.planrates.infotext"></s:text></p>
+						<div>
+							
+						</div>
+						
+						<div class="clear20"></div>
+						<div class="clear20"></div>
+						
+						<div class="">
+								<s:hidden name="planId"></s:hidden>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planrates.ratingarea"></s:text>:</label> 
+									<span> <s:select
+										list="lookups.RatingArea" class="class_sel_lookupRA form-control" id="id_sel_ra" name="criteria.ratingArea" headerKey=""
+										headerValue="%{selectAllBoxHeader}" listKey="value" listValue="label" value="criteria.ratingArea"></s:select>
+									</span>
+								</div>
+								<div class="carrier-fieldA">
+									<label><s:text name="txt.planrates.age"></s:text>:</label> <span> 
+									<s:select
+										list="lookups.Age" class="class_sel_lookupAge form-control" id="id_sel_age" name="criteria.age" headerKey=""
+										headerValue="%{selectAllBoxHeader}" listKey="value" listValue="label" value="criteria.age"></s:select>
+									</span>
+								</div>
+							
+							<div class="clearfix"></div>
+						</div>
+
+						<span class = "view-rates">
+							<button id="rates-back" class="save-btn" onclick="return setActionAndSubmit('id_form_plan_rates', 'back');">
+								<s:text name="txt.global.button2"></s:text>
+							</button>
+							<button id="rates-search" class="save-btn" onclick="return setActionAndSubmit('id_form_plan_rates', 'search');">
+								<s:text name="txt.planrates.rates_btn"></s:text>
+							</button>
+						</span>
+						<div class="plan-table content" id="result">
+						<div class="carrier-data" id="table-div">
+							<table width="100%" border="0" cellpadding="0" cellspacing="0" id="rates-datatable" class="pretty searchtabel customdatatable">
+							
+								<thead>
+								<tr class="ac-trHd serchtr">
+									<th class="padng10"><s:text name="txt.planrates.ratingarea"></s:text></th>
+									<th class="padng10"><s:text name="txt.planrates.tobacco"></s:text></th>
+									<th class="padng10"><s:text name="txt.planrates.age"></s:text></th>
+									<th class="padng10"><s:text name="txt.planrates.rate"></s:text></th>
+								</tr>
+								</thead>
+								<tbody>
+									<s:iterator value="planRates" var="planVO" status="itStatus">
+										<tr>
+											<td class="padng10"><s:property value="%{getLookupDisplay('RatingArea',#planVO.ratingArea)}" /></td>
+											<td class="padng10"><s:property value="%{getLookupDisplay('Tobacco',#planVO.tobaccoPreference)}" /></td>
+											<td class="padng10"><s:property value="%{getLookupDisplay('Age',#planVO.age)}" /></td>
+											<td class="padng10">$<s:property value="%{#planVO.rate}" /></td>			
+										</tr>
+									</s:iterator>
+								</tbody>
+							</table>
+
+						</div>
+						</div>
+					</div>
+						
+					<h2 class="benefitsTab">
+						<s:text name="txt.planmanage.benefits"></s:text>
+					</h2>
+					<div>
+						<h2>
+							<img class='plan-centeredLoading' src='<s:property value='rootPath'/>static/custom/images/loader.gif' />
+						</h2>
+					</div>
+				</div>
+
+				<div class="clearfix"></div>
+			</div>
+			</s:form>
+			<div class="clearfix"></div>
+		</div>
+
+	
+		<div class="clearfix"></div>
+
+	</div>
+</div>
+
+<script type="text/javascript" src="<s:property value='rootPath'/>static/custom/js/script.js?v=<s:property value='buildId'/>"></script>
+<script type="text/javascript" src="<s:property value='rootPath'/>static/custom/js/responsiveTabs.js?v=<s:property value='buildId'/>"></script>
+
+<script>
+	$(document).ready(function() {
+		<s:if test="!hasMessages()">
+				 if($("#result").length){
+					$('html,body').animate({scrollTop: $("#result").offset().top}, 'slow');
+				 } 
+		</s:if>
+		
+		RESPONSIVEUI.responsiveTabs();
+		$(".responsive-tabs").show();
+	})
+
+	
+</script>
+<script>
+	var fileName = "<s:property value='plan.carrierId'/>_<s:property value='plan.planName'></s:property>_Rates_"+getFormattedCurrentDate();
+	$(document).ready(function() {
+		$('img[alt="Tooltip"]').tooltip();
+		$(document).on("click", "#tablist1-tab1", function() {
+			$(".ratesTab").hide()
+			$(".profileTab").after("<div><h2><img class='plan-centeredLoading' src='<s:property value='rootPath'/>static/custom/images/loader.gif' /></h2></div>");
+			return setActionAndSubmit("id_form_plan_rates", "showManage");
+			window.location="planmgmt/plan-rates_showManage"
+		});
+		$(document).on("click", "#tablist1-tab3", function() {
+		return setActionAndSubmit("id_form_plan_rates", "showBenefits");
+			window.location="planmgmt/plan-rates_showBenefits"
+		});
+		
+		var dontSort = [];
+						$('#rates-datatable thead th').each(function() {
+							if ($(this).hasClass('no_sort')) {
+								dontSort.push({
+									"bSortable" : false
+								});
+							} else {
+								dontSort.push(null);
+							}
+						});
+						$("#rates-datatable").addClass("cell-border");
+						$("#rates-datatable").addClass("display");
+						
+						var datatable = $('#rates-datatable')
+								.dataTable(
+										{
+											"aaSorting" : [],
+											"sPaginationType" : "full_numbers",
+											"sDom" : 'TC<"clear">lfrtip',
+											"iDisplayLength": 20,
+											"lengthMenu": [ [20, 100, 1000, -1], [20, 100, 1000, "All"] ],
+											"oColVis" : {
+												"aiExclude" : []
+											},
+											"oTableTools" : {
+												"sSwfPath" : '<s:property value='rootPath'/>static/custom/swf/copy_csv_xls_pdf.swf',
+												"aButtons": [
+							                        {
+							                            'sExtends': 'xls',
+							                            "sFileName": fileName+".xls",
+							                            "oSelectorOpts": { filter: 'applied', order: 'current' },
+							                        },
+							                        {
+							                            'sExtends': 'pdf',
+							                            "sTitle": fileName,
+							                            "oSelectorOpts": { filter: 'applied', order: 'current' },
+							                        }
+												]
+											},
+											"oLanguage": {
+			         							 "sZeroRecords":'<img style="width: 33px;" src="<s:property value='rootPath'/>static/custom/images/alert.png"/> <s:text name='msg.global.no_data_found'/>'
+			      										 },
+											 "language": {
+										      "emptyTable": '<img style="width: 33px;" src="<s:property value='rootPath'/>static/custom/images/alert.png"/> <s:text name='msg.global.no_data_found'/>'
+										    },
+										    "columnDefs": [
+          										{ type: 'currency', targets: 3 }
+        									]
+											
+										});
+										
+		<s:if test="searched == true">
+				$(".plan-table").show();
+				$("#rates-datatable_filter input[type=search]").attr("id","search-filed");
+		</s:if>
+		<s:else>
+			$(".plan-table").hide();
+		</s:else>
+	});
+</script>
+<%@include file="/jsp/includes/footer.jsp"%>
+

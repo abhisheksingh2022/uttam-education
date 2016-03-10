@@ -1,0 +1,18 @@
+package com.hixapi.pmp.api.modeltranslator;
+
+import com.hixapi.pmp.api.model.RoleVO;
+import com.hixapi.pmp.entity.model.RoleMstr;
+
+public class RoleModelTranslator {
+
+	
+	public RoleVO initializeRoleVO(RoleMstr role) {
+		//Initialize the VO fields from the entity
+		RoleVO vo = new RoleVO();
+		vo.setRoleCode(role.getRoleTypeCd());
+		vo.setRoleId(role.getRoleId());
+		vo.setRoleName(role.getRoleDescTxt());
+		vo.setRoleHeaderName(role.getReqHeaderNm());
+		return vo;
+	}
+}

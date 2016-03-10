@@ -1,0 +1,33 @@
+/**
+ * 
+ */
+package com.hixapi.pmp.service.account;
+
+import java.util.List;
+
+import com.hixapi.framework.common.exception.BusinessServiceException;
+import com.hixapi.framework.service.IService;
+import com.hixapi.pmp.api.model.AttachmentVO;
+import com.hixapi.pmp.api.model.NotificationVO;
+import com.hixapi.pmp.api.model.criteria.NotificationSearchCriteria;
+
+/**
+ * @author admin
+ *
+ */
+public interface NotificationService extends IService {
+
+	List<NotificationVO> retrieveNotificationsForUser(NotificationSearchCriteria criteria) throws BusinessServiceException;
+
+	void sendNotification(NotificationVO vo) throws BusinessServiceException;
+
+	void updateNotification(NotificationVO vo) throws BusinessServiceException;
+
+	NotificationVO retrieveNotificationDetail(Long id) throws BusinessServiceException;
+
+	void deleteNotification(NotificationVO vo) throws BusinessServiceException;
+
+	void saveAttachment(AttachmentVO vo) throws BusinessServiceException;
+
+	void deleteAttachment(AttachmentVO vo) throws BusinessServiceException;
+}

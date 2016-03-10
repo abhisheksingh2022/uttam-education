@@ -1,0 +1,21 @@
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<!--                 	<div class="leftcon-bg"> -->
+                    	<h2><s:text name="txt.notiofication.recentnotification"/></h2>
+                    	<br>
+                    	<br>
+                    	<s:if test="recentNotifications.size() == 0">
+                    	<div style="height: 150px;">
+                    	 <img class="nodataFoundIcon" src="<s:property value='contextRoot'/>static/custom/images/alert.png" />
+                    	 <p style="text-align: center;"> <s:text name="msg.notiofication.nodatafound"/></p>
+                    	 </div>
+                    	</s:if>
+                    	<ul>
+                    	<s:if test="recentNotifications.size() > 0">
+                    	<s:iterator value="recentNotifications" var="notif"
+										status="itStatus">
+                        	<li><a href="#"><s:property value="message"/></a></li>
+                        	</s:iterator>
+                        	</s:if>
+                        </ul>
+                    <div class="clearfix"></div>    
+<!--                     </div> -->

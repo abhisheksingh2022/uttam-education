@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+
+	<constant name="struts.devMode" value="false" />
+	<constant name="struts.multipart.maxSize" value="15000000" />
+	<constant name="struts.ui.theme" value="simple" />
+	<!-- Set encoding to UTF-8, default is ISO-8859-1 -->
+	<constant name="struts.i18n.encoding" value="UTF-8" />
+	<constant name="struts.action.excludePattern" value=".*/static/.*" />
+	
+	<constant name="struts.custom.i18n.resources" value="com.hixapi.framework.common.i18n.DBResourceBundle" />
+	
+	<package name="hixapi-basic" extends="struts-default" namespace="/" abstract="yes">
+		 <result-types>
+            <result-type name="json" class="org.apache.struts2.json.JSONResult"/>
+            <result-type name="actionRedirect" class="com.hixapi.web.framework.struts.ActionRedirectResult" />
+            <result-type name="flashResult" class="com.hixapi.web.framework.struts.FlashResult" />
+        </result-types>
+		<interceptors>
+			<interceptor name="hixI18n" class="com.hixapi.web.framework.struts.HIXI18nInterceptor" />
+			<interceptor name="root" class="com.hixapi.web.framework.struts.RootInterceptor" />
+			<interceptor name="performance" class="com.hixapi.web.framework.struts.PerformanceInterceptor" />
+			<interceptor name="json" class="org.apache.struts2.json.JSONInterceptor" />
+			<interceptor name="security" class="com.hixapi.web.framework.struts.SecurityInterceptor" />
+			<interceptor name="flash" class="com.hixapi.web.framework.struts.FlashInterceptor"/>
+			<interceptor name="escapeParam" class="com.hixapi.web.framework.struts.ParameterSanitizerInterceptor"/>
+			<interceptor name="token" class="com.hixapi.web.framework.struts.HIXTokenInterceptor"/>
+			
+			<interceptor-stack name="hixStack">
+				<interceptor-ref name="root" />
+				<interceptor-ref name="performance" />
+				<interceptor-ref name="security" />
+				<interceptor-ref name="flash">
+        			<param name="operation">Retrieve</param>
+        		</interceptor-ref>
+				<interceptor-ref name="alias" />
+				<interceptor-ref name="servletConfig" />
+				<interceptor-ref name="hixI18n" />
+				<interceptor-ref name="prepare" />
+				<interceptor-ref name="scopedModelDriven" />
+				<interceptor-ref name="modelDriven" />
+				<interceptor-ref name="fileUpload">
+					<param name="maximumSize">10000000</param>
+				</interceptor-ref>
+				<interceptor-ref name="staticParams" />
+				<interceptor-ref name="actionMappingParams" />
+				<interceptor-ref name="params">
+					<param name="excludeParams">^action:.*,^method:.*</param>
+				</interceptor-ref>
+				<interceptor-ref name="token"/>
+				<interceptor-ref name="validation">
+					<param name="excludeMethods">input,flash,back,cancel,browse,exit</param>
+				</interceptor-ref>
+				<interceptor-ref name="workflow">
+					<param name="excludeMethods">input,back,cancel,browse</param>
+					<param name="inputResultName">flash</param>
+				</interceptor-ref>
+				<interceptor-ref name="debugging" />
+				
+				<interceptor-ref name="json" />
+				
+			</interceptor-stack>
+		</interceptors>
+
+		<default-interceptor-ref name="hixStack" />
+		<global-results>
+			<result name="error" type="flashResult" >/error</result>
+			<result name="asynchError">/jsp/asynchError.jsp</result>
+			<result name="frameworkError">/jsp/frameworkError.jsp</result>
+			<result name="unauthorized" type="flashResult" >/unauthorized</result>
+			<result name="notfound" >/jsp/notfound.jsp</result>
+		</global-results>
+		
+
+
+		<action name="error" class="com.hixapi.web.framework.struts.ErrorAction" method="input">
+			<result name="page">/jsp/error.jsp</result>
+		</action>
+		<action name="unauthorized" class="com.hixapi.web.framework.struts.AuthorizationErrorAction" method="input">
+			<result name="page">/jsp/unauthorized.jsp</result>
+		</action>
+	</package>
+</struts>

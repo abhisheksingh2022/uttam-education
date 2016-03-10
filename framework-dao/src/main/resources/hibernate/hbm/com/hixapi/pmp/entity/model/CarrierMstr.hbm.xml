@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.CarrierMstr" table="CARRIER_MSTR" optimistic-lock="version">
+        <id name="carrierIdNbr" type="java.lang.Long">
+            <column name="CARRIER_ID_NBR" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_CARRIER_MSTR_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="address" class="com.hixapi.pmp.entity.model.Address" fetch="join" cascade = "all">
+            <column name="CONTACT_ADDR_ID" precision="12" scale="0" />
+        </many-to-one>
+        <property name="carrierId" type="string">
+            <column name="CARRIER_ID" length="5" not-null="true" />
+        </property>
+        <property name="stateCd" type="string">
+            <column name="STATE_CD" length="2" />
+        </property>
+        <property name="carrierName" type="string">
+            <column name="CARRIER_NAME" length="200" not-null="true" />
+        </property>
+        <property name="tinIdNbr" type="string">
+            <column name="TIN_ID_NBR" length="30" />
+        </property>
+        <property name="naicCmpnyCd" type="string">
+            <column name="NAIC_CMPNY_CD" length="10" />
+        </property>
+        <property name="naicGrpCd" type="string">
+            <column name="NAIC_GRP_CD" length="10" />
+        </property>
+        <property name="primaryUrl" type="string">
+            <column name="PRIMARY_URL" length="500" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+        <!-- <property name="logoAttchmntBlob" type="blob">
+            <column name="LOGO_ATTCHMNT_BLOB" />
+        </property> -->
+        <property name="contactPhoneNbr" type="string">
+            <column name="CONTACT_PHONE_NBR" length="15" />
+        </property>
+        <!-- <set name="carrierAdminInfos" table="CARRIER_ADMIN_INFO" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="CARRIER_ID_NBR" precision="12" scale="0" not-null="true" />
+            </key>
+            <one-to-many class="com.hixapi.pmp.entity.model.CarrierAdminInfo" />
+        </set>
+        <set name="carrierUsers" table="CARRIER_USER" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="CARRIER_ID_NBR" precision="12" scale="0" not-null="true" />
+            </key>
+            <one-to-many class="com.hixapi.pmp.entity.model.CarrierUser" />
+        </set> -->
+    </class>
+</hibernate-mapping>

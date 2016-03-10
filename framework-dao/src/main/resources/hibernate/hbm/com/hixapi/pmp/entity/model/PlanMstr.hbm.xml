@@ -1,0 +1,178 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Jul 17, 2015 4:08:10 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.hixapi.pmp.entity.model.PlanMstr" table="PLAN_MSTR" optimistic-lock="version">
+        <id name="planMstrId" type="java.lang.Long">
+            <column name="PLAN_MSTR_ID" precision="12" scale="0" />
+            <generator class="sequence">
+        		<param name="sequence">PMP_PLAN_MSTR_SEQ</param>
+    		</generator>
+        </id>
+        <many-to-one name="carrierAdminInfo" class="com.hixapi.pmp.entity.model.CarrierAdminInfo"  fetch="join">
+            <column name="ISSUER_PK" precision="12" scale="0" not-null="true" />
+        </many-to-one>
+        <property name="planHiosId" type="string">
+            <column name="PLAN_HIOS_ID" length="32" not-null="true" />
+        </property>
+         <property name="productId" type="string">
+            <column name="PRODUCT_ID" length="32"  />
+        </property>
+        <property name="dntlOnlyPlanFlg" type="java.lang.Character">
+            <column name="DNTL_ONLY_PLAN_FLG" length="1" not-null="false" />
+        </property>
+        <property name="planMktngName" type="string">
+            <column name="PLAN_MKTNG_NAME" length="30" not-null="true" />
+        </property>
+       
+        <property name="hpid" type="string">
+            <column name="HPID" length="5" />
+        </property>
+         <property name="deletedIndicator" type="string">
+            <column name="DELETED_IND" length="1" />
+        </property>
+        <property name="ntwrkId" type="string">
+            <column name="NTWRK_ID" length="10" not-null="false"  />
+        </property>
+        <property name="svcAreaId" type="string">
+            <column name="SVC_AREA_ID" length="10" not-null="false"  />
+        </property>
+        <property name="frmltryId" type="string">
+            <column name="FRMLTRY_ID" length="15" not-null="false"  />
+        </property>
+        <property name="newPlanFlg" type="java.lang.Character">
+            <column name="NEW_PLAN_FLG" length="1" not-null="false"  />
+        </property>
+        <property name="planTypCd" type="string">
+            <column name="PLAN_TYP_CD" length="5" not-null="false"  />
+        </property>
+        <property name="lvlCvgCd" type="java.lang.Character">
+            <column name="LVL_CVG_CD" length="1" not-null="false"  />
+        </property>
+        <property name="unqPlanFlg" type="java.lang.Character">
+            <column name="UNQ_PLAN_FLG" length="1" not-null="false"  />
+        </property>
+        <property name="qhpCd" type="string">
+            <column name="QHP_CD" length="30" not-null="false"  />
+        </property>
+        <property name="noticePrgncyFlg" type="java.lang.Character">
+            <column name="NOTICE_PRGNCY_FLG" length="1" not-null="false"  />
+        </property>
+        <property name="rfrlRqdForSpecialistFlg" type="java.lang.Character">
+            <column name="RFRL_RQD_FOR_SPECIALIST_FLG" length="1" not-null="false"  />
+        </property>
+        <property name="specialistRequiringRfrlTxt" type="string">
+            <column name="SPECIALIST_REQUIRING_RFRL_TXT" length="30" />
+        </property>
+        <property name="planLvlExclTxt" type="string">
+            <column name="PLAN_LVL_EXCL_TXT" length="5" />
+        </property>
+        <property name="limitedCsvEstAdvPymnt" type="string">
+            <column name="LIMITED_CSV_EST_ADV_PYMNT" length="10" />
+        </property>
+        <property name="compositeRatingFlg" type="java.lang.Character">
+            <column name="COMPOSITE_RATING_FLG" length="1" not-null="false"  />
+        </property>
+        <property name="lkChldOnlyOffrngCd" type="string">
+            <column name="LK_CHLD_ONLY_OFFRNG_CD" length="3" not-null="false"  />
+        </property>
+        <property name="chldOnlyPlanId" type="string">
+            <column name="CHLD_ONLY_PLAN_ID" length="32" />
+        </property>
+        <property name="tobaccoWellnessFlg" type="java.lang.Character">
+            <column name="TOBACCO_WELLNESS_FLG" length="1" not-null="false"  />
+        </property>
+        <property name="disMgmtPgmOffrdTxt" type="string">
+            <column name="DIS_MGMT_PGM_OFFRD_TXT" length="200" />
+        </property>
+        <property name="ehbPercent" type="big_decimal">
+            <column name="EHB_PERCENT" precision="5" not-null="false"  />
+        </property>
+        <property name="ehbApptmnt" type="string">
+            <column name="EHB_APPTMNT" length="45" />
+        </property>
+        <property name="guranteedRateFlg" type="java.lang.Character">
+            <column name="GURANTEED_RATE_FLG" length="1" />
+        </property>
+        <property name="maxCoinsNbr" type="string">
+            <column name="MAX_COINS_NBR" length="10" />
+        </property>
+        <property name="maxDaysChargingCopayNbr" type="string">
+            <column name="MAX_DAYS_CHARGING_COPAY_NBR" length="10" />
+        </property>
+        <property name="beginCostSharingAfetrVisitNbr" type="string">
+            <column name="BEGIN_COST_SHARING_AFETR_VISIT_NBR" length="10" />
+        </property>
+        <property name="beginCoinsAfterCopaysNbr" type="string">
+            <column name="BEGIN_COINS_AFTER_COPAYS_NBR" length="10" />
+        </property>
+        <property name="effDt" type="date">
+            <column name="EFF_DT" length="10" not-null="false"  />
+        </property>
+        <property name="expDt" type="date">
+            <column name="EXP_DT" length="10" />
+        </property>
+        <property name="outOfCntryCvgFlg" type="java.lang.Character">
+            <column name="OUT_OF_CNTRY_CVG_FLG" length="1" not-null="false"  />
+        </property>
+        <property name="outOfCntryCvgDescTxt" type="string">
+            <column name="OUT_OF_CNTRY_CVG_DESC_TXT" length="200" />
+        </property>
+        <property name="outOfSvcAreaCvgFlg" type="java.lang.Character">
+            <column name="OUT_OF_SVC_AREA_CVG_FLG" length="1" not-null="false"  />
+        </property>
+        <property name="outOfSvcAreaCvgDescTxt" type="string">
+            <column name="OUT_OF_SVC_AREA_CVG_DESC_TXT" length="200" />
+        </property>
+        <property name="nationalNtwrkFlg" type="java.lang.Character">
+            <column name="NATIONAL_NTWRK_FLG" length="1" not-null="false"  />
+        </property>
+        <property name="enrollPymntUrlTxt" type="string">
+            <column name="ENROLL_PYMNT_URL_TXT" length="2000" />
+        </property>
+        <property name="qltyRating" type="java.lang.Short">
+            <column name="QLTY_RATING" />
+        </property>
+        <property name="cvgYr" type="java.lang.Short">
+            <column name="CVG_YR" />
+        </property>
+        <property name="publicDt" type="date">
+            <column name="PUBLIC_DT" length="10" />
+        </property>
+        <property name="crtdDt" type="java.util.Date">
+            <column name="CRTD_DT" length="26" not-null="true" />
+        </property>
+        <property name="createUsrId" type="string">
+            <column name="CREATE_USR_ID" length="30" not-null="true" />
+        </property>
+        <property name="updtDt" type="java.util.Date">
+            <column name="UPDT_DT" length="26" />
+        </property>
+        <property name="updtUserId" type="string">
+            <column name="UPDT_USER_ID" length="30" />
+        </property>
+        <property name="carrierUpdatesAllowedInd" type="string">
+            <column name="CARRIER_UPDATE_ALLOWED_IND" length="1" />
+        </property>
+        <set name="planBenefitMstrs" table="PLAN_BENEFIT_MSTR" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="PLAN_MSTR_ID" precision="12" scale="0" not-null="true" />
+            </key>
+            <one-to-many class="com.hixapi.pmp.entity.model.PlanBenefitMstr" />
+        </set>
+        <set name="planLifecycles" table="PLAN_LIFECYCLE" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="PLAN_MSTR_ID" precision="12" scale="0" not-null="true" />
+            </key>
+            <one-to-many class="com.hixapi.pmp.entity.model.PlanLifecycle" />
+        </set>
+        <set name="planUploadHists" table="PLAN_UPLOAD_HIST" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="PLAN_MSTR_ID" precision="12" scale="0" not-null="true" />
+            </key>
+            <one-to-many class="com.hixapi.pmp.entity.model.PlanUploadHist" />
+        </set>
+       
+    </class>
+</hibernate-mapping>
