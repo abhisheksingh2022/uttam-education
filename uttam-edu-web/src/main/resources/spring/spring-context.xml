@@ -20,7 +20,6 @@
 		<property name="services">
 			<map key-type="java.lang.Class" value-type="com.uttam.framework.service.IService">
 				<entry key="com.uttam.framework.common.env.IEnvironmentProvider" value-ref="dbEnvironmentProvider" />
-				<entry key="com.uttam.education.service.user.UserService" value-ref="userService" />
 				<entry key="com.uttam.framework.common.i18n.IResourceBundleDao" value-ref="resourceBundleDao" />
 				<entry key="com.uttam.education.service.admin.SystemAdministrationService" value-ref="systemAdministrationService" />
 			</map>

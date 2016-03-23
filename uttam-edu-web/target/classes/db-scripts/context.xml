@@ -29,5 +29,5 @@
     <!--
     <Valve className="org.apache.catalina.valves.CometConnectionManagerValve" />
     -->
-	<ResourceLink name="jdbc/cdsdb" global="jdbc/cdsdb" type="javax.sql.DataSource" />
+	<ResourceLink name="jdbc/edudb" global="jdbc/edudb" type="javax.sql.DataSource" />
 </Context>

@@ -5,13 +5,13 @@ import com.uttam.framework.service.IService;
 /**
  * Environment provider interface
  * 
- * @author admin
+ * @author Abhishek
  *
  */
 public interface IEnvironmentProvider extends IService{
 	
 	/**
-	 * Reload the properties. useful for automatic reload of propeties stored in
+	 * Reload the properties. useful for automatic reload of properties stored in
 	 * the singleton.
 	 */
 	public void reload();

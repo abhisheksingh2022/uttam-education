@@ -23,7 +23,7 @@
     <welcome-file>default.jsp</welcome-file>
   </welcome-file-list>
   <listener>
-    <listener-class>com.hixapi.pmp.web.servlet.HIXAPIContextInitializer</listener-class>
+    <listener-class>com.uttam.education.web.servlet.FrameworkContextInitializer</listener-class>
   </listener>
   <error-page>
     <error-code>500</error-code>
@@ -33,20 +33,20 @@
     <error-code>404</error-code>
     <location>/jsp/notfound.jsp</location>
   </error-page>
-  <resource-ref>
-    <description>HixDB Datasource</description>
+ <!--  <resource-ref>
+    <description>EducationDB Datasource</description>
     <res-ref-name>jdbc/pmpdb</res-ref-name>
     <res-type>javax.sql.DataSource</res-type>
     <res-auth>Container</res-auth>
     <res-sharing-scope>Shareable</res-sharing-scope>
-  </resource-ref>
+  </resource-ref> -->
   <filter>
     <display-name>struts2</display-name>
     <filter-name>struts2</filter-name>
     <filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
     <init-param>
       <param-name>config</param-name>
-      <param-value>struts-default.xml,struts-plugin.xml,struts.xml,struts-pmp.xml</param-value>
+      <param-value>struts-default.xml,struts-plugin.xml,struts.xml,struts-education.xml</param-value>
     </init-param>
   </filter>
   <filter-mapping>
