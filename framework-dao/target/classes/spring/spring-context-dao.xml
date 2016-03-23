@@ -35,7 +35,7 @@
 	</bean>
 
 
-	<jee:jndi-lookup id="hixDataSource" jndi-name="jdbc/pmpdb" expected-type="javax.sql.DataSource" />
+	<jee:jndi-lookup id="educationDataSource" jndi-name="jdbc/edudb" expected-type="javax.sql.DataSource" />
 
 
 	<!--Bean settings for session factory starts -->

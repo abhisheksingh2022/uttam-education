@@ -24,44 +24,9 @@
 		<property name="hibernate.validator.apply_to_ddl">false</property>
 		<property name="hibernate.validator.autoregister_listeners">false</property>
 
-		<mapping resource="/hibernate/hbm/common/LookUpManager.hbm.xml" />
+		<!-- <mapping resource="/hibernate/hbm/common/LookUpManager.hbm.xml" />
 
-		<!-- <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Attchmnt.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/BasePlanDtl.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/BnftInfo.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/CustSvc.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/DrgLst.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/DrgTierTyp.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/FunctionMstr.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/FunctionRole.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Issuer.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/LoginHist.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Msg.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/MsgAttchmnt.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/NotifAlrt.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/NotifDtl.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/NotifGrp.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Ntwrk.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PlanHist.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PmpAdr.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PmpGrp.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PmpUsr.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PmpUsrContact.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PrscprptnDrg.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PrscrptnDrgMstr.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/RateData.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/RateMstr.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Rcpnt.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/RoleMstr.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Task.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/TaskMapping.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/VarPlanDtl.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/VarPlanDtlScenarioCpCi.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/VarPlanDtlScenarioIo.hbm.xml" 
-			/> <mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/PmpUsrGrp.hbm.xml" 
-			/> -->
-
-		<!-- Modified Mapping Files configuration -->
+		Modified Mapping Files configuration
 
 		<mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/Address.hbm.xml" />
 		<mapping
@@ -124,7 +89,7 @@
 			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/UsrLoginHistory.hbm.xml" />
 		<mapping resource="/hibernate/hbm/com/hixapi/pmp/entity/model/WorkItem.hbm.xml" />
 
-		<!-- prescreen related ,some of them are above -->
+		prescreen related ,some of them are above
 
 		<mapping
 			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/EligLkupFplAmounts.hbm.xml" />
@@ -135,9 +100,7 @@
 			<mapping
 			resource="/hibernate/hbm/com/hixapi/pmp/entity/model/EligLkupApplicablePercentageRange.hbm.xml" />
 
-
-
-	</session-factory>
+ -->	</session-factory>
 
 
 </hibernate-configuration>
