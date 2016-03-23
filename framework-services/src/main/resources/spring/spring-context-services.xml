@@ -25,9 +25,9 @@
 	<aop:config>
 		<aop:advisor pointcut="execution(* com.uttam.education.service..*.*(..))" advice-ref="pmpLocalTxAdvice" />
 	</aop:config>
-	<aop:config>
+	<!-- <aop:config>
 		<aop:advisor pointcut="execution(* com.uttam.education.service.user.UserService*.*(..))" advice-ref="userServiceImplRetrieveUserByLoginIdTxnAdvice" />
-	</aop:config>
+	</aop:config> -->
 	
 	<tx:advice id="pmpLocalTxAdvice" transaction-manager="transactionManager">
 		<tx:attributes>
