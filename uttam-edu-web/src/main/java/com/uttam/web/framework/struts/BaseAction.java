@@ -265,13 +265,13 @@ public abstract class BaseAction extends ActionSupport implements RequestAware, 
 	 *
 	 * @return the lookups
 	 */
-	public Map<String, List<LookupBean>> getLookups() {
+	/*public Map<String, List<LookupBean>> getLookups() {
 		return LookupService.getLocaleSpecificLookups(ActionContext.getContext().getLocale());
 	}
 
 	public Map<String, List<LookupBean>> getLookups(Locale l) {
 		return LookupService.getLocaleSpecificLookups(l);
-	}
+	}*/
 
 	/**
 	 * @param arg0
@@ -530,9 +530,9 @@ public abstract class BaseAction extends ActionSupport implements RequestAware, 
 	 *
 	 * @return the lookup display
 	 */
-	public String getLookupDisplay(String lookupName, String key) {
+	/*public String getLookupDisplay(String lookupName, String key) {
 		return LookupService.getLookupDisplayValue(ActionContext.getContext().getLocale(), lookupName, key);
-	}
+	}*/
 
 	/**
 	 * Gets the sanitized text for rendering user messages

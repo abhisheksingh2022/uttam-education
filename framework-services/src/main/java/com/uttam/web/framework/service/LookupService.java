@@ -7,7 +7,7 @@ import java.util.Map;
 import com.uttam.framework.common.model.LookupBean;
 import com.uttam.framework.dao.LookupManager;
 
-public class LookupService {
+public class LookupService {/*
 
 	public static void initialize() {
 		LookupManager.loadLookups();
@@ -21,4 +21,4 @@ public class LookupService {
 	public static String getLookupDisplayValue(Locale locale, String lookupName, String key) {
 		return LookupManager.getLookupDisplayValue(locale, lookupName, key);
 	}
-}
+*/}

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<beans xmlns="http://www.springframework.org/schema/beans" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:mongo="http://www.springframework.org/schema/data/mongo"
 	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
 	xmlns:util="http://www.springframework.org/schema/util"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans
@@ -12,39 +14,61 @@
 	http://www.springframework.org/schema/tx
 	http://www.springframework.org/schema/tx/spring-tx-4.1.xsd
 	http://www.springframework.org/schema/util 
-	http://www.springframework.org/schema/util/spring-util.xsd">
+	http://www.springframework.org/schema/util/spring-util.xsd
+	http://www.springframework.org/schema/data/mongo 
+	http://www.springframework.org/schema/data/mongo/spring-mongo-1.5.xsd">
 
 
 
-	<bean id="dbEnvironmentProvider" class="com.uttam.framework.dao.env.DatabaseEnvProvider" init-method="reload">
+	<!-- <bean id="dbEnvironmentProvider" class="com.uttam.framework.dao.env.DatabaseEnvProvider" init-method="reload">
 		<property name="dataSource" ref="hixDataSource" />
 		<property name="applicationId">
 			<value>${application.systemid}</value>
 		</property>
-	</bean>
+	</bean> -->
 
+	<!-- <jee:jndi-lookup id="educationDataSource" jndi-name="jdbc/edudb" expected-type="javax.sql.DataSource" /> -->
+
+	<mongo:mongo host="localhost" port="27017" id="mongo">
+	    <mongo:options connections-per-host="8"
+	                   threads-allowed-to-block-for-connection-multiplier="4"
+	                   connect-timeout="1000"
+	                   max-wait-time="1500"
+	                   auto-connect-retry="true"
+	                   socket-keep-alive="true"
+	                   socket-timeout="1500"
+	                   slave-ok="true"
+	                   write-number="1"
+	                   write-timeout="0"
+	                   write-fsync="true" />
+	  </mongo:mongo>
+	<mongo:db-factory id="mongoDbFactory" dbname="educationDB" mongo-ref="mongo"/>
+	
+	<bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
+		<constructor-arg name="mongoDbFactory" ref="mongoDbFactory" />
+	</bean>
+	
+	<bean id="baseDao" class="com.uttam.framework.dao.impl.BaseDAOImpl">
+		<property name="mongoOps" ref="mongoTemplate"/>
+	</bean>
+	
 	<bean id="resourceBundleDao" class="com.uttam.framework.dao.i18n.ResourceBundleDAO">
-		<property name="template" ref="simpleJdbcTemplate" />
+		<property name="mongoOps" ref="mongoTemplate"/>
 		<property name="applicationId">
 			<value>${application.systemid}</value>
 		</property>
 	</bean>
-
-	<bean class="org.springframework.jdbc.core.JdbcTemplate" id="simpleJdbcTemplate">
-		<property name="dataSource" ref="hixDataSource"></property>
+	<bean id="systemAdinistrationDAO" class="com.uttam.education.dao.admin.impl.SystemAdministrationDAOImpl">
+		<property name="mongoOps" ref="mongoTemplate"/>
 	</bean>
-
-
-	<jee:jndi-lookup id="educationDataSource" jndi-name="jdbc/edudb" expected-type="javax.sql.DataSource" />
-
-
+	
 	<!--Bean settings for session factory starts -->
-	<bean id="hibernateTemplate" class="org.springframework.orm.hibernate4.HibernateTemplate">
+	<!-- <bean id="hibernateTemplate" class="org.springframework.orm.hibernate4.HibernateTemplate">
 		<property name="sessionFactory">
 			<ref bean="sessionFactory" />
 		</property>
 	</bean>
-	<!-- Configure Hibernate 4 Session Facotry -->
+	Configure Hibernate 4 Session Facotry
 	<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
 
 		<property name="dataSource">
@@ -57,12 +81,9 @@
 		<property name="entityInterceptor">
 			<bean class="com.uttam.framework.dao.interceptor.AuditLogInterceptor" />
 		</property>
-	</bean>
+	</bean> -->
 
-	
-
-
-
+<!-- 
 	<bean id="userDAO" class="com.uttam.education.dao.user.impl.UserDAOImpl">
 		<property name="sessionFactory" ref="sessionFactory" />
 		<property name="carrierDAO" ref="carrierDAO" />
@@ -79,10 +100,7 @@
 	
 	<bean id="queryUtilDAO" class="com.uttam.framework.dao.helper.QueryUtilDAO">
 		<property name="sessionFactory" ref="sessionFactory" />
-	</bean>
+	</bean> -->
 	
-	<bean id="systemAdinistrationDAO" class="com.uttam.education.dao.admin.impl.SystemAdministrationDAOImpl">
-		<property name="sessionFactory" ref="sessionFactory" />
-	</bean>
 
 </beans>

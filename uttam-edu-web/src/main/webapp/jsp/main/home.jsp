@@ -6,14 +6,14 @@
         	<div class="row">
             	<div id="form_block_id" class="body-bg">
             	<div class="body-leftbg">
-<div class="leftcon-bg" id="notifications">
-<img class="centeredLoading" src="<s:property value='contextRoot'/>static/custom/images/small_loader.gif" />
-</div>
-
-<div  class="leftcon-bg mytask" id="workItems">
-<img class="centeredLoading" src="<s:property value='contextRoot'/>static/custom/images/small_loader.gif" />
-</div>         
-</div>         
+					<div class="leftcon-bg" id="notifications">
+						<img class="centeredLoading" src="<s:property value='contextRoot'/>static/custom/images/small_loader.gif" />
+					</div>
+					
+					<div  class="leftcon-bg mytask" id="workItems">
+						<img class="centeredLoading" src="<s:property value='contextRoot'/>static/custom/images/small_loader.gif" />
+					</div>         
+				</div>         
                 <div class="rightcon-bg">
                 	<h2><s:text name="msg.homepage.welcome"/></h2>
                 	<div class="home-logo" align="center">

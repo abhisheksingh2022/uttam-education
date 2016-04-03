@@ -32,27 +32,27 @@ import com.uttam.framework.service.ServiceLocator;
  * lookups.properties should have a corresponding named query in LookupManager.hbm.xml
  * 
  */
-public class LookupManager {
+public class LookupManager {/*
 
-	/** The lookups. */
+	*//** The lookups. *//*
 	private static Map<String, List<LookupBean>> lookups;
 
-	/** The lookup ids. */
+	*//** The lookup ids. *//*
 	private static List<String> lookupIds;
 
-	/** The locale maps. */
+	*//** The locale maps. *//*
 	private static Map<String, Map<String, List<LookupBean>>> localeMaps;
 
-	/** The Constant LOG. */
+	*//** The Constant LOG. *//*
 	private static final Logger LOG = LogManager.getLogger(LookupManager.class);
 	
 
-	/**
+	*//**
 	 * This is load method for the lookup manager.. This is a costly invocation. Should be used only when there is a change
 	 * in data in DB and the change is to be reflected
 	 * 
 	 * @author admin May 9, 2009
-	 */
+	 *//*
 	public static void loadLookups() {
 		Session session = null;
 		try {
@@ -90,9 +90,9 @@ public class LookupManager {
 		}
 	}
 
-	/**
+	*//**
 	 * Load lookup names.
-	 */
+	 *//*
 	private static void loadLookupNames() {
 		lookupIds = new ArrayList<String>();
 		BufferedInputStream str = null;
@@ -119,23 +119,23 @@ public class LookupManager {
 		}
 	}
 
-	/**
+	*//**
 	 * Gets the lookups.
 	 * 
 	 * @return the lookups
-	 */
+	 *//*
 	public static Map<String, List<LookupBean>> getLookups() {
 		return new HashMap<String, List<LookupBean>> (lookups);
 	}
 
-	/**
+	*//**
 	 * Gets the lookup.
 	 * 
 	 * @param lookupId
 	 *            the lookup id
 	 * 
 	 * @return the lookup
-	 */
+	 *//*
 	public static List<LookupBean> getLookup(String lookupId) {
 		final List<LookupBean> list = lookups.get(lookupId);
 		if(list != null){
@@ -144,11 +144,11 @@ public class LookupManager {
 		return Collections.emptyList();
 	}
 
-	/**
+	*//**
 	 * Gets the locale sorted lookups.
 	 * 
 	 * @return the locale sorted lookups
-	 */
+	 *//*
 	private static Map<String, Map<String, List<LookupBean>>> getLocaleSortedLookups() {
 		if (localeMaps != null) {
 			return new HashMap<String, Map<String, List<LookupBean>>>(localeMaps);
@@ -182,19 +182,19 @@ public class LookupManager {
 		return localeMaps;
 	}
 
-	/**
+	*//**
 	 * Gets the locale specific lookups.
 	 * 
 	 * @param locale
 	 *            the locale
 	 * 
 	 * @return the locale specific lookups
-	 */
+	 *//*
 	public static Map<String, List<LookupBean>> getLocaleSpecificLookups(Locale locale) {
 		return localeMaps.get(locale.toString());
 	}
 
-	/**
+	*//**
 	 * Gets the locale specific lookups.
 	 * 
 	 * @param locale
@@ -203,7 +203,7 @@ public class LookupManager {
 	 *            the key
 	 * 
 	 * @return the locale specific lookups
-	 */
+	 *//*
 	public static List<LookupBean> getLocaleSpecificLookups(Locale locale, String key) {
 		List<LookupBean> retList = null;
 		Map<String, List<LookupBean>> localeMap = getLocaleSpecificLookups(locale);
@@ -220,7 +220,7 @@ public class LookupManager {
 
 	}
 
-	/**
+	*//**
 	 * Gets the lookup display value.
 	 * 
 	 * @param locale
@@ -231,7 +231,7 @@ public class LookupManager {
 	 *            the value
 	 * 
 	 * @return the lookup display value
-	 */
+	 *//*
 	public static String getLookupDisplayValue(Locale locale, String key, String value) {
 		List<LookupBean> beans = getLocaleSpecificLookups(locale, key);
 		if (beans != null) {
@@ -246,7 +246,7 @@ public class LookupManager {
 	}
 	
 	
-	/**
+	*//**
 	 * Gets the lookup code
 	 * 
 	 * @param locale
@@ -257,7 +257,7 @@ public class LookupManager {
 	 *            the label in the provided locale
 	 * 
 	 * @return the lookup display value - checking for case insensitive comparison of the label
-	 */
+	 *//*
 	public static String getLookupKey(Locale locale, String lookupName, String label) {
 		List<LookupBean> beans = getLocaleSpecificLookups(locale, lookupName);
 		if (beans != null) {
@@ -271,4 +271,4 @@ public class LookupManager {
 		return null;
 	}
 
-}
+*/}

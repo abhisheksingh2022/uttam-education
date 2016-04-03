@@ -14,7 +14,7 @@
 	
 	<constant name="struts.custom.i18n.resources" value="com.uttam.framework.common.i18n.DBResourceBundle" />
 	
-	<package name="uttam-basic" extends="struts-default" namespace="/" abstract="yes">
+	<package name="framework-basic" extends="struts-default" namespace="/" abstract="yes">
 		 <result-types>
             <result-type name="json" class="org.apache.struts2.json.JSONResult"/>
             <result-type name="actionRedirect" class="com.uttam.web.framework.struts.ActionRedirectResult" />

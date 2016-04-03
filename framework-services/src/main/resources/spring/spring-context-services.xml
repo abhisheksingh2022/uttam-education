@@ -14,22 +14,22 @@
 
 	<!-- ########################################################################################################## -->
 	<!-- Bean for JTA Transaction manager starts -->
-	<bean id="transactionManager" class="org.springframework.transaction.jta.JtaTransactionManager">
+	<!-- <bean id="transactionManager" class="org.springframework.transaction.jta.JtaTransactionManager">
 		<property name="defaultTimeout">
 			<value>100</value>
 		</property>
 		<property name="allowCustomIsolationLevels" value="true" />
-		<!-- <property name="sessionFactory" ref="sessionFactory" /> -->
-	</bean>
-	<!-- Bean for JTA Transaction manager ends -->
-	<aop:config>
+		<property name="sessionFactory" ref="mongoDbFactory" />
+	</bean> -->
+	
+	<!-- <aop:config>
 		<aop:advisor pointcut="execution(* com.uttam.education.service..*.*(..))" advice-ref="pmpLocalTxAdvice" />
 	</aop:config>
-	<!-- <aop:config>
+	<aop:config>
 		<aop:advisor pointcut="execution(* com.uttam.education.service.user.UserService*.*(..))" advice-ref="userServiceImplRetrieveUserByLoginIdTxnAdvice" />
-	</aop:config> -->
-	
-	<tx:advice id="pmpLocalTxAdvice" transaction-manager="transactionManager">
+	</aop:config>
+	 -->
+	<!-- <tx:advice id="pmpLocalTxAdvice" transaction-manager="transactionManager">
 		<tx:attributes>
 			<tx:method name="retrieve*" read-only="true" propagation="REQUIRED" isolation="READ_UNCOMMITTED" />
 			<tx:method name="search*" read-only="true" propagation="REQUIRED" isolation="READ_UNCOMMITTED" />
@@ -40,7 +40,7 @@
 			<tx:method name="upload*" propagation="REQUIRED" rollback-for="com.uttam.framework.common.exception.BusinessServiceException" />
 			<tx:method name="*" />
 		</tx:attributes>
-	</tx:advice>
+	</tx:advice> -->
 
 	<!-- ########################################################################################################## -->
 	<!-- Services Start -->

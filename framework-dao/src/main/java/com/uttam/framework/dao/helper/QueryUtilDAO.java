@@ -12,6 +12,7 @@ import org.hibernate.Session;
 import org.hibernate.type.Type;
 
 import com.uttam.framework.dao.BaseDAO;
+import com.uttam.framework.dao.impl.BaseDAOImpl;
 
 /**
  * 
@@ -19,7 +20,7 @@ import com.uttam.framework.dao.BaseDAO;
  *
  */
 @SuppressWarnings("rawtypes")
-public class QueryUtilDAO extends BaseDAO {
+public class QueryUtilDAO extends BaseDAOImpl {/*
 
 	private static ThreadLocal threadBeanClass = new ThreadLocal();
 
@@ -27,7 +28,7 @@ public class QueryUtilDAO extends BaseDAO {
 
 	private static ThreadLocal threadAttributeNames = new ThreadLocal();
 
-	/**
+	*//**
 	 * 
 	 * Method to find a list based on equal properties as filters. <br>
 	 * The propertyName array contains the fields which has to be checked for equal condition and propertyValue array
@@ -51,14 +52,14 @@ public class QueryUtilDAO extends BaseDAO {
 	 * @param orderProperty
 	 * @param isDescending
 	 * @return List
-	 */
+	 *//*
 	public List findOptimizedListByCondition(Class aClass, String[] returnProperty, String[] propertyName,
 			Object[] propertyValue, String orderProperty, boolean isDescending) {
 		return executeHQL(HixQueryGenerator.generateQuery(aClass, returnProperty, propertyName, propertyValue,
 				orderProperty, isDescending), propertyValue);
 	}
 
-	/**
+	*//**
 	 * @author Abhishek
 	 * 
 	 *         Execute an hql query which returns a list. This query fetch the result
@@ -67,7 +68,7 @@ public class QueryUtilDAO extends BaseDAO {
 	 * @param pareameters
 	 *            can be null if no parameter is to be set
 	 * @return
-	 */
+	 *//*
 	public List executeHQL(String query, Object[] parameters) {
 		initialize(query);
 		Session session = null;
@@ -91,11 +92,11 @@ public class QueryUtilDAO extends BaseDAO {
 		}
 	}
 
-	/**
+	*//**
 	 *
 	 * 
 	 * Initialize for HQL
-	 */
+	 *//*
 	private void initialize(String query) {
 		Session session = null;
 		session = getReadOnlySession();
@@ -104,7 +105,7 @@ public class QueryUtilDAO extends BaseDAO {
 
 	}
 
-	/**
+	*//**
 	 * Private method execute query and set the values for the object.
 	 * 
 	 * @param query
@@ -112,7 +113,7 @@ public class QueryUtilDAO extends BaseDAO {
 	 * @throws Exception
 	 * @return List
 	 * 
-	 */
+	 *//*
 	@SuppressWarnings("unchecked")
 	private List executeHibQuery(Query query) throws Exception {
 
@@ -157,7 +158,7 @@ public class QueryUtilDAO extends BaseDAO {
 		}
 	}
 
-	/** Initialize for Query Object */
+	*//** Initialize for Query Object *//*
 	@SuppressWarnings("unchecked")
 	private void init(Query qry) {
 		Session session = null;
@@ -254,4 +255,4 @@ public class QueryUtilDAO extends BaseDAO {
 		}
 		return null;
 	}
-}
+*/}

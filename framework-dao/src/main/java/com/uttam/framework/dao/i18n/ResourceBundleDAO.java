@@ -1,20 +1,26 @@
 package com.uttam.framework.dao.i18n;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 import com.uttam.framework.common.i18n.IResourceBundleDao;
 import com.uttam.framework.common.i18n.ResourceBundleEntry;
+import com.uttam.framework.core.model.DisplayText;
+import com.uttam.framework.dao.impl.BaseDAOImpl;
 
-public class ResourceBundleDAO implements IResourceBundleDao {
+public class ResourceBundleDAO<T> extends BaseDAOImpl<T> implements IResourceBundleDao {
 	private static final Logger log = LogManager.getLogger(ResourceBundleDAO.class);
-	private JdbcTemplate template;
+	
+	public ResourceBundleDAO() {
+		log.debug("ResourceBundleDAO Instantiated");
+	}
+
 	private String applicationId;
 
 	public String getApplicationId() {
@@ -27,48 +33,46 @@ public class ResourceBundleDAO implements IResourceBundleDao {
 
 	@Override
 	public List<ResourceBundleEntry> retrieveDBResourceBundle(String localeCode) {
-		final String sql = "select text_key, text_lang_cd, service_provider_id, text_val from display_text where text_lang_cd = ? and service_provider_id = ?";
+		Query query = new Query();
+		query.addCriteria(Criteria.where("textLangCode").is(localeCode).and("serviceProviderId").is(applicationId));
 
+		query.fields().include("textKey");
+		query.fields().include("textLangCode");
+		query.fields().include("serviceProviderId");
+		query.fields().include("textValue");
+		try{
+		List<DisplayText> displayTextCol = getMongoOps().find(query,DisplayText.class);
+		List<ResourceBundleEntry> list = loadResourceBundle(displayTextCol);
+		
 		log.info("Loading Resource Bundle of locale {} for service provider {}", localeCode, applicationId);
-		List<ResourceBundleEntry> list = template.query(sql, new Object[] { localeCode, applicationId },
-				new RowMapper<ResourceBundleEntry>() {
-
-					@Override
-					public ResourceBundleEntry mapRow(ResultSet rs, int rowNum) throws SQLException {
-						log.entry(rowNum);
-						ResourceBundleEntry entry = new ResourceBundleEntry();
-						entry.setKey(rs.getString("text_key"));
-						entry.setLangCode(rs.getString("text_lang_cd"));
-						entry.setServiceProviderId(rs.getString("service_provider_id"));
-						try {
-							entry.setValue(rs.getString("text_val"));
-						} catch (SQLException ex) {
-							log.error(
-									"Invalid string found for key: {}, language: {}. This text will not be available in resource bundle",
-									entry.getKey(), entry.getLangCode(), ex);
-							entry.setValue("Invalid text content");
-						}
-						log.exit();
-						return entry;
-					}
-
-				});
+		log.info("Number of Entry found {}",list.size());
 		return list;
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
-
-	/**
-	 * @return the template
-	 */
-	public JdbcTemplate getTemplate() {
-		return template;
+	
+	private List<ResourceBundleEntry> loadResourceBundle(List<DisplayText> list){
+		log.entry();
+		List<ResourceBundleEntry> bundleList = new ArrayList<ResourceBundleEntry>();
+		for(DisplayText displayText:list){
+			ResourceBundleEntry entry = new ResourceBundleEntry();
+			entry.setKey(displayText.getTextKey());
+			entry.setLangCode(displayText.getTextLangCode());
+			entry.setServiceProviderId(displayText.getServiceProviderId());
+			
+			if(StringUtils.isEmpty(displayText.getTextValue())){
+				log.error(
+						"Invalid string found for key: {}, language: {}. This text will not be available in resource bundle",
+						entry.getKey(), entry.getLangCode());
+				entry.setValue("Invalid text content");
+			}else{
+				entry.setValue(displayText.getTextValue());
+			}
+			bundleList.add(entry);
+		}
+		return log.exit(bundleList);
 	}
-
-	/**
-	 * @param template
-	 *            the template to set
-	 */
-	public void setTemplate(JdbcTemplate template) {
-		this.template = template;
-	}
-
 }

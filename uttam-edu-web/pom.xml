@@ -14,6 +14,7 @@
 		<struts.version>2.3.24</struts.version>
 		<spring.version>4.1.7.RELEASE</spring.version>
 		<hibernate.version>4.3.10.Final</hibernate.version>
+		<spring-data-mongodb.version>1.5.2.RELEASE</spring-data-mongodb.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -159,6 +160,12 @@
 			<version>${hibernate.version}</version>
 		</dependency>
 		
+		<!-- Mongo Configuration -->
+		<dependency>
+    		<groupId>org.springframework.data</groupId>
+    		<artifactId>spring-data-mongodb</artifactId>
+    		<version>${spring-data-mongodb.version}</version>
+  		</dependency>
 
 		<dependency>
 			<groupId>com.uttam.framework</groupId>

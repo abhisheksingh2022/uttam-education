@@ -4,9 +4,11 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
@@ -60,9 +62,9 @@ public abstract class DBResourceBundle extends ResourceBundle {
 				spEntries.put(entry.getKey(), entry.getValue());
 				entries.add(spId + ":" + entry.getKey());
 			}
-		} catch (Exception t) {
-			log.error("Exception occured initializing database based resource bundle", t);
-			throw log.throwing(new RuntimeException(t));
+		} catch (Exception e) {
+			log.error("Exception occured initializing database based resource bundle", e);
+			throw log.throwing(new RuntimeException(e));
 		}
 	}
 

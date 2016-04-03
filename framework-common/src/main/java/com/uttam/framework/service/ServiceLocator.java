@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hibernate.SessionFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -43,18 +42,7 @@ public class ServiceLocator {
 		this.services = services;
 	}
 
-	public SessionFactory getDefaultHibernateSessionFactory() {
-		return getHibernateSessionFactory("sessionFactory");
-	}
-
-	public SessionFactory getHibernateSessionFactory(String name) {
-		if(this.springContext != null){
-			return this.springContext.getBean(name, SessionFactory.class);
-		}
-		_log.error("***Warning!!!*** - spring context not registered - potential spring configuration issue?");
-		return _log.exit(null);
-	}
-
+	
 	public void setSpringContext(ApplicationContext springContext) {
 		this.springContext = springContext;
 	}
@@ -64,6 +52,7 @@ public class ServiceLocator {
 		applicationContext = new ClassPathXmlApplicationContext(path);
 		_log.info("Initialized Spring Application Context of id " + applicationContext.getDisplayName());
 		getInstance().setSpringContext(applicationContext);
+		
 
 	}
 
@@ -77,5 +66,9 @@ public class ServiceLocator {
 
 	public void setApplicationId(String applicationId) {
 		this.applicationId = applicationId;
+	}
+
+	public ApplicationContext getSpringContext() {
+		return springContext;
 	}
 }

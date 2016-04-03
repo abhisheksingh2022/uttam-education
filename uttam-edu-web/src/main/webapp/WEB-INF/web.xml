@@ -15,7 +15,7 @@
     <param-value>PMP</param-value>
   </context-param>
   <welcome-file-list>
-    <welcome-file>index.html</welcome-file>
+    <welcome-file>login.jsp</welcome-file>
     <welcome-file>index.htm</welcome-file>
     <welcome-file>index.jsp</welcome-file>
     <welcome-file>default.html</welcome-file>
@@ -33,13 +33,6 @@
     <error-code>404</error-code>
     <location>/jsp/notfound.jsp</location>
   </error-page>
- <!--  <resource-ref>
-    <description>EducationDB Datasource</description>
-    <res-ref-name>jdbc/pmpdb</res-ref-name>
-    <res-type>javax.sql.DataSource</res-type>
-    <res-auth>Container</res-auth>
-    <res-sharing-scope>Shareable</res-sharing-scope>
-  </resource-ref> -->
   <filter>
     <display-name>struts2</display-name>
     <filter-name>struts2</filter-name>
@@ -56,7 +49,7 @@
   <jsp-config>
     <taglib>
       <taglib-uri>/struts-tags</taglib-uri>
-      <taglib-location>WEB-INF/tld/struts-tags.tld</taglib-location>
+      <taglib-location>tld/struts-tags.tld</taglib-location>
     </taglib>
   </jsp-config>
   <session-config>

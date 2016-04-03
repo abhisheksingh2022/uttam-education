@@ -55,7 +55,7 @@ public class FrameworkContextInitializer implements ServletContextListener {
 				//				struts.setInitParameter("config", sce.getServletContext().getInitParameter("struts-config-location"));
 				//				struts.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD,
 				//						DispatcherType.ASYNC, DispatcherType.ERROR), true, "/*");
-				LookupService.initialize();
+				//LookupService.initialize();
 				
 				System.out.println("******* Education Web App initialized successfully *******");
 				LogManager.getLogger(FrameworkContextInitializer.class).error(

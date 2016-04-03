@@ -15,11 +15,12 @@
 			<value>application.properties</value>
 		</property>
 	</bean>
+	<import resource="classpath:/spring/spring-context-dao.xml" />
 	<alias name="dbEnvironmentProvider" alias="currentEnvironmentProvider" />
 	<bean id="globalServiceLocator" class="com.uttam.framework.service.ServiceLocator" factory-method="getInstance">
 		<property name="services">
 			<map key-type="java.lang.Class" value-type="com.uttam.framework.service.IService">
-				<entry key="com.uttam.framework.common.env.IEnvironmentProvider" value-ref="dbEnvironmentProvider" />
+				<!-- <entry key="com.uttam.framework.common.env.IEnvironmentProvider" value-ref="dbEnvironmentProvider" /> -->
 				<entry key="com.uttam.framework.common.i18n.IResourceBundleDao" value-ref="resourceBundleDao" />
 				<entry key="com.uttam.education.service.admin.SystemAdministrationService" value-ref="systemAdministrationService" />
 			</map>
@@ -31,8 +32,4 @@
 	</bean>
 
 	<import resource="classpath:/spring/spring-context-services.xml" />
-	<import resource="classpath:/spring/spring-context-dao.xml" />
-
-
-
 </beans>

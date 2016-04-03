@@ -12,6 +12,7 @@
 		<jdk.version>1.7</jdk.version>
 		<log4j.version>2.2</log4j.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<spring-data-mongodb.version>1.5.2.RELEASE</spring-data-mongodb.version>
 	</properties>
 
 	<dependencies>
@@ -50,6 +51,12 @@
 			<artifactId>commons-beanutils</artifactId>
 			<version>1.9.2</version>
 		</dependency>
+		<!-- Mongo Configuration -->
+		<dependency>
+    		<groupId>org.springframework.data</groupId>
+    		<artifactId>spring-data-mongodb</artifactId>
+    		<version>${spring-data-mongodb.version}</version>
+  		</dependency>
 	</dependencies>
 	<build>
 		<finalName>framework-model</finalName>
