@@ -14,19 +14,20 @@ public class Privilege extends BaseModel {
 
 	@Id
 	private String id;
-
     private String name;
-
     private Role role;
-
     private ResourceModule resourceModule;
-
     private int priority;
 
+    
     public String getId() {
     	return this.id;
     }
-
+    
+    public void setId(String id) {
+		this.id = id;
+	}
+    
     public String getName() {
     	return this.name;
     }

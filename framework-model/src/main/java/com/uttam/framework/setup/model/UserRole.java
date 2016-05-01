@@ -8,7 +8,6 @@ import com.uttam.framework.core.model.BaseModel;
 @Document(collection = "user_role")
 public class UserRole extends BaseModel {
 
-
 	/**
 	 * 
 	 */
@@ -16,24 +15,26 @@ public class UserRole extends BaseModel {
 	
 	@Id
 	private String id;
-
-	private AppUser appUser;
-
+	private User user;
 	private Role role;
-	
 	private UserGroup userGroup;
 	
 	public String getId() {
 		return id;
 	}
 	
-	public AppUser getAppUser() {
-		return appUser;
+	public void setId(String id) {
+		this.id = id;
 	}
 
-	public void setAppUser(AppUser appUser) {
-		this.appUser = appUser;
+	public User getUser() {
+		return user;
 	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
 
 	public Role getRole() {
 		return role;

@@ -16,18 +16,18 @@ public class RoleModule extends BaseModel {
 	
 	@Id
 	private String id;
-
-	/** persistent field */
 	private Module module;
-
-	/** persistent field */
 	private Role role;
-
-	private int displayOrder;
+	private Integer displayOrder;
 
 	public String getId() {
 		return id;
 	}
+	
+	public void setId(String id) {
+		this.id = id;
+	}
+	
 	public Module getModule() {
 		return this.module;
 	}
@@ -44,11 +44,11 @@ public class RoleModule extends BaseModel {
 		this.role = role;
 	}
 	
-	public int getDisplayOrder() {
+	public Integer getDisplayOrder() {
 		return displayOrder;
 	}
 
-	public void setDisplayOrder(int displayOrder) {
+	public void setDisplayOrder(Integer displayOrder) {
 		this.displayOrder = displayOrder;
 	}
 }

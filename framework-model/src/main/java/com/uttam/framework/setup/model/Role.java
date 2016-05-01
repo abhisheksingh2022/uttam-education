@@ -1,6 +1,5 @@
 package com.uttam.framework.setup.model;
 
-import java.util.Set;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import com.uttam.framework.core.model.BaseModel;
@@ -16,23 +15,17 @@ public class Role extends BaseModel {
 	
 	@Id
 	private String id;
-
 	private String name;
-
 	private String description;
-	
 	private String icon;
 
-	private Set roleModules;
-
-	private Set privileges;
-
-	private Set userRoles;
 	
-	private Set reportRoles;
-
 	public String getId() {
 		return id;
+	}
+	
+	public void setId(String id) {
+		this.id = id;
 	}
 	
 	public String getName() {
@@ -59,39 +52,7 @@ public class Role extends BaseModel {
 		this.icon = icon;
 	}
 
-	public Set getRoleModules() {
-		return this.roleModules;
-	}
-
-	public void setRoleModules(Set roleModules) {
-		this.roleModules = roleModules;
-	}
-
 	public String toString() {
 		return getName();
-	}
-
-	public Set getPrivileges() {
-		return privileges;
-	}
-
-	public void setPrivileges(Set privilages) {
-		this.privileges = privilages;
-	}
-
-	public Set getUserRoles() {
-		return userRoles;
-	}
-
-	public void setUserRoles(Set userRoles) {
-		this.userRoles = userRoles;
-	}
-
-	public Set getReportRoles() {
-		return reportRoles;
-	}
-
-	public void setReportRoles(Set reportRoles) {
-		this.reportRoles = reportRoles;
 	}
 }

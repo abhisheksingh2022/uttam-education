@@ -1,8 +1,8 @@
 package com.uttam.framework.setup.model;
 
-import java.util.Set;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
 import com.uttam.framework.core.model.BaseModel;
 
 @Document(collection = "user_group")
@@ -15,21 +15,17 @@ public class UserGroup extends BaseModel {
 	
 	@Id
 	private String id;
-
 	private String groupName;
-
 	private String description;
-
 	private String fullyQualifiedName;
-
-	private Set userRoles;
-
 	private UserGroup parentGroup;
-
-	private Set childGroups;
 
 	public String getId() {
 		return id;
+	}
+	
+	public void setId(String id) {
+		this.id = id;
 	}
 	
 	public String getDescription() {
@@ -53,21 +49,6 @@ public class UserGroup extends BaseModel {
 
 	public void setFullyQualifiedName(String fullyQualifiedName) {
 		this.fullyQualifiedName = fullyQualifiedName;
-	}
-	public Set getUserRoles() {
-		return userRoles;
-	}
-
-	public void setUserRoles(Set userRoles) {
-		this.userRoles = userRoles;
-	}
-
-	public Set getChildGroups() {
-		return childGroups;
-	}
-
-	public void setChildGroups(Set childGroups) {
-		this.childGroups = childGroups;
 	}
 
 	public UserGroup getParentGroup() {

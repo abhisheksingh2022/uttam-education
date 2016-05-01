@@ -7,7 +7,6 @@ import com.uttam.framework.core.model.BaseModel;
 
 @Document(collection = "page_resource")
 public class PageResource extends BaseModel {
-
 	/**
 	 * 
 	 */
@@ -15,18 +14,18 @@ public class PageResource extends BaseModel {
 	
 	@Id
 	private String id;
-
 	private String name;
-
 	private String action;
-
 	private int type;
-
 	private Resource resource;
-	
 
+	
 	public String getId() {
 		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public String getAction() {

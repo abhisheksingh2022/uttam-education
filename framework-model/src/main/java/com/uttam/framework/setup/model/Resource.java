@@ -1,6 +1,5 @@
 package com.uttam.framework.setup.model;
 
-import java.util.Set;
 import com.uttam.framework.core.model.BaseModel;
 
 public class Resource extends BaseModel {
@@ -11,38 +10,23 @@ public class Resource extends BaseModel {
 	private static final long serialVersionUID = 1L;
 
 	private String id;
-
 	private String name;
-	
 	private String displayName;
-
 	private String description;
-
 	private String action;
-
-	private int displayOrder;
-
-	private boolean showInMenu;
-
+	private Integer displayOrder;
+	private Boolean showInMenu;
 	private String hierarchyId;
-
 	private String icon;
-	
 	private Resource parentResource;
-
-	private Set resourceModules;
-
-	private Set childResources;
-
-	private Set pageResources;
-	
-	private Set userFavourites;
-
 	
 	public String getId() {
 		return this.id;
 	}
 
+	public void setId(String id) {
+		this.id = id;
+	}
 
 	public String getName() {
 		return this.name;
@@ -76,11 +60,11 @@ public class Resource extends BaseModel {
 		this.action = action;
 	}
 
-	public int getDisplayOrder() {
+	public Integer getDisplayOrder() {
 		return this.displayOrder;
 	}
 
-	public void setDisplayOrder(int displayOrder) {
+	public void setDisplayOrder(Integer displayOrder) {
 		this.displayOrder = displayOrder;
 	}
 
@@ -98,48 +82,13 @@ public class Resource extends BaseModel {
 	public void setParentResource(Resource resource) {
 		this.parentResource = resource;
 	}
-
-	public Set getResourceModules() {
-		return this.resourceModules;
-	}
-
-	public void setResourceModules(Set resourceModules) {
-		this.resourceModules = resourceModules;
-	}
-
-	public Set getChildResources() {
-		return this.childResources;
-	}
-
-	public void setChildResources(Set resources) {
-		this.childResources = resources;
-	}
-
 	
-	public boolean isShowInMenu() {
+	public Boolean isShowInMenu() {
 		return showInMenu;
 	}
 
-	public void setShowInMenu(boolean showInMenu) {
+	public void setShowInMenu(Boolean showInMenu) {
 		this.showInMenu = showInMenu;
-	}
-
-	
-	public Set getPageResources() {
-		return pageResources;
-	}
-
-	public void setPageResources(Set pageResources) {
-		this.pageResources = pageResources;
-	}
-
-	
-	public Set getUserFavourites() {
-		return userFavourites;
-	}
-
-	public void setUserFavourites(Set userFavourites) {
-		this.userFavourites = userFavourites;
 	}
 
 	public String getIcon() {
